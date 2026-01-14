@@ -7,12 +7,13 @@
 .pub/
 build/
 
-# Generated Flutter files
 .flutter-plugins
 .flutter-plugins-dependencies
 .flutter_tool_state
 
-# Documentation output
+####################################
+# Documentation
+####################################
 **/doc/api/
 
 ####################################
@@ -30,7 +31,6 @@ build/
 ####################################
 android/.gradle/
 android/local.properties
-android/**/GeneratedPluginRegistrant.java
 android/**/key.properties
 android/app/debug/
 android/app/profile/
@@ -44,10 +44,8 @@ ios/.symlinks/
 ios/Flutter/Flutter.framework
 ios/Flutter/Flutter.podspec
 ios/Flutter/App.framework
-ios/Flutter/Generated.xcconfig
 ios/Flutter/ephemeral/
 ios/Runner.xcworkspace
-ios/Runner/GeneratedPluginRegistrant.*
 ios/DerivedData/
 **/ios/Flutter/.last_build_id
 
