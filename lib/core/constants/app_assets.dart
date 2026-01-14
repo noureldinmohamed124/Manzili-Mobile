@@ -6,6 +6,14 @@ class AppAssets {
   // PNG Assets - Gradient decorative shapes
   static const String gradientTop = '$_basePngs/gradient_top.png';
   static const String gradientBottomLeft = '$_basePngs/gradient_bottom_left.png';
+  static const String signInButton = '$_basePngs/Sign In Button.png';
+  
+  // Food Images
+  static const String cookie = '$_basePngs/Cookie.png';
+  static const String cupcake = '$_basePngs/CupCake.png';
+  static const String donuts = '$_basePngs/Donutes.png';
+  static const String kunafa = '$_basePngs/Kunafa.png';
+  static const String strawberryCake = '$_basePngs/Strawbery_Cake.png';
   
   // Icon Assets (PNG)
   static const String googleIcon = '$_baseIcons/Google.png';

@@ -3,21 +3,19 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:manzili_mobile/presentation/widgets/custom_text_field.dart';
 import 'package:manzili_mobile/presentation/widgets/login_row_cta.dart';
-import 'package:manzili_mobile/presentation/views/signup_view.dart';
-
+import 'package:manzili_mobile/presentation/views/signin_view.dart';
 import '../../../core/constants/app_assets.dart';
 import '../../../core/theme/app_colors.dart';
 
-class SigninView extends StatefulWidget {
-  const SigninView({super.key});
+class SignupView extends StatefulWidget {
+  const SignupView({super.key});
 
   @override
-  State<SigninView> createState() => _SigninViewState();
+  State<SignupView> createState() => _SignupViewState();
 }
 
-class _SigninViewState extends State<SigninView> {
+class _SignupViewState extends State<SignupView> {
   bool _obscurePassword = true;
-  bool _rememberMe = false;
   String _selectedRole = 'seller';
 
   @override
@@ -29,7 +27,7 @@ class _SigninViewState extends State<SigninView> {
       textDirection: TextDirection.rtl,
       child: MediaQuery(
         data: MediaQuery.of(context).copyWith(
-          textScaleFactor: 1.10,
+          textScaleFactor: 1.10, 
         ),
         child: Scaffold(
           backgroundColor: Colors.white,
@@ -67,21 +65,12 @@ class _SigninViewState extends State<SigninView> {
                         child: Column(
                           children: [
                             const Text(
-                              'مرحباً',
+                              'انشأ حساب جديد',
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                fontSize: 38, // ✅ bigger
+                                fontSize: 38, 
                                 fontWeight: FontWeight.w800,
                                 color: Color(0xFF0F172A),
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            const Text(
-                              'سجل الدخول إلى حسابك',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 15, // ✅ bigger
-                                color: AppColors.textSecondary,
                               ),
                             ),
 
@@ -115,12 +104,17 @@ class _SigninViewState extends State<SigninView> {
                             const SizedBox(height: 26),
 
                             const CustomTextField(
-                              label: 'البريد الالكتروني',
+                              label: 'الاسم بالكامل',
+                            ),
+                            const SizedBox(height: 18),
+
+                            const CustomTextField(
+                              label: 'البريد الاكتروني',
                             ),
                             const SizedBox(height: 18),
 
                             CustomTextField(
-                              label: 'كلمة المرور',
+                              label: 'كلمه المرور',
                               obscureText: _obscurePassword,
                               suffixIcon: IconButton(
                                 icon: Icon(
@@ -136,47 +130,6 @@ class _SigninViewState extends State<SigninView> {
                               ),
                             ),
 
-                            const SizedBox(height: 16),
-
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                TextButton(
-                                  onPressed: () {},
-                                  child: const Text(
-                                    'نسيت كلمة المرور؟',
-                                    style: TextStyle(
-                                      fontSize: 13, // ✅ bigger
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.textSecondary,
-                                    ),
-                                  ),
-                                ),
-                                Row(
-                                  children: [
-                                    Checkbox(
-                                      value: _rememberMe,
-                                      onChanged: (v) => setState(
-                                          () => _rememberMe = v ?? false),
-                                      activeColor: AppColors.primary,
-                                      side: const BorderSide(
-                                        color: AppColors.primary,
-                                        width: 1.4,
-                                      ),
-                                    ),
-                                    const Text(
-                                      'تذكرني',
-                                      style: TextStyle(
-                                        fontSize: 13, // ✅ bigger
-                                        fontWeight: FontWeight.w600,
-                                        color: AppColors.textSecondary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-
                             const SizedBox(height: 24),
 
                             Directionality(
@@ -184,7 +137,7 @@ class _SigninViewState extends State<SigninView> {
                               child: Align(
                                 alignment: Alignment.centerLeft,
                                 child: LoginRowCTA(
-                                  text: 'سجل الدخول',
+                                  text: 'إنشاء حساب',
                                   onTap: () {},
                                 ),
                               ),
@@ -200,7 +153,7 @@ class _SigninViewState extends State<SigninView> {
                                   child: Text(
                                     'أو سجل باستخدام وسائل التواصل الاجتماعي',
                                     style: TextStyle(
-                                      fontSize: 12, // ✅ bigger
+                                      fontSize: 12, 
                                       fontWeight: FontWeight.w600,
                                       color: AppColors.textSecondary,
                                     ),
@@ -228,15 +181,15 @@ class _SigninViewState extends State<SigninView> {
                             RichText(
                               textAlign: TextAlign.center,
                               text: TextSpan(
-                                text: 'ليس لديك حساب؟ ',
+                                text: 'لديك حساب؟ ',
                                 style: const TextStyle(
-                                  fontSize: 14, // ✅ bigger
+                                  fontSize: 14, 
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.textSecondary,
                                 ),
                                 children: [
                                   TextSpan(
-                                    text: 'إنشاء حساب',
+                                    text: 'سجل الدخول',
                                     style: const TextStyle(
                                       fontWeight: FontWeight.w800,
                                       color: AppColors.primary,
@@ -246,7 +199,7 @@ class _SigninViewState extends State<SigninView> {
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                            builder: (context) => const SignupView(),
+                                            builder: (context) => const SigninView(),
                                           ),
                                         );
                                       },

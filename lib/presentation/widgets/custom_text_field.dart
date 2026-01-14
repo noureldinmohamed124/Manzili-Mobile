@@ -8,7 +8,7 @@ class CustomTextField extends StatelessWidget {
   final bool obscureText;
   final TextInputType? keyboardType;
   final Widget? suffixIcon;
-  final Widget? prefixIcon; // ✅ for left icon (eye) in RTL
+  final Widget? prefixIcon; // for left icon (eye) in RTL
   final bool enabled;
   final ValueChanged<String>? onChanged;
 
@@ -30,7 +30,6 @@ class CustomTextField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // label فوق الحقل
         Text(
           label,
           style: const TextStyle(
@@ -41,9 +40,8 @@ class CustomTextField extends StatelessWidget {
         ),
         const SizedBox(height: 10),
 
-        // ✅ 322x50 style (height fixed)
         Container(
-          height: 50, // ✅ exactly like design
+          height: 50, 
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(30),
@@ -63,7 +61,7 @@ class CustomTextField extends StatelessWidget {
             enabled: enabled,
             onChanged: onChanged,
             textDirection: TextDirection.rtl,
-            textAlignVertical: TextAlignVertical.center, // ✅ vertically centered
+            textAlignVertical: TextAlignVertical.center, 
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -77,14 +75,11 @@ class CustomTextField extends StatelessWidget {
                 color: AppColors.textHint,
               ),
 
-              // ✅ icons inside the field
-              prefixIcon: prefixIcon, // shows on LEFT in RTL
-              suffixIcon: suffixIcon, // shows on RIGHT in RTL
+              prefixIcon: prefixIcon, 
+              suffixIcon: suffixIcon, 
 
-              // ✅ remove borders
               border: InputBorder.none,
 
-              // ✅ padding tuned for height 50
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 18,
                 vertical: 0,

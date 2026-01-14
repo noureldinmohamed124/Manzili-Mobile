@@ -1,5 +1,5 @@
-// ========================= login_row_cta.dart =========================
 import 'package:flutter/material.dart';
+import 'package:manzili_mobile/core/constants/app_assets.dart';
 
 class LoginRowCTA extends StatelessWidget {
   final String text;
@@ -16,30 +16,19 @@ class LoginRowCTA extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          Container(
-            width: 48, // ✅ bigger
-            height: 48, // ✅ bigger
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                colors: [
-                  Color(0xFFFF8D28),
-                  Color(0xFFC20AFA),
-                ],
-              ),
-            ),
-            child: const Icon(
-              Icons.arrow_back,
-              color: Colors.white,
-              size: 24, // ✅ bigger
-            ),
+          Image.asset(
+            AppAssets.signInButton,
+            width: 48,
+            height: 48,
+            fit: BoxFit.contain,
           ),
           const SizedBox(width: 12),
           Text(
             text,
             style: const TextStyle(
-              fontSize: 20, // ✅ bigger
+              fontSize: 20, 
               fontWeight: FontWeight.w800,
               color: Color(0xFF0F172A),
             ),
