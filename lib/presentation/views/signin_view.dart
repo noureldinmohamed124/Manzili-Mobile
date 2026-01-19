@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:manzili_mobile/presentation/widgets/custom_text_field.dart';
-import 'package:manzili_mobile/presentation/widgets/login_row_cta.dart';
+import 'package:manzili_mobile/presentation/widgets/auth/custom_text_field.dart';
+import 'package:manzili_mobile/presentation/widgets/auth/login_row_cta.dart';
+import 'package:manzili_mobile/presentation/widgets/auth/role_button.dart';
+import 'package:manzili_mobile/presentation/widgets/auth/social_login_button.dart';
 import 'package:manzili_mobile/presentation/views/signup_view.dart';
-
 import '../../../core/constants/app_assets.dart';
 import '../../../core/theme/app_colors.dart';
 
@@ -24,6 +24,8 @@ class _SigninViewState extends State<SigninView> {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final gradientHeight = size.height * 0.18;
+    final gradientBottomHeight = size.height * 0.20;
+    final gradientBottomWidth = size.width * 0.20;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -47,7 +49,6 @@ class _SigninViewState extends State<SigninView> {
                   ),
                 ),
               ),
-
               Column(
                 children: [
                   SizedBox(height: gradientHeight + 16),
@@ -70,7 +71,7 @@ class _SigninViewState extends State<SigninView> {
                               'مرحباً',
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                fontSize: 38, // ✅ bigger
+                                fontSize: 38,
                                 fontWeight: FontWeight.w800,
                                 color: Color(0xFF0F172A),
                               ),
@@ -80,18 +81,15 @@ class _SigninViewState extends State<SigninView> {
                               'سجل الدخول إلى حسابك',
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                fontSize: 15, // ✅ bigger
+                                fontSize: 15,
                                 color: AppColors.textSecondary,
                               ),
                             ),
-
                             const SizedBox(height: 24),
-
-                            // Role Buttons
                             Row(
                               children: [
                                 Expanded(
-                                  child: _RoleButton(
+                                  child: RoleButton(
                                     label: 'مشتري',
                                     icon: Icons.shopping_cart_outlined,
                                     isSelected: _selectedRole == 'buyer',
@@ -101,7 +99,7 @@ class _SigninViewState extends State<SigninView> {
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
-                                  child: _RoleButton(
+                                  child: RoleButton(
                                     label: 'بائع',
                                     icon: Icons.shopping_bag_outlined,
                                     isSelected: _selectedRole == 'seller',
@@ -111,14 +109,11 @@ class _SigninViewState extends State<SigninView> {
                                 ),
                               ],
                             ),
-
                             const SizedBox(height: 26),
-
                             const CustomTextField(
                               label: 'البريد الالكتروني',
                             ),
                             const SizedBox(height: 18),
-
                             CustomTextField(
                               label: 'كلمة المرور',
                               obscureText: _obscurePassword,
@@ -127,7 +122,7 @@ class _SigninViewState extends State<SigninView> {
                                   _obscurePassword
                                       ? Icons.visibility_off
                                       : Icons.visibility,
-                                  size: 22, // ✅ bigger icon
+                                  size: 22,
                                   color: AppColors.textHint,
                                 ),
                                 onPressed: () => setState(() {
@@ -135,9 +130,7 @@ class _SigninViewState extends State<SigninView> {
                                 }),
                               ),
                             ),
-
                             const SizedBox(height: 16),
-
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
@@ -146,7 +139,7 @@ class _SigninViewState extends State<SigninView> {
                                   child: const Text(
                                     'نسيت كلمة المرور؟',
                                     style: TextStyle(
-                                      fontSize: 13, // ✅ bigger
+                                      fontSize: 13,
                                       fontWeight: FontWeight.w600,
                                       color: AppColors.textSecondary,
                                     ),
@@ -167,7 +160,7 @@ class _SigninViewState extends State<SigninView> {
                                     const Text(
                                       'تذكرني',
                                       style: TextStyle(
-                                        fontSize: 13, // ✅ bigger
+                                        fontSize: 13,
                                         fontWeight: FontWeight.w600,
                                         color: AppColors.textSecondary,
                                       ),
@@ -176,9 +169,7 @@ class _SigninViewState extends State<SigninView> {
                                 ),
                               ],
                             ),
-
                             const SizedBox(height: 24),
-
                             Directionality(
                               textDirection: TextDirection.ltr,
                               child: Align(
@@ -189,9 +180,7 @@ class _SigninViewState extends State<SigninView> {
                                 ),
                               ),
                             ),
-
                             const SizedBox(height: 30),
-
                             Row(
                               children: const [
                                 Expanded(child: Divider()),
@@ -200,7 +189,7 @@ class _SigninViewState extends State<SigninView> {
                                   child: Text(
                                     'أو سجل باستخدام وسائل التواصل الاجتماعي',
                                     style: TextStyle(
-                                      fontSize: 12, // ✅ bigger
+                                      fontSize: 12,
                                       fontWeight: FontWeight.w600,
                                       color: AppColors.textSecondary,
                                     ),
@@ -209,28 +198,24 @@ class _SigninViewState extends State<SigninView> {
                                 Expanded(child: Divider()),
                               ],
                             ),
-
                             const SizedBox(height: 16),
-
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                _SocialLoginButton(asset: AppAssets.googleIcon),
+                                SocialLoginButton(asset: AppAssets.googleIcon),
                                 const SizedBox(width: 14,height: 26),
-                                _SocialLoginButton(asset: AppAssets.twitterIcon),
+                                SocialLoginButton(asset: AppAssets.twitterIcon),
                                 const SizedBox(width: 14,height: 26),
-                                _SocialLoginButton(asset: AppAssets.facebookIcon),
+                                SocialLoginButton(asset: AppAssets.facebookIcon),
                               ],
                             ),
-
                             const SizedBox(height: 26),
-
                             RichText(
                               textAlign: TextAlign.center,
                               text: TextSpan(
                                 text: 'ليس لديك حساب؟ ',
                                 style: const TextStyle(
-                                  fontSize: 14, // ✅ bigger
+                                  fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.textSecondary,
                                 ),
@@ -261,108 +246,22 @@ class _SigninViewState extends State<SigninView> {
                   ),
                 ],
               ),
-
               Positioned(
                 bottom: 0,
                 left: 0,
-                child: Image.asset(
-                  AppAssets.gradientBottomLeft,
-                  width: size.width * 0.20,
-                  fit: BoxFit.contain,
-                  alignment: Alignment.bottomLeft,
+                child: SizedBox(
+                  width: gradientBottomWidth,
+                  height: gradientBottomHeight,
+                  child: Image.asset(
+                    AppAssets.gradientBottomLeft,
+                    fit: BoxFit.fill,
+                    alignment: Alignment.bottomLeft,
+                  ),
                 ),
               ),
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-/* ---------- Helper Widgets ---------- */
-
-class _RoleButton extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _RoleButton({
-    required this.label,
-    required this.icon,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(14),
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : const Color(0xFFEFF1F4),
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 20, // ✅ bigger icon
-              color: isSelected ? Colors.white : AppColors.textSecondary,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 14, // ✅ bigger
-                fontWeight: FontWeight.w700,
-                color: isSelected ? Colors.white : AppColors.textSecondary,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SocialLoginButton extends StatelessWidget {
-  final String asset;
-
-  const _SocialLoginButton({required this.asset});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 64, // ⬅️ كانت 54
-      height: 64, // ⬅️ كانت 54
-      decoration: BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.14),
-            blurRadius: 14,
-            offset: const Offset(0, 7),
-          ),
-        ],
-      ),
-      child: Center(
-        child: asset.endsWith('.svg')
-            ? SvgPicture.asset(
-                asset,
-                width: 50, // ⬅️ كانت 26
-                height: 50,
-              )
-            : Image.asset(
-                asset,
-                width: 50, // ⬅️ كانت 26
-                height: 50,
-              ),
       ),
     );
   }

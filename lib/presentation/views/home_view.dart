@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:manzili_mobile/presentation/widgets/food_card.dart';
-import 'package:manzili_mobile/presentation/widgets/food_list_section.dart';
-import 'package:manzili_mobile/presentation/widgets/bottom_nav_bar.dart';
+import 'package:manzili_mobile/presentation/widgets/home/food_card.dart';
+import 'package:manzili_mobile/presentation/widgets/home/food_list_section.dart';
+import 'package:manzili_mobile/presentation/widgets/home/bottom_nav_bar.dart';
+import 'package:manzili_mobile/presentation/views/services_view.dart';
+import 'package:manzili_mobile/presentation/views/service_details_view.dart';
 import '../../../core/constants/app_assets.dart';
 import '../../../core/theme/app_colors.dart';
 
@@ -301,6 +303,22 @@ class _HomeViewState extends State<HomeView> {
                           FoodListSection(
                             title: 'الخدمات',
                             viewAllText: 'عرض الكل',
+                            onViewAllTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const ServicesView(),
+                                ),
+                              );
+                            },
+                            onTitleTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const ServicesView(),
+                                ),
+                              );
+                            },
                             foodItems: [
                               FoodCard(
                                 imagePath: AppAssets.cupcake,
@@ -309,6 +327,14 @@ class _HomeViewState extends State<HomeView> {
                                 price: 150,
                                 rating: 4.7,
                                 badge: 'مرشحه',
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const ServiceDetailsView(),
+                                    ),
+                                  );
+                                },
                               ),
                               FoodCard(
                                 imagePath: AppAssets.strawberryCake,

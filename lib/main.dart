@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:manzili_mobile/core/theme/app_theme.dart';
-import 'package:manzili_mobile/presentation/views/signin_view.dart';
+import 'package:manzili_mobile/presentation/views/home_view.dart';
 
 void main() {
   runApp(const MyApp());
@@ -15,7 +15,7 @@ class MyApp extends StatelessWidget {
       title: 'Manzili Mobile',
       theme: AppTheme.lightTheme,
       debugShowCheckedModeBanner: false,
-      home: const SigninView(),
+      home: const HomeView(),
     );
   }
 }

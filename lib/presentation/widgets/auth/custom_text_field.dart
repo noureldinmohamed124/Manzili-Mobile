@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class CustomTextField extends StatelessWidget {
   final String label;
@@ -8,7 +8,7 @@ class CustomTextField extends StatelessWidget {
   final bool obscureText;
   final TextInputType? keyboardType;
   final Widget? suffixIcon;
-  final Widget? prefixIcon; // for left icon (eye) in RTL
+  final Widget? prefixIcon; 
   final bool enabled;
   final ValueChanged<String>? onChanged;
 
@@ -39,7 +39,6 @@ class CustomTextField extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
-
         Container(
           height: 50, 
           decoration: BoxDecoration(
@@ -74,12 +73,9 @@ class CustomTextField extends StatelessWidget {
                 fontSize: 14,
                 color: AppColors.textHint,
               ),
-
               prefixIcon: prefixIcon, 
               suffixIcon: suffixIcon, 
-
               border: InputBorder.none,
-
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 18,
                 vertical: 0,

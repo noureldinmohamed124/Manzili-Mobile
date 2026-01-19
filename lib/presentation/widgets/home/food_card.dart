@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class FoodCard extends StatelessWidget {
   final String imagePath;
@@ -48,7 +48,6 @@ class FoodCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image with badges and icons
             Stack(
               children: [
                 ClipRRect(
@@ -62,7 +61,6 @@ class FoodCard extends StatelessWidget {
                     fit: BoxFit.cover,
                   ),
                 ),
-                // Favorite icon (top-left)
                 Positioned(
                   top: 8,
                   left: 8,
@@ -82,7 +80,6 @@ class FoodCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                // Badge (top-right)
                 if (badge != null)
                   Positioned(
                     top: 8,
@@ -106,7 +103,6 @@ class FoodCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                // Rating (bottom-left)
                 Positioned(
                   bottom: 8,
                   left: 8,
@@ -142,7 +138,6 @@ class FoodCard extends StatelessWidget {
                 ),
               ],
             ),
-            // Content
             Padding(
               padding: const EdgeInsets.all(12),
               child: Column(

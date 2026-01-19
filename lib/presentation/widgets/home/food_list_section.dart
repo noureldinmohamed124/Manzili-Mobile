@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:manzili_mobile/presentation/widgets/food_card.dart';
-import '../../../core/theme/app_colors.dart';
+import 'food_card.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class FoodListSection extends StatelessWidget {
   final String title;
@@ -8,6 +8,7 @@ class FoodListSection extends StatelessWidget {
   final Color? titleIconColor;
   final String? viewAllText;
   final VoidCallback? onViewAllTap;
+  final VoidCallback? onTitleTap;
   final List<FoodCard> foodItems;
 
   const FoodListSection({
@@ -17,6 +18,7 @@ class FoodListSection extends StatelessWidget {
     this.titleIconColor,
     this.viewAllText,
     this.onViewAllTap,
+    this.onTitleTap,
     required this.foodItems,
   });
 
@@ -30,25 +32,28 @@ class FoodListSection extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
+              GestureDetector(
+                onTap: onTitleTap,
+                child: Row(
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
-                  ),
-                  if (titleIcon != null) ...[
-                    const SizedBox(width: 8),
-                    Icon(
-                      titleIcon,
-                      size: 20,
-                      color: titleIconColor ?? AppColors.primary,
-                    ),
+                    if (titleIcon != null) ...[
+                      const SizedBox(width: 8),
+                      Icon(
+                        titleIcon,
+                        size: 20,
+                        color: titleIconColor ?? AppColors.primary,
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
               if (viewAllText != null)
                 TextButton(

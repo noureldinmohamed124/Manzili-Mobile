@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
 
-import 'package:manzili_mobile/core/theme/app_colors.dart';
-
-class _RoleButton extends StatelessWidget {
+class RoleButton extends StatelessWidget {
   final String label;
   final IconData icon;
   final bool isSelected;
   final VoidCallback onTap;
 
-  const _RoleButton({
+  const RoleButton({
+    super.key,
     required this.label,
     required this.icon,
     required this.isSelected,
     required this.onTap,
-  }); 
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -31,15 +31,15 @@ class _RoleButton extends StatelessWidget {
           children: [
             Icon(
               icon,
-              size: 18,
+              size: 20,
               color: isSelected ? Colors.white : AppColors.textSecondary,
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: 8),
             Text(
               label,
               style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
                 color: isSelected ? Colors.white : AppColors.textSecondary,
               ),
             ),
