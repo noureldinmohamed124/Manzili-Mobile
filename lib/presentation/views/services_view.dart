@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:manzili_mobile/data/models/service_models.dart';
+import 'package:manzili_mobile/presentation/providers/services_provider.dart';
+import 'package:manzili_mobile/presentation/views/service_details_view.dart';
 import 'package:manzili_mobile/presentation/widgets/services/filter_button.dart';
 import 'package:manzili_mobile/presentation/widgets/services/service_grid_card.dart';
 import 'package:manzili_mobile/presentation/widgets/services/sort_modal.dart';
@@ -14,6 +18,14 @@ class ServicesView extends StatefulWidget {
 class _ServicesViewState extends State<ServicesView> {
   String _selectedFilter = 'اكتشف افضل الخدمات';
   String _selectedSortOption = 'الافتراضي';
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ServicesProvider>().fetchServices();
+    });
+  }
 
   void _showSortModal(BuildContext context) {
     showModalBottomSheet(
@@ -229,22 +241,93 @@ class _ServicesViewState extends State<ServicesView> {
               ),
             ),
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    childAspectRatio: 0.75,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                  ),
-                  itemCount: 6,
-                  itemBuilder: (context, index) {
-                    return ServiceGridCard(index: index);
-                  },
-                ),
+              child: Consumer<ServicesProvider>(
+                builder: (context, servicesProvider, _) {
+                  if (servicesProvider.isLoading &&
+                      servicesProvider.services.isEmpty) {
+                    return const Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  }
+
+                  if (servicesProvider.errorMessage != null &&
+                      servicesProvider.services.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                            child: Text(
+                              servicesProvider.errorMessage!,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.red,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          ElevatedButton(
+                            onPressed: () {
+                              servicesProvider.fetchServices();
+                            },
+                            child: const Text('إعادة المحاولة'),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  final List<ServiceItem> services =
+                      servicesProvider.services;
+
+                  if (services.isEmpty) {
+                    return const Center(
+                      child: Text(
+                        'لا توجد خدمات متاحة حالياً',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    );
+                  }
+
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        childAspectRatio: 0.75,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                      ),
+                      itemCount: services.length,
+                      itemBuilder: (context, index) {
+                        final service = services[index];
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ServiceDetailsView(
+                                  serviceId: service.id,
+                                ),
+                              ),
+                            );
+                          },
+                          child: ServiceGridCard(service: service),
+                        );
+                      },
+                    ),
+                  );
+                },
               ),
             ),
           ],

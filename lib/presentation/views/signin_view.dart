@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
+import 'package:provider/provider.dart';
+import 'package:manzili_mobile/presentation/providers/auth_provider.dart';
+import 'package:manzili_mobile/presentation/views/home_view.dart';
 import 'package:manzili_mobile/presentation/widgets/auth/custom_text_field.dart';
 import 'package:manzili_mobile/presentation/widgets/auth/login_row_cta.dart';
 import 'package:manzili_mobile/presentation/widgets/auth/role_button.dart';
@@ -19,6 +22,57 @@ class _SigninViewState extends State<SigninView> {
   bool _obscurePassword = true;
   bool _rememberMe = false;
   String _selectedRole = 'seller';
+
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleLogin(BuildContext context) async {
+    final auth = context.read<AuthProvider>();
+
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('من فضلك أدخل البريد الإلكتروني وكلمة المرور'),
+        ),
+      );
+      return;
+    }
+
+    final success = await auth.login(email: email, password: password);
+
+    if (!mounted) return;
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('تم تسجيل الدخول بنجاح'),
+        ),
+      );
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const HomeView(),
+        ),
+      );
+    } else {
+      final message = auth.errorMessage ?? 'فشل تسجيل الدخول، حاول مرة أخرى';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -110,12 +164,15 @@ class _SigninViewState extends State<SigninView> {
                               ],
                             ),
                             const SizedBox(height: 26),
-                            const CustomTextField(
+                            CustomTextField(
                               label: 'البريد الالكتروني',
+                              keyboardType: TextInputType.emailAddress,
+                              controller: _emailController,
                             ),
                             const SizedBox(height: 18),
                             CustomTextField(
                               label: 'كلمة المرور',
+                              controller: _passwordController,
                               obscureText: _obscurePassword,
                               suffixIcon: IconButton(
                                 icon: Icon(
@@ -170,15 +227,43 @@ class _SigninViewState extends State<SigninView> {
                               ],
                             ),
                             const SizedBox(height: 24),
-                            Directionality(
-                              textDirection: TextDirection.ltr,
-                              child: Align(
-                                alignment: Alignment.centerLeft,
-                                child: LoginRowCTA(
-                                  text: 'سجل الدخول',
-                                  onTap: () {},
-                                ),
-                              ),
+                            Consumer<AuthProvider>(
+                              builder: (context, auth, _) {
+                                final isLoading =
+                                    auth.status == AuthStatus.authenticating;
+
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Directionality(
+                                      textDirection: TextDirection.ltr,
+                                      child: Align(
+                                        alignment: Alignment.centerLeft,
+                                        child: LoginRowCTA(
+                                          text: isLoading
+                                              ? 'جارٍ تسجيل الدخول...'
+                                              : 'سجل الدخول',
+                                          onTap: isLoading
+                                              ? null
+                                              : () => _handleLogin(context),
+                                        ),
+                                      ),
+                                    ),
+                                    if (auth.errorMessage != null) ...[
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        auth.errorMessage!,
+                                        textAlign: TextAlign.right,
+                                        style: const TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.red,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                );
+                              },
                             ),
                             const SizedBox(height: 30),
                             Row(

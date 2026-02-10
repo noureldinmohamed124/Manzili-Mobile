@@ -1,63 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:manzili_mobile/data/models/service_models.dart';
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/theme/app_colors.dart';
 
 class ServiceGridCard extends StatelessWidget {
-  final int index;
+  final ServiceItem service;
 
-  const ServiceGridCard({super.key, required this.index});
+  const ServiceGridCard({super.key, required this.service});
 
   @override
   Widget build(BuildContext context) {
-    final services = [
-      {
-        'image': AppAssets.cupcake,
-        'name': 'كيكة بالفراولة',
-        'seller': 'ليلى أحمد',
-        'price': 120,
-        'rating': 4.8,
-        'badge': 'مرشحه',
-      },
-      {
-        'image': AppAssets.cookie,
-        'name': 'كيكة بالفراولة',
-        'seller': 'ليلى أحمد',
-        'price': 120,
-        'rating': 4.8,
-      },
-      {
-        'image': AppAssets.strawberryCake,
-        'name': 'كيكة بالفراولة',
-        'seller': 'ليلى أحمد',
-        'price': 120,
-        'rating': 4.8,
-        'badge': 'أفضل',
-      },
-      {
-        'image': AppAssets.donuts,
-        'name': 'كيكة بالفراولة',
-        'seller': 'ليلى أحمد',
-        'price': 120,
-        'rating': 4.8,
-      },
-      {
-        'image': AppAssets.kunafa,
-        'name': 'كيكة بالفراولة',
-        'seller': 'ليلى أحمد',
-        'price': 120,
-        'rating': 4.8,
-      },
-      {
-        'image': AppAssets.cupcake,
-        'name': 'كيكة بالفراولة',
-        'seller': 'ليلى أحمد',
-        'price': 120,
-        'rating': 4.8,
-      },
-    ];
-
-    final service = services[index];
-
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -81,12 +33,19 @@ class ServiceGridCard extends StatelessWidget {
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(16),
                   ),
-                  child: Image.asset(
-                    service['image'] as String,
-                    width: double.infinity,
-                    height: double.infinity,
-                    fit: BoxFit.cover,
-                  ),
+                  child: service.imageUrl.isNotEmpty
+                      ? Image.network(
+                          service.imageUrl,
+                          width: double.infinity,
+                          height: double.infinity,
+                          fit: BoxFit.cover,
+                        )
+                      : Image.asset(
+                          AppAssets.cupcake,
+                          width: double.infinity,
+                          height: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
                 ),
                 Positioned(
                   top: 8,
@@ -104,31 +63,6 @@ class ServiceGridCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (service['badge'] != null)
-                  Positioned(
-                    top: 8,
-                    left: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: service['badge'] == 'مرشحه'
-                            ? Colors.amber.shade700
-                            : Colors.red,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        service['badge'] as String,
-                        style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
                 Positioned(
                   bottom: 8,
                   left: 8,
@@ -151,7 +85,7 @@ class ServiceGridCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          (service['rating'] as double).toStringAsFixed(1),
+                          service.rating.toStringAsFixed(1),
                           style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
@@ -177,7 +111,7 @@ class ServiceGridCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        service['name'] as String,
+                        service.title,
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
@@ -188,7 +122,7 @@ class ServiceGridCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'بواسطة ${service['seller']}',
+                        'بواسطة ${service.providerName}',
                         style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w500,
@@ -200,7 +134,7 @@ class ServiceGridCard extends StatelessWidget {
                     ],
                   ),
                   Text(
-                    '${(service['price'] as int)} جنيه',
+                    '${service.basePrice} جنيه',
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w800,

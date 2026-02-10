@@ -3,7 +3,6 @@ import 'package:manzili_mobile/presentation/widgets/home/food_card.dart';
 import 'package:manzili_mobile/presentation/widgets/home/food_list_section.dart';
 import 'package:manzili_mobile/presentation/widgets/home/bottom_nav_bar.dart';
 import 'package:manzili_mobile/presentation/views/services_view.dart';
-import 'package:manzili_mobile/presentation/views/service_details_view.dart';
 import '../../../core/constants/app_assets.dart';
 import '../../../core/theme/app_colors.dart';
 
@@ -331,7 +330,7 @@ class _HomeViewState extends State<HomeView> {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => const ServiceDetailsView(),
+                                      builder: (context) => const ServicesView(),
                                     ),
                                   );
                                 },

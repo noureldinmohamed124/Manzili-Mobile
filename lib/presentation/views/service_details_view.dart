@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:manzili_mobile/data/models/service_models.dart';
+import 'package:manzili_mobile/presentation/providers/services_provider.dart';
 import '../../core/constants/app_assets.dart';
 import '../../core/theme/app_colors.dart';
 import '../widgets/home/food_card.dart';
 import 'reviews_view.dart';
 
 class ServiceDetailsView extends StatefulWidget {
-  const ServiceDetailsView({super.key});
+  final int serviceId;
+
+  const ServiceDetailsView({super.key, required this.serviceId});
 
   @override
   State<ServiceDetailsView> createState() => _ServiceDetailsViewState();
@@ -21,6 +26,14 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
     'سينابون رول': false,
     'دوناتس': false,
   };
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ServicesProvider>().getServiceById(widget.serviceId);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,21 +58,84 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
               left: 0,
               right: 0,
               bottom: 0,
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildProductImage(),
-                    _buildProductInfo(),
-                    _buildFlavorSelector(),
-                    _buildQuantitySelector(),
-                    _buildSpecialInstructions(),
-                    _buildProductsWithOrder(),
-                    _buildSellerInfo(),
-                    _buildYouMightAlsoLike(),
-                    SizedBox(height: mediaQuery.padding.bottom + 100),
-                  ],
-                ),
+              child: Consumer<ServicesProvider>(
+                builder: (context, servicesProvider, _) {
+                  ServiceItem? service;
+                  for (final s in servicesProvider.services) {
+                    if (s.id == widget.serviceId) {
+                      service = s;
+                      break;
+                    }
+                  }
+
+                  if (servicesProvider.isLoading && service == null) {
+                    return const Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  }
+
+                  if (servicesProvider.errorMessage != null &&
+                      service == null) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 24),
+                            child: Text(
+                              servicesProvider.errorMessage!,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.red,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          ElevatedButton(
+                            onPressed: () {
+                              servicesProvider
+                                  .getServiceById(widget.serviceId);
+                            },
+                            child: const Text('إعادة المحاولة'),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  if (service == null) {
+                    return const Center(
+                      child: Text(
+                        'لم يتم العثور على هذه الخدمة',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    );
+                  }
+
+                  return SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildProductImage(service),
+                        _buildProductInfo(service),
+                        _buildFlavorSelector(),
+                        _buildQuantitySelector(),
+                        _buildSpecialInstructions(),
+                        _buildProductsWithOrder(),
+                        _buildSellerInfo(service),
+                        _buildYouMightAlsoLike(),
+                        SizedBox(height: mediaQuery.padding.bottom + 100),
+                      ],
+                    ),
+                  );
+                },
               ),
             ),
             _buildBottomBar(),
@@ -132,15 +208,22 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
     );
   }
 
-  Widget _buildProductImage() {
+  Widget _buildProductImage(ServiceItem service) {
     return Stack(
       children: [
-        Image.asset(
-          AppAssets.cookie,
-          width: double.infinity,
-          height: 300,
-          fit: BoxFit.cover,
-        ),
+        service.imageUrl.isNotEmpty
+            ? Image.network(
+                service.imageUrl,
+                width: double.infinity,
+                height: 300,
+                fit: BoxFit.cover,
+              )
+            : Image.asset(
+                AppAssets.cookie,
+                width: double.infinity,
+                height: 300,
+                fit: BoxFit.cover,
+              ),
         Positioned(
           bottom: 16,
           left: 0,
@@ -166,15 +249,15 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
     );
   }
 
-  Widget _buildProductInfo() {
+  Widget _buildProductInfo(ServiceItem service) {
     return Padding(
       padding: const EdgeInsets.all(22),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'كوكيز بالشكولاتة',
-            style: TextStyle(
+          Text(
+            service.title,
+            style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w800,
               color: AppColors.textPrimary,
@@ -199,7 +282,7 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  '(284 تقييم)',
+                  '(تقييم الخدمة)',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
@@ -208,7 +291,7 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  '4.9',
+                  service.rating.toStringAsFixed(1),
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
@@ -216,20 +299,21 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                ...List.generate(5, (index) {
-                  return Icon(
+                ...List.generate(
+                  5,
+                  (index) => const Icon(
                     Icons.star,
                     color: Colors.amber,
                     size: 18,
-                  );
-                }),
+                  ),
+                ),
               ],
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
-            '120 جنيه',
-            style: TextStyle(
+          Text(
+            '${service.basePrice} جنيه',
+            style: const TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.w800,
               color: AppColors.primary,
@@ -241,7 +325,7 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
               const Icon(Icons.location_on, size: 18, color: AppColors.textSecondary),
               const SizedBox(width: 4),
               const Text(
-                'متاح في: القاهرة',
+                'متاح في: ',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -472,7 +556,7 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
     );
   }
 
-  Widget _buildSellerInfo() {
+  Widget _buildSellerInfo(ServiceItem service) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 24),
       child: Column(
@@ -521,9 +605,9 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'ليلى أحمد',
-                        style: TextStyle(
+                      Text(
+                        service.providerName,
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
                           color: AppColors.textPrimary,
