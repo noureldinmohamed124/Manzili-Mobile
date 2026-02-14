@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/responsive_helper.dart';
 
 class FoodCard extends StatelessWidget {
   final String imagePath;
@@ -29,35 +30,44 @@ class FoodCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 180,
-        margin: const EdgeInsets.only(left: 12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cardWidth = ResponsiveHelper.clampScaledValue(
+          context,
+          45,
+          min: 160.0,
+          max: 220.0,
+        );
+        
+        return GestureDetector(
+          onTap: onTap,
+          child: Container(
+            width: cardWidth,
+            margin: EdgeInsets.only(left: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12)),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(ResponsiveHelper.responsiveValueCompat(context, mobile: 16.0)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: Column(
+            child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Stack(
               children: [
                 ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(16),
+                  borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(ResponsiveHelper.responsiveValueCompat(context, mobile: 16.0)),
                   ),
                   child: Image.asset(
                     imagePath,
                     width: double.infinity,
-                    height: 140,
+                    height: ResponsiveHelper.clampScaledValue(context, 35, min: 120.0, max: 180.0),
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -67,14 +77,14 @@ class FoodCard extends StatelessWidget {
                   child: GestureDetector(
                     onTap: onFavoriteTap,
                     child: Container(
-                      padding: const EdgeInsets.all(6),
+                      padding: EdgeInsets.all(ResponsiveHelper.responsiveSpacingCompat(context, mobile: 6)),
                       decoration: const BoxDecoration(
                         color: Colors.white,
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
                         isFavorite ? Icons.favorite : Icons.favorite_border,
-                        size: 18,
+                        size: ResponsiveHelper.responsiveValueCompat(context, mobile: 18.0),
                         color: isFavorite ? Colors.red : AppColors.textSecondary,
                       ),
                     ),
@@ -82,21 +92,21 @@ class FoodCard extends StatelessWidget {
                 ),
                 if (badge != null)
                   Positioned(
-                    top: 8,
-                    right: 8,
+                    top: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 8),
+                    right: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 8),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 8),
+                        vertical: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 4),
                       ),
                       decoration: BoxDecoration(
                         color: _getBadgeColor(badge!),
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(ResponsiveHelper.responsiveValueCompat(context, mobile: 8.0)),
                       ),
                       child: Text(
                         badge!,
-                        style: const TextStyle(
-                          fontSize: 10,
+                        style: TextStyle(
+                          fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 10),
                           fontWeight: FontWeight.w700,
                           color: Colors.white,
                         ),
@@ -104,30 +114,30 @@ class FoodCard extends StatelessWidget {
                     ),
                   ),
                 Positioned(
-                  bottom: 8,
-                  left: 8,
+                  bottom: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 8),
+                  left: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 8),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 4,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 6),
+                      vertical: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 4),
                     ),
                     decoration: BoxDecoration(
                       color: Colors.black.withOpacity(0.6),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(ResponsiveHelper.responsiveValueCompat(context, mobile: 8.0)),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.star,
-                          size: 12,
+                          size: ResponsiveHelper.responsiveValueCompat(context, mobile: 12.0),
                           color: Colors.amber,
                         ),
-                        const SizedBox(width: 4),
+                        SizedBox(width: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 4)),
                         Text(
                           rating.toStringAsFixed(1),
-                          style: const TextStyle(
-                            fontSize: 11,
+                          style: TextStyle(
+                            fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 11),
                             fontWeight: FontWeight.w600,
                             color: Colors.white,
                           ),
@@ -139,48 +149,48 @@ class FoodCard extends StatelessWidget {
               ],
             ),
             Padding(
-              padding: const EdgeInsets.all(12),
+              padding: EdgeInsets.all(ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12)),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     name,
-                    style: const TextStyle(
-                      fontSize: 16,
+                    style: TextStyle(
+                      fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 16),
                       fontWeight: FontWeight.w700,
                       color: AppColors.textPrimary,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 4)),
                   Text(
                     'بواسطة $sellerName',
-                    style: const TextStyle(
-                      fontSize: 12,
+                    style: TextStyle(
+                      fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 12),
                       fontWeight: FontWeight.w500,
                       color: AppColors.textSecondary,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 8)),
                   Row(
                     children: [
                       Text(
                         '${price.toInt()} جنيه',
-                        style: const TextStyle(
-                          fontSize: 16,
+                        style: TextStyle(
+                          fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 16),
                           fontWeight: FontWeight.w800,
                           color: AppColors.primary,
                         ),
                       ),
                       if (originalPrice != null) ...[
-                        const SizedBox(width: 8),
+                        SizedBox(width: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 8)),
                         Text(
                           '${originalPrice!.toInt()}',
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 14),
                             fontWeight: FontWeight.w500,
                             color: AppColors.textSecondary,
                             decoration: TextDecoration.lineThrough,
@@ -195,6 +205,8 @@ class FoodCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+      },
     );
   }
 

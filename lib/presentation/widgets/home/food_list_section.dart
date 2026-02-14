@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'food_card.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/responsive_helper.dart';
 
 class FoodListSection extends StatelessWidget {
   final String title;
@@ -28,7 +29,10 @@ class FoodListSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
+          padding: EdgeInsets.symmetric(
+            horizontal: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 22),
+            vertical: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16),
+          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -38,17 +42,17 @@ class FoodListSection extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(
-                        fontSize: 20,
+                      style: TextStyle(
+                        fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 20, tablet: 22),
                         fontWeight: FontWeight.w800,
                         color: AppColors.textPrimary,
                       ),
                     ),
                     if (titleIcon != null) ...[
-                      const SizedBox(width: 8),
+                      SizedBox(width: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 8)),
                       Icon(
                         titleIcon,
-                        size: 20,
+                        size: ResponsiveHelper.responsiveValueCompat(context, mobile: 20.0),
                         color: titleIconColor ?? AppColors.primary,
                       ),
                     ],
@@ -65,8 +69,8 @@ class FoodListSection extends StatelessWidget {
                   ),
                   child: Text(
                     viewAllText!,
-                    style: const TextStyle(
-                      fontSize: 14,
+                    style: TextStyle(
+                      fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 14),
                       fontWeight: FontWeight.w600,
                       color: Colors.red,
                     ),
@@ -76,10 +80,10 @@ class FoodListSection extends StatelessWidget {
           ),
         ),
         SizedBox(
-          height: 280,
+          height: ResponsiveHelper.scaleValueFromContext(context, 280.0, min: 260.0, max: 320.0),
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.only(right: 22),
+            padding: EdgeInsets.only(right: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 22)),
             itemCount: foodItems.length,
             itemBuilder: (context, index) => foodItems[index],
           ),

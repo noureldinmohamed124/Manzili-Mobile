@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:manzili_mobile/core/theme/app_theme.dart';
 import 'package:manzili_mobile/presentation/providers/auth_provider.dart';
 import 'package:manzili_mobile/presentation/providers/services_provider.dart';
+import 'package:manzili_mobile/presentation/views/home_view.dart';
 import 'package:manzili_mobile/presentation/views/signin_view.dart';
 import 'package:provider/provider.dart';
 

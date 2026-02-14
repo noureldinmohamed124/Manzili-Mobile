@@ -4,6 +4,8 @@ import 'package:manzili_mobile/data/models/service_models.dart';
 import 'package:manzili_mobile/presentation/providers/services_provider.dart';
 import '../../core/constants/app_assets.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/utils/responsive_helper.dart';
+import '../../core/widgets/responsive_max_width.dart';
 import '../widgets/home/food_card.dart';
 import 'reviews_view.dart';
 
@@ -37,29 +39,30 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
 
   @override
   Widget build(BuildContext context) {
-    final mediaQuery = MediaQuery.of(context);
-    final headerHeight = mediaQuery.padding.top + 60;
-    
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        body: Stack(
-          children: [
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              height: headerHeight,
-              child: _buildHeader(),
-            ),
-            Positioned(
-              top: headerHeight,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: Consumer<ServicesProvider>(
-                builder: (context, servicesProvider, _) {
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final headerHeight = MediaQuery.of(context).padding.top + ResponsiveHelper.responsiveValueCompat(context, mobile: 60.0, tablet: 64.0);
+          
+          return Scaffold(
+            backgroundColor: Colors.white,
+            body: Stack(
+              children: [
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: headerHeight,
+                  child: _buildHeader(),
+                ),
+                Positioned(
+                  top: headerHeight,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: Consumer<ServicesProvider>(
+                    builder: (context, servicesProvider, _) {
                   ServiceItem? service;
                   for (final s in servicesProvider.services) {
                     if (s.id == widget.serviceId) {
@@ -119,39 +122,45 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
                     );
                   }
 
-                  return SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildProductImage(service),
-                        _buildProductInfo(service),
-                        _buildFlavorSelector(),
-                        _buildQuantitySelector(),
-                        _buildSpecialInstructions(),
-                        _buildProductsWithOrder(),
-                        _buildSellerInfo(service),
-                        _buildYouMightAlsoLike(),
-                        SizedBox(height: mediaQuery.padding.bottom + 100),
-                      ],
-                    ),
-                  );
-                },
-              ),
+                      return ResponsiveMaxWidth(
+                        child: SingleChildScrollView(
+                          padding: EdgeInsets.only(
+                            bottom: MediaQuery.of(context).viewInsets.bottom + MediaQuery.of(context).padding.bottom + ResponsiveHelper.responsiveSpacingCompat(context, mobile: 100),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                            _buildProductImage(service),
+                            _buildProductInfo(service),
+                            _buildFlavorSelector(),
+                            _buildQuantitySelector(),
+                            _buildSpecialInstructions(),
+                            _buildProductsWithOrder(),
+                            _buildSellerInfo(service),
+                            _buildYouMightAlsoLike(),
+                          ],
+                        ),
+                      ),
+                    );
+                    },
+                  ),
+                ),
+                _buildBottomBar(),
+              ],
             ),
-            _buildBottomBar(),
-          ],
-        ),
-      ),
+          );
+      },
+    ),
     );
   }
 
   Widget _buildHeader() {
     return Container(
       padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + 8,
-        left: 16,
-        right: 16,
-        bottom: 12,
+        top: MediaQuery.of(context).padding.top + ResponsiveHelper.responsiveSpacingCompat(context, mobile: 8),
+        left: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16),
+        right: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16),
+        bottom: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12),
       ),
       color: Colors.white,
       child: Row(
@@ -160,8 +169,8 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
           Row(
             children: [
               Container(
-                width: 40,
-                height: 40,
+                width: ResponsiveHelper.responsiveValueCompat(context, mobile: 40.0, tablet: 44.0),
+                height: ResponsiveHelper.responsiveValueCompat(context, mobile: 40.0, tablet: 44.0),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(8),
@@ -180,10 +189,10 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
                   onPressed: () {},
                 ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 8)),
               Container(
-                width: 40,
-                height: 40,
+                width: ResponsiveHelper.responsiveValueCompat(context, mobile: 40.0, tablet: 44.0),
+                height: ResponsiveHelper.responsiveValueCompat(context, mobile: 40.0, tablet: 44.0),
                 decoration: BoxDecoration(
                   color: AppColors.primary,
                   borderRadius: BorderRadius.circular(8),
@@ -209,19 +218,26 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
   }
 
   Widget _buildProductImage(ServiceItem service) {
+    final imageHeight = ResponsiveHelper.clampScaledValue(
+      context,
+      40,
+      min: 250.0,
+      max: 400.0,
+    );
+    
     return Stack(
       children: [
         service.imageUrl.isNotEmpty
             ? Image.network(
                 service.imageUrl,
                 width: double.infinity,
-                height: 300,
+                height: imageHeight,
                 fit: BoxFit.cover,
               )
             : Image.asset(
                 AppAssets.cookie,
                 width: double.infinity,
-                height: 300,
+                height: imageHeight,
                 fit: BoxFit.cover,
               ),
         Positioned(
@@ -251,19 +267,21 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
 
   Widget _buildProductInfo(ServiceItem service) {
     return Padding(
-      padding: const EdgeInsets.all(22),
+      padding: EdgeInsets.symmetric(
+        horizontal: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 22),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             service.title,
-            style: const TextStyle(
-              fontSize: 24,
+            style: TextStyle(
+              fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 24, tablet: 26, desktop: 28),
               fontWeight: FontWeight.w800,
               color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 8)),
           GestureDetector(
             onTap: () {
               Navigator.push(
@@ -293,63 +311,63 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
                 Text(
                   service.rating.toStringAsFixed(1),
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 14),
                     fontWeight: FontWeight.w500,
                     color: AppColors.textSecondary.withOpacity(0.8),
                   ),
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 8)),
                 ...List.generate(
                   5,
-                  (index) => const Icon(
+                  (index) => Icon(
                     Icons.star,
                     color: Colors.amber,
-                    size: 18,
+                    size: ResponsiveHelper.responsiveValueCompat(context, mobile: 18.0),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16)),
           Text(
             '${service.basePrice} جنيه',
-            style: const TextStyle(
-              fontSize: 28,
+            style: TextStyle(
+              fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 28, tablet: 30, desktop: 32),
               fontWeight: FontWeight.w800,
               color: AppColors.primary,
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16)),
           Row(
             children: [
               const Icon(Icons.location_on, size: 18, color: AppColors.textSecondary),
               const SizedBox(width: 4),
-              const Text(
+              Text(
                 'متاح في: ',
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 14),
                   fontWeight: FontWeight.w500,
                   color: AppColors.textSecondary,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          const Text(
+          SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 8)),
+          Text(
             'الوقت المستغرق في التحضير: ساعتين',
             style: TextStyle(
-              fontSize: 14,
+              fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 14),
               fontWeight: FontWeight.w500,
               color: AppColors.textSecondary,
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16)),
           GestureDetector(
             onTap: () {},
-            child: const Text(
+            child: Text(
               'حول هذة الخدمة',
               style: TextStyle(
-                fontSize: 14,
+                fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 14),
                 fontWeight: FontWeight.w600,
                 color: Colors.blue,
                 decoration: TextDecoration.underline,
@@ -363,23 +381,26 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
 
   Widget _buildFlavorSelector() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 22),
+      padding: EdgeInsets.symmetric(horizontal: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 22)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'اختر النكهة',
             style: TextStyle(
-              fontSize: 16,
+              fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 16),
               fontWeight: FontWeight.w700,
               color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12)),
           GestureDetector(
             onTap: () {},
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              padding: EdgeInsets.symmetric(
+                horizontal: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16),
+                vertical: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 14),
+              ),
               decoration: BoxDecoration(
                 color: const Color(0xFFF5F5F5),
                 borderRadius: BorderRadius.circular(12),
@@ -391,8 +412,8 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
                   const Icon(Icons.keyboard_arrow_down, color: AppColors.textSecondary),
                   Text(
                     _selectedFlavor,
-                    style: const TextStyle(
-                      fontSize: 14,
+                    style: TextStyle(
+                      fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 14),
                       fontWeight: FontWeight.w500,
                       color: AppColors.textPrimary,
                     ),
@@ -408,19 +429,22 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
 
   Widget _buildQuantitySelector() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 24),
+      padding: EdgeInsets.symmetric(
+        horizontal: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 22),
+        vertical: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 24),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'الكمية',
             style: TextStyle(
-              fontSize: 16,
+              fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 16),
               fontWeight: FontWeight.w700,
               color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12)),
           Row(
             children: [
               GestureDetector(
@@ -430,8 +454,8 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
                   }
                 },
                 child: Container(
-                  width: 40,
-                  height: 40,
+                  width: ResponsiveHelper.responsiveValueCompat(context, mobile: 40.0),
+                  height: ResponsiveHelper.responsiveValueCompat(context, mobile: 40.0),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF5F5F5),
                     shape: BoxShape.circle,
@@ -439,23 +463,23 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
                   child: const Icon(Icons.remove, color: AppColors.textPrimary),
                 ),
               ),
-              const SizedBox(width: 24),
+              SizedBox(width: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 24)),
               Text(
                 '$_quantity',
-                style: const TextStyle(
-                  fontSize: 20,
+                style: TextStyle(
+                  fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 20),
                   fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary,
                 ),
               ),
-              const SizedBox(width: 24),
+              SizedBox(width: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 24)),
               GestureDetector(
                 onTap: () {
                   setState(() => _quantity++);
                 },
                 child: Container(
-                  width: 40,
-                  height: 40,
+                  width: ResponsiveHelper.responsiveValueCompat(context, mobile: 40.0),
+                  height: ResponsiveHelper.responsiveValueCompat(context, mobile: 40.0),
                   decoration: const BoxDecoration(
                     color: AppColors.primary,
                     shape: BoxShape.circle,
@@ -472,32 +496,35 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
 
   Widget _buildSpecialInstructions() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 22),
+      padding: EdgeInsets.symmetric(horizontal: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 22)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'تعليمات خاصة (اختياري)',
             style: TextStyle(
-              fontSize: 16,
+              fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 16),
               fontWeight: FontWeight.w700,
               color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12)),
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16)),
             decoration: BoxDecoration(
               color: const Color(0xFFF5F5F5),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: const Color(0xFFE0E0E0)),
             ),
-            child: const TextField(
+            child: TextField(
+              style: TextStyle(
+                fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 14),
+              ),
               decoration: InputDecoration(
                 hintText: 'أضف أي طلبات خاصة.....',
                 hintStyle: TextStyle(
                   color: AppColors.textHint,
-                  fontSize: 14,
+                  fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 14),
                 ),
                 border: InputBorder.none,
               ),
@@ -511,31 +538,37 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
 
   Widget _buildProductsWithOrder() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 24),
+      padding: EdgeInsets.symmetric(
+        horizontal: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 22),
+        vertical: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 24),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'منتجات مع الطلب',
             style: TextStyle(
-              fontSize: 18,
+              fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 18, tablet: 20),
               fontWeight: FontWeight.w800,
               color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16)),
           ..._selectedProducts.keys.map((product) {
             return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
+              padding: EdgeInsets.only(bottom: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12)),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    '$product - 120 جنيه',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.textPrimary,
+                  Flexible(
+                    child: Text(
+                      '$product - 120 جنيه',
+                      style: TextStyle(
+                        fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 14),
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textPrimary,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   Checkbox(
@@ -558,21 +591,24 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
 
   Widget _buildSellerInfo(ServiceItem service) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 24),
+      padding: EdgeInsets.symmetric(
+        horizontal: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 22),
+        vertical: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 24),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'يباع بواسطة',
             style: TextStyle(
-              fontSize: 18,
+              fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 18, tablet: 20),
               fontWeight: FontWeight.w800,
               color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16)),
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16)),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
@@ -588,8 +624,8 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
             child: Row(
               children: [
                 Container(
-                  width: 50,
-                  height: 50,
+                  width: ResponsiveHelper.responsiveValueCompat(context, mobile: 50.0, tablet: 56.0),
+                  height: ResponsiveHelper.responsiveValueCompat(context, mobile: 50.0, tablet: 56.0),
                   decoration: const BoxDecoration(
                     shape: BoxShape.circle,
                     color: Colors.blue,
@@ -600,37 +636,37 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
                     size: 30,
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12)),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         service.providerName,
-                        style: const TextStyle(
-                          fontSize: 16,
+                        style: TextStyle(
+                          fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 16),
                           fontWeight: FontWeight.w700,
                           color: AppColors.textPrimary,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 4)),
                       Row(
                         children: [
-                          const Text(
+                          Text(
                             '4.9',
                             style: TextStyle(
-                              fontSize: 14,
+                              fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 14),
                               fontWeight: FontWeight.w600,
                               color: AppColors.textPrimary,
                             ),
                           ),
-                          const SizedBox(width: 4),
-                          const Icon(Icons.star, color: Colors.amber, size: 16),
-                          const SizedBox(width: 4),
-                          const Text(
+                          SizedBox(width: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 4)),
+                          Icon(Icons.star, color: Colors.amber, size: ResponsiveHelper.responsiveValueCompat(context, mobile: 16.0)),
+                          SizedBox(width: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 4)),
+                          Text(
                             '(284) تقييم',
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 12),
                               fontWeight: FontWeight.w500,
                               color: AppColors.textSecondary,
                             ),
@@ -650,42 +686,84 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
 
   Widget _buildYouMightAlsoLike() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 24),
+      padding: EdgeInsets.symmetric(
+        horizontal: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 22),
+        vertical: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 24),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'قد يعجبك ايضاً',
             style: TextStyle(
-              fontSize: 18,
+              fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 18, tablet: 20),
               fontWeight: FontWeight.w800,
               color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: FoodCard(
-                  imagePath: AppAssets.strawberryCake,
-                  name: 'كيكة بالفراولة',
-                  sellerName: 'ليلى أحمد',
-                  price: 120,
-                  rating: 4.8,
-                  badge: 'مرشحه',
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: FoodCard(
-                  imagePath: AppAssets.cookie,
-                  name: 'كيكة بالفراولة',
-                  sellerName: 'ليلى أحمد',
-                  price: 120,
-                  rating: 4.8,
-                ),
-              ),
-            ],
+          SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16)),
+          LayoutBuilder(
+            builder: (context, constraints) {
+                      final crossAxisCount = ResponsiveHelper.gridColumnCount(
+                        context,
+                        xs: 1,
+                        sm: 2,
+                        md: 3,
+                        lg: 4,
+                        xl: 5,
+                      );
+              
+              if (crossAxisCount >= 2) {
+                return Row(
+                  children: [
+                    Expanded(
+                      child: FoodCard(
+                        imagePath: AppAssets.strawberryCake,
+                        name: 'كيكة بالفراولة',
+                        sellerName: 'ليلى أحمد',
+                        price: 120,
+                        rating: 4.8,
+                        badge: 'مرشحه',
+                      ),
+                    ),
+                    SizedBox(width: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12)),
+                    Expanded(
+                      child: FoodCard(
+                        imagePath: AppAssets.cookie,
+                        name: 'كيكة بالفراولة',
+                        sellerName: 'ليلى أحمد',
+                        price: 120,
+                        rating: 4.8,
+                      ),
+                    ),
+                  ],
+                );
+              } else {
+                return SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      FoodCard(
+                        imagePath: AppAssets.strawberryCake,
+                        name: 'كيكة بالفراولة',
+                        sellerName: 'ليلى أحمد',
+                        price: 120,
+                        rating: 4.8,
+                        badge: 'مرشحه',
+                      ),
+                      SizedBox(width: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12)),
+                      FoodCard(
+                        imagePath: AppAssets.cookie,
+                        name: 'كيكة بالفراولة',
+                        sellerName: 'ليلى أحمد',
+                        price: 120,
+                        rating: 4.8,
+                      ),
+                    ],
+                  ),
+                );
+              }
+            },
           ),
         ],
       ),
@@ -698,7 +776,12 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
       left: 0,
       right: 0,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.only(
+          left: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16),
+          right: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16),
+          top: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16),
+          bottom: MediaQuery.of(context).padding.bottom + ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16),
+        ),
         decoration: BoxDecoration(
           color: Colors.white,
           boxShadow: [
@@ -716,22 +799,22 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
                 onPressed: () {},
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.success,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  padding: EdgeInsets.symmetric(vertical: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16)),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(ResponsiveHelper.responsiveValueCompat(context, mobile: 12.0)),
                   ),
                 ),
-                child: const Text(
+                child: Text(
                   'أضف الي عربة التسوق',
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 16),
                     fontWeight: FontWeight.w700,
                     color: Colors.white,
                   ),
                 ),
               ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12)),
             IconButton(
               onPressed: () {
                 setState(() => _isFavorite = !_isFavorite);
@@ -739,18 +822,18 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
               icon: Icon(
                 _isFavorite ? Icons.favorite : Icons.favorite_border,
                 color: _isFavorite ? Colors.red : AppColors.textSecondary,
-                size: 28,
+                size: ResponsiveHelper.responsiveValueCompat(context, mobile: 28.0),
               ),
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 8)),
             IconButton(
               onPressed: () {
                 Navigator.pop(context);
               },
-              icon: const Icon(
+              icon: Icon(
                 Icons.home_outlined,
                 color: AppColors.textSecondary,
-                size: 28,
+                size: ResponsiveHelper.responsiveValueCompat(context, mobile: 28.0),
               ),
             ),
           ],

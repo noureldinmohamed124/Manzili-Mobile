@@ -5,6 +5,8 @@ import 'package:manzili_mobile/presentation/widgets/home/bottom_nav_bar.dart';
 import 'package:manzili_mobile/presentation/views/services_view.dart';
 import '../../../core/constants/app_assets.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/responsive_helper.dart';
+import '../../../core/widgets/responsive_max_width.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -18,106 +20,104 @@ class _HomeViewState extends State<HomeView> {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        body: Stack(
-          children: [
-            // Bottom Gradients only
-            Positioned(
-              bottom: 0,
-              left: 0,
-              child: Image.asset(
-                AppAssets.gradientBottomLeft,
-                width: size.width * 0.45,
-              ),
-            ),
-            Positioned(
-              bottom: 0,
-              right: 0,
-              child: Transform(
-                alignment: Alignment.center,
-                transform: Matrix4.identity()..scale(-1.0, 1.0),
-                child: Image.asset(
-                  AppAssets.gradientBottomLeft,
-                  width: size.width * 0.45,
-                ),
-              ),
-            ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Use effective width for scaling to prevent over-scaling on ultra-wide screens
+          final effectiveW = ResponsiveHelper.effectiveWidthFromConstraints(constraints);
+          final gradientWidth = ResponsiveHelper.scaleValue(
+            168.75, // 45% of 375 base width
+            effectiveW,
+            min: 100.0,
+            max: effectiveW * 0.45,
+          );
+          final spacing = ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 8.0);
+          final horizontalPadding = ResponsiveHelper.responsiveHorizontalPaddingFromConstraints(constraints);
 
-            // Main Content
-            Column(
-              children: [
-                // Header
-                Container(
-                  padding: EdgeInsets.only(
-                    top: MediaQuery.of(context).padding.top + 8,
-                    left: 16,
-                    right: 16,
-                    bottom: 12,
+          return Scaffold(
+            backgroundColor: Colors.white,
+            body: SafeArea(
+              bottom: false,
+              child: Stack(
+                children: [
+                  // Bottom Gradients only
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    child: Image.asset(
+                      AppAssets.gradientBottomLeft,
+                      width: gradientWidth,
+                    ),
                   ),
-                  child: Row(
-                    children: [
-                      // Left Icons
-                      Row(
-                        children: [
-                          // Settings Button
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF5F5F5),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: IconButton(
-                              padding: EdgeInsets.zero,
-                              icon: const Icon(Icons.settings_outlined),
-                              color: AppColors.textPrimary,
-                              onPressed: () {},
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          // Notifications Button
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: IconButton(
-                              padding: EdgeInsets.zero,
-                              icon: const Icon(Icons.notifications_outlined),
-                              color: AppColors.textSecondary,
-                              onPressed: () {},
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          // Shopping Cart Button
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: AppColors.primary,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: IconButton(
-                              padding: EdgeInsets.zero,
-                              icon: const Icon(Icons.shopping_cart_outlined),
-                              color: Colors.white,
-                              onPressed: () {},
-                            ),
-                          ),
-                        ],
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: Transform(
+                      alignment: Alignment.center,
+                      transform: Matrix4.identity()..scale(-1.0, 1.0),
+                      child: Image.asset(
+                        AppAssets.gradientBottomLeft,
+                        width: gradientWidth,
                       ),
-                      // Search Bar
-                      Expanded(
-                        child: Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 8),
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                    ),
+                  ),
+
+                  // Main Content with max width constraint
+                  ResponsiveMaxWidth(
+                    child: Column(
+                      children: [
+                        // Header
+                        Container(
+                          padding: EdgeInsets.only(
+                            top: spacing,
+                            bottom: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 12.0),
+                          ).add(horizontalPadding),
+                          child: LayoutBuilder(
+                            builder: (context, headerConstraints) {
+                              final iconSize = ResponsiveHelper.scaleValue(
+                                40.0,
+                                headerConstraints.maxWidth,
+                                min: 36.0,
+                                max: 48.0,
+                              );
+                              
+                              return Row(
+                                children: [
+                                  // Left Icons - Use Wrap for very small screens
+                                  LayoutBuilder(
+                                    builder: (context, iconConstraints) {
+                                      if (iconConstraints.maxWidth < 200) {
+                                        // Very narrow: stack icons vertically or use Wrap
+                                        return Wrap(
+                                          spacing: spacing,
+                                          children: [
+                                            _buildIconButton(Icons.settings_outlined, AppColors.textPrimary, const Color(0xFFF5F5F5), iconSize, () {}),
+                                            _buildIconButton(Icons.notifications_outlined, AppColors.textSecondary, Colors.white, iconSize, () {}),
+                                            _buildIconButton(Icons.shopping_cart_outlined, Colors.white, AppColors.primary, iconSize, () {}),
+                                          ],
+                                        );
+                                      }
+                                      
+                                      return Row(
+                                        children: [
+                                          // Settings Button
+                                          _buildIconButton(Icons.settings_outlined, AppColors.textPrimary, const Color(0xFFF5F5F5), iconSize, () {}),
+                                          SizedBox(width: spacing),
+                                          // Notifications Button
+                                          _buildIconButton(Icons.notifications_outlined, AppColors.textSecondary, Colors.white, iconSize, () {}),
+                                          SizedBox(width: spacing),
+                                          // Shopping Cart Button
+                                          _buildIconButton(Icons.shopping_cart_outlined, Colors.white, AppColors.primary, iconSize, () {}),
+                                        ],
+                                      );
+                                    },
+                                  ),
+                                  // Search Bar
+                                  Expanded(
+                                    child: Container(
+                                      margin: EdgeInsets.symmetric(horizontal: spacing),
+                                      padding: EdgeInsets.symmetric(horizontal: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 16.0)),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(12),
@@ -129,26 +129,30 @@ class _HomeViewState extends State<HomeView> {
                               ),
                             ],
                           ),
-                          child: TextField(
-                            decoration: const InputDecoration(
-                              hintText: 'نفسك فأيه؟',
-                              hintStyle: TextStyle(
-                                color: AppColors.textHint,
-                                fontSize: 14,
-                              ),
-                              border: InputBorder.none,
-                              suffixIcon: Icon(
-                                Icons.search,
-                                color: AppColors.textHint,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      // Profile Picture
-                      Container(
-                        width: 40,
-                        height: 40,
+                                      child: TextField(
+                                        style: TextStyle(
+                                          fontSize: ResponsiveHelper.responsiveFontSize(context, base: 14.0, min: 12.0, max: 16.0),
+                                        ),
+                                        decoration: InputDecoration(
+                                          hintText: 'نفسك فأيه؟',
+                                          hintStyle: TextStyle(
+                                            color: AppColors.textHint,
+                                            fontSize: ResponsiveHelper.responsiveFontSize(context, base: 14.0, min: 12.0, max: 16.0),
+                                          ),
+                                          border: InputBorder.none,
+                                          suffixIcon: Icon(
+                                            Icons.search,
+                                            color: AppColors.textHint,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: spacing),
+                                  // Profile Picture
+                                  Container(
+                                    width: iconSize,
+                                    height: iconSize,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           border: Border.all(
@@ -164,61 +168,68 @@ class _HomeViewState extends State<HomeView> {
                               color: Colors.blue,
                             ),
                           ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Title Section
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
-                  child: Column(
-                    children: [
-                      const Text(
-                        'منزلي',
-                        style: TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text(
-                            'شغل يدوي وأكل بيتي على أصوله',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.textSecondary,
-                            ),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
                           ),
-                          const SizedBox(width: 4),
-                          const Text('👋', style: TextStyle(fontSize: 16)),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
+                        ),
 
-                // Scrollable Content
-                Expanded(
-                  child: Container(
-                    margin: const EdgeInsets.only(top: 16),
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.vertical(
-                        top: Radius.circular(30),
-                      ),
-                    ),
-                    child: SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // أقوى العروض (Strongest Offers)
-                          FoodListSection(
+                        // Title Section
+                        Padding(
+                          padding: EdgeInsets.symmetric(
+                            vertical: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 16.0),
+                          ),
+                          child: Column(
+                            children: [
+                              Text(
+                                'منزلي',
+                                style: TextStyle(
+                                  fontSize: ResponsiveHelper.responsiveFontSize(context, base: 32.0, min: 24.0, max: 48.0),
+                                  fontWeight: FontWeight.w900,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              SizedBox(height: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 4.0)),
+                              Wrap(
+                                alignment: WrapAlignment.center,
+                                spacing: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 4.0),
+                                children: [
+                                  Text(
+                                    'شغل يدوي وأكل بيتي على أصوله',
+                                    style: TextStyle(
+                                      fontSize: ResponsiveHelper.responsiveFontSize(context, base: 14.0, min: 12.0, max: 16.0),
+                                      fontWeight: FontWeight.w500,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                  Text(
+                                    '👋',
+                                    style: TextStyle(fontSize: ResponsiveHelper.responsiveFontSize(context, base: 16.0)),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // Scrollable Content
+                        Expanded(
+                          child: Container(
+                            margin: EdgeInsets.only(top: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 16.0)),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.vertical(
+                                top: Radius.circular(ResponsiveHelper.responsiveValueFromConstraints(constraints, base: 30.0, lg: 32.0)),
+                              ),
+                            ),
+                            child: SingleChildScrollView(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // أقوى العروض (Strongest Offers)
+                                  FoodListSection(
                             title: 'أقوى العروض',
                             titleIcon: Icons.percent,
                             titleIconColor: Colors.red,
@@ -244,10 +255,10 @@ class _HomeViewState extends State<HomeView> {
                             ],
                           ),
 
-                          const SizedBox(height: 8),
+                                  SizedBox(height: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 8.0)),
 
-                          // خدمات مرشحه (Recommended Services)
-                          FoodListSection(
+                                  // خدمات مرشحه (Recommended Services)
+                                  FoodListSection(
                             title: 'خدمات مرشحه',
                             foodItems: [
                               FoodCard(
@@ -269,10 +280,10 @@ class _HomeViewState extends State<HomeView> {
                             ],
                           ),
 
-                          const SizedBox(height: 8),
+                                  SizedBox(height: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 8.0)),
 
-                          // الأكثر مبيعًا (Bestsellers)
-                          FoodListSection(
+                                  // الأكثر مبيعًا (Bestsellers)
+                                  FoodListSection(
                             title: 'الأكثر مبيعًا',
                             titleIcon: Icons.star,
                             titleIconColor: Colors.amber,
@@ -296,10 +307,10 @@ class _HomeViewState extends State<HomeView> {
                             ],
                           ),
 
-                          const SizedBox(height: 8),
+                                  SizedBox(height: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 8.0)),
 
-                          // الخدمات (Services)
-                          FoodListSection(
+                                  // الخدمات (Services)
+                                  FoodListSection(
                             title: 'الخدمات',
                             viewAllText: 'عرض الكل',
                             onViewAllTap: () {
@@ -353,24 +364,45 @@ class _HomeViewState extends State<HomeView> {
                             ],
                           ),
 
-                          const SizedBox(height: 20),
-                        ],
-                      ),
+                                  SizedBox(height: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 20.0)),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ],
-        ),
-        bottomNavigationBar: BottomNavBar(
-          currentIndex: _currentNavIndex,
-          onTap: (index) {
-            setState(() {
-              _currentNavIndex = index;
-            });
-          },
-        ),
+            bottomNavigationBar: BottomNavBar(
+              currentIndex: _currentNavIndex,
+              onTap: (index) {
+                setState(() {
+                  _currentNavIndex = index;
+                });
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
+  
+  Widget _buildIconButton(IconData icon, Color iconColor, Color bgColor, double size, VoidCallback onPressed) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: IconButton(
+        padding: EdgeInsets.zero,
+        icon: Icon(icon),
+        color: iconColor,
+        onPressed: onPressed,
       ),
     );
   }

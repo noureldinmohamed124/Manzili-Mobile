@@ -10,6 +10,8 @@ import 'package:manzili_mobile/presentation/widgets/auth/social_login_button.dar
 import 'package:manzili_mobile/presentation/views/signin_view.dart';
 import '../../../core/constants/app_assets.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/responsive_helper.dart';
+import '../../../core/widgets/responsive_max_width.dart';
 
 class SignupView extends StatefulWidget {
   const SignupView({super.key});
@@ -93,227 +95,273 @@ class _SignupViewState extends State<SignupView> {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    final gradientHeight = size.height * 0.18;
-    final gradientBottomHeight = size.height * 0.20;
-    final gradientBottomWidth = size.width * 0.20;
-
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: MediaQuery(
-        data: MediaQuery.of(context).copyWith(
-          textScaleFactor: 1.10, 
-        ),
-        child: Scaffold(
-          backgroundColor: Colors.white,
-          body: Stack(
-            children: [
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                child: SizedBox(
-                  height: gradientHeight,
-                  child: Image.asset(
-                    AppAssets.gradientTop,
-                    fit: BoxFit.fill,
-                  ),
-                ),
-              ),
-              Column(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final size = MediaQuery.of(context).size;
+          final gradientHeight = ResponsiveHelper.scaleValue(
+            67.5, // 18% of 375 base
+            constraints.maxHeight,
+            min: constraints.maxHeight * 0.15,
+            max: constraints.maxHeight * 0.20,
+          );
+          final gradientBottomHeight = ResponsiveHelper.scaleValue(
+            75.0, // 20% of 375 base
+            size.height,
+            min: size.height * 0.18,
+            max: size.height * 0.20,
+          );
+          final gradientBottomWidth = ResponsiveHelper.scaleValue(
+            75.0, // 20% of 375 base
+            size.width,
+            min: size.width * 0.20,
+            max: size.width * 0.25,
+          );
+
+          final viewInsets = MediaQuery.of(context).viewInsets;
+          final keyboardHeight = viewInsets.bottom;
+
+          return Scaffold(
+            backgroundColor: Colors.white,
+            body: SafeArea(
+              bottom: false,
+              child: Stack(
                 children: [
-                  SizedBox(height: gradientHeight + 16),
-                  Expanded(
-                    child: Container(
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.vertical(
-                          top: Radius.circular(40),
-                        ),
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    child: SizedBox(
+                      height: gradientHeight,
+                      child: Image.asset(
+                        AppAssets.gradientTop,
+                        fit: BoxFit.fill,
                       ),
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 22,
-                          vertical: 20,
-                        ),
-                        child: Column(
-                          children: [
-                            const Text(
-                              'انشأ حساب جديد',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 38, 
-                                fontWeight: FontWeight.w800,
-                                color: Color(0xFF0F172A),
+                    ),
+                  ),
+                  Column(
+                    children: [
+                      SizedBox(height: gradientHeight + ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16)),
+                      Expanded(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.vertical(
+                              top: Radius.circular(ResponsiveHelper.responsiveValueCompat(context, mobile: 40.0, tablet: 44.0)),
+                            ),
+                          ),
+                          child: ResponsiveMaxWidth(
+                            child: SingleChildScrollView(
+                              padding: EdgeInsets.only(
+                                top: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 20),
+                                bottom: keyboardHeight + ResponsiveHelper.responsiveSpacingCompat(context, mobile: 20),
                               ),
-                            ),
-                            const SizedBox(height: 24),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: RoleButton(
-                                    label: 'مشتري',
-                                    icon: Icons.shopping_cart_outlined,
-                                    isSelected: _selectedRole == 'buyer',
-                                    onTap: () =>
-                                        setState(() => _selectedRole = 'buyer'),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: RoleButton(
-                                    label: 'بائع',
-                                    icon: Icons.shopping_bag_outlined,
-                                    isSelected: _selectedRole == 'seller',
-                                    onTap: () =>
-                                        setState(() => _selectedRole = 'seller'),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 26),
-                            CustomTextField(
-                              label: 'الاسم بالكامل',
-                              controller: _fullNameController,
-                            ),
-                            const SizedBox(height: 18),
-                            CustomTextField(
-                              label: 'البريد الاكتروني',
-                              keyboardType: TextInputType.emailAddress,
-                              controller: _emailController,
-                            ),
-                            const SizedBox(height: 18),
-                            CustomTextField(
-                              label: 'كلمه المرور',
-                              controller: _passwordController,
-                              obscureText: _obscurePassword,
-                              suffixIcon: IconButton(
-                                icon: Icon(
-                                  _obscurePassword
-                                      ? Icons.visibility_off
-                                      : Icons.visibility,
-                                  size: 22,
-                                  color: AppColors.textHint,
-                                ),
-                                onPressed: () => setState(() {
-                                  _obscurePassword = !_obscurePassword;
-                                }),
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            Consumer<AuthProvider>(
-                              builder: (context, auth, _) {
-                                return Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                              child: Column(
                                   children: [
-                                    Directionality(
-                                      textDirection: TextDirection.ltr,
-                                      child: Align(
-                                        alignment: Alignment.centerLeft,
-                                        child: LoginRowCTA(
-                                          text: 'إنشاء حساب',
-                                          onTap: () => _handleRegister(context),
-                                        ),
-                                      ),
-                                    ),
-                                    if (auth.errorMessage != null) ...[
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        auth.errorMessage!,
-                                        textAlign: TextAlign.right,
-                                        style: const TextStyle(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.red,
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                );
-                              },
-                            ),
-                            const SizedBox(height: 30),
-                            Row(
-                              children: const [
-                                Expanded(child: Divider()),
-                                Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 12),
-                                  child: Text(
-                                    'أو سجل باستخدام وسائل التواصل الاجتماعي',
-                                    style: TextStyle(
-                                      fontSize: 12, 
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.textSecondary,
-                                    ),
+                                  Text(
+                                    'انشأ حساب جديد',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 38, tablet: 42, desktop: 46),
+                                    fontWeight: FontWeight.w800,
+                                    color: const Color(0xFF0F172A),
                                   ),
                                 ),
-                                Expanded(child: Divider()),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                SocialLoginButton(asset: AppAssets.googleIcon),
-                                const SizedBox(width: 14,height: 26),
-                                SocialLoginButton(asset: AppAssets.twitterIcon),
-                                const SizedBox(width: 14,height: 26),
-                                SocialLoginButton(asset: AppAssets.facebookIcon),
-                              ],
-                            ),
-                            const SizedBox(height: 26),
-                            RichText(
-                              textAlign: TextAlign.center,
-                              text: TextSpan(
-                                text: 'لديك حساب؟ ',
-                                style: const TextStyle(
-                                  fontSize: 14, 
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.textSecondary,
-                                ),
-                                children: [
-                                  TextSpan(
-                                    text: 'سجل الدخول',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w800,
-                                      color: AppColors.primary,
+                                SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 24)),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: RoleButton(
+                                        label: 'مشتري',
+                                        icon: Icons.shopping_cart_outlined,
+                                        isSelected: _selectedRole == 'buyer',
+                                        onTap: () =>
+                                            setState(() => _selectedRole = 'buyer'),
+                                      ),
                                     ),
-                                    recognizer: TapGestureRecognizer()
-                                      ..onTap = () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) => const SigninView(),
+                                    SizedBox(width: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12)),
+                                    Expanded(
+                                      child: RoleButton(
+                                        label: 'بائع',
+                                        icon: Icons.shopping_bag_outlined,
+                                        isSelected: _selectedRole == 'seller',
+                                        onTap: () =>
+                                            setState(() => _selectedRole = 'seller'),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                  SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 26)),
+                                  CustomTextField(
+                                    label: 'الاسم بالكامل',
+                                    controller: _fullNameController,
+                                  ),
+                                  SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 18)),
+                                  CustomTextField(
+                                    label: 'البريد الاكتروني',
+                                    keyboardType: TextInputType.emailAddress,
+                                    controller: _emailController,
+                                  ),
+                                  SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 18)),
+                                  CustomTextField(
+                                    label: 'كلمه المرور',
+                                    controller: _passwordController,
+                                    obscureText: _obscurePassword,
+                                    suffixIcon: IconButton(
+                                      icon: Icon(
+                                        _obscurePassword
+                                            ? Icons.visibility_off
+                                            : Icons.visibility,
+                                        size: ResponsiveHelper.responsiveValueCompat(context, mobile: 22.0),
+                                        color: AppColors.textHint,
+                                      ),
+                                      onPressed: () => setState(() {
+                                        _obscurePassword = !_obscurePassword;
+                                      }),
+                                    ),
+                                  ),
+                                  SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 24)),
+                                  Consumer<AuthProvider>(
+                                    builder: (context, auth, _) {
+                                      return Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Directionality(
+                                            textDirection: TextDirection.ltr,
+                                            child: Align(
+                                              alignment: Alignment.centerLeft,
+                                              child: LoginRowCTA(
+                                                text: 'إنشاء حساب',
+                                                onTap: () => _handleRegister(context),
+                                              ),
+                                            ),
                                           ),
+                                          if (auth.errorMessage != null) ...[
+                                            SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 8)),
+                                            Text(
+                                              auth.errorMessage!,
+                                              textAlign: TextAlign.right,
+                                              style: TextStyle(
+                                                fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 13),
+                                                fontWeight: FontWeight.w600,
+                                                color: Colors.red,
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      );
+                                    },
+                                  ),
+                                  SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 30)),
+                                  LayoutBuilder(
+                                    builder: (context, dividerConstraints) {
+                                      if (dividerConstraints.maxWidth < 300) {
+                                        return Column(
+                                          children: [
+                                            const Divider(),
+                                            Padding(
+                                              padding: EdgeInsets.symmetric(vertical: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 8)),
+                                              child: Text(
+                                                'أو سجل باستخدام وسائل التواصل الاجتماعي',
+                                                textAlign: TextAlign.center,
+                                                style: TextStyle(
+                                                  fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 12),
+                                                  fontWeight: FontWeight.w600,
+                                                  color: AppColors.textSecondary,
+                                                ),
+                                              ),
+                                            ),
+                                            const Divider(),
+                                          ],
                                         );
-                                      },
+                                      }
+                                      
+                                      return Row(
+                                        children: [
+                                          const Expanded(child: Divider()),
+                                          Padding(
+                                            padding: EdgeInsets.symmetric(horizontal: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12)),
+                                            child: Text(
+                                              'أو سجل باستخدام وسائل التواصل الاجتماعي',
+                                              style: TextStyle(
+                                                fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 12),
+                                                fontWeight: FontWeight.w600,
+                                                color: AppColors.textSecondary,
+                                              ),
+                                            ),
+                                          ),
+                                          const Expanded(child: Divider()),
+                                        ],
+                                      );
+                                    },
+                                  ),
+                                  SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16)),
+                                  Wrap(
+                                    alignment: WrapAlignment.center,
+                                    spacing: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 14),
+                                    children: [
+                                      SocialLoginButton(asset: AppAssets.googleIcon),
+                                      SocialLoginButton(asset: AppAssets.twitterIcon),
+                                      SocialLoginButton(asset: AppAssets.facebookIcon),
+                                    ],
+                                  ),
+                                  SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 26)),
+                                  RichText(
+                                    textAlign: TextAlign.center,
+                                    text: TextSpan(
+                                      text: 'لديك حساب؟ ',
+                                      style: TextStyle(
+                                        fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 14),
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                      children: [
+                                        TextSpan(
+                                          text: 'سجل الدخول',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w800,
+                                            color: AppColors.primary,
+                                          ),
+                                          recognizer: TapGestureRecognizer()
+                                            ..onTap = () {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) => const SigninView(),
+                                                ),
+                                              );
+                                            },
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ],
                               ),
                             ),
-                          ],
+                          ),
                         ),
+                      ),
+                  ],
+                ),
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    child: SizedBox(
+                      width: gradientBottomWidth,
+                      height: gradientBottomHeight,
+                      child: Image.asset(
+                        AppAssets.gradientBottomLeft,
+                        fit: BoxFit.fill,
+                        alignment: Alignment.bottomLeft,
                       ),
                     ),
                   ),
                 ],
               ),
-              Positioned(
-                bottom: 0,
-                left: 0,
-                child: SizedBox(
-                  width: gradientBottomWidth,
-                  height: gradientBottomHeight,
-                  child: Image.asset(
-                    AppAssets.gradientBottomLeft,
-                    fit: BoxFit.fill,
-                    alignment: Alignment.bottomLeft,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }

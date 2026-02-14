@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/responsive_helper.dart';
 
 class CustomTextField extends StatelessWidget {
   final String label;
@@ -32,18 +33,18 @@ class CustomTextField extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(
-            fontSize: 14,
+          style: TextStyle(
+            fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 14),
             fontWeight: FontWeight.w700,
             color: AppColors.textSecondary,
           ),
         ),
-        const SizedBox(height: 10),
+        SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 10)),
         Container(
-          height: 50, 
+          height: ResponsiveHelper.clampScaledValue(context, 6.5, min: 48.0, max: 56.0),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(30),
+            borderRadius: BorderRadius.circular(ResponsiveHelper.responsiveValueCompat(context, mobile: 30.0)),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.12),
@@ -61,23 +62,23 @@ class CustomTextField extends StatelessWidget {
             onChanged: onChanged,
             textDirection: TextDirection.rtl,
             textAlignVertical: TextAlignVertical.center, 
-            style: const TextStyle(
-              fontSize: 16,
+            style: TextStyle(
+              fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 16),
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
             ),
             decoration: InputDecoration(
               hintText: hint,
               hintTextDirection: TextDirection.rtl,
-              hintStyle: const TextStyle(
-                fontSize: 14,
+              hintStyle: TextStyle(
+                fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 14),
                 color: AppColors.textHint,
               ),
               prefixIcon: prefixIcon, 
               suffixIcon: suffixIcon, 
               border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 18,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 18),
                 vertical: 0,
               ),
             ),
