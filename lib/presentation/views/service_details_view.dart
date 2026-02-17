@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:manzili_mobile/data/models/service_models.dart';
 import 'package:manzili_mobile/presentation/providers/services_provider.dart';
 import '../../core/constants/app_assets.dart';
+import '../../core/network/api_constants.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/responsive_helper.dart';
 import '../../core/widgets/responsive_max_width.dart';
@@ -19,15 +20,11 @@ class ServiceDetailsView extends StatefulWidget {
 }
 
 class _ServiceDetailsViewState extends State<ServiceDetailsView> {
-  int _currentImageIndex = 1;
+  int _currentImageIndex = 0;
   int _quantity = 1;
-  String _selectedFlavor = 'فانيليا';
+  String? _selectedOptionId;
   bool _isFavorite = false;
-  final Map<String, bool> _selectedProducts = {
-    'كوكيز شوكولاته': false,
-    'سينابون رول': false,
-    'دوناتس': false,
-  };
+  final Map<int, bool> _selectedOptions = {};
 
   @override
   void initState() {
@@ -63,64 +60,67 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
                   bottom: 0,
                   child: Consumer<ServicesProvider>(
                     builder: (context, servicesProvider, _) {
-                  ServiceItem? service;
-                  for (final s in servicesProvider.services) {
-                    if (s.id == widget.serviceId) {
-                      service = s;
-                      break;
-                    }
-                  }
+                      // Use detailed service if available, otherwise fall back to list
+                      ServiceItem? service = servicesProvider.currentServiceDetails;
+                      if (service == null || service.id != widget.serviceId) {
+                        for (final s in servicesProvider.services) {
+                          if (s.id == widget.serviceId) {
+                            service = s;
+                            break;
+                          }
+                        }
+                      }
 
-                  if (servicesProvider.isLoading && service == null) {
-                    return const Center(
-                      child: CircularProgressIndicator(),
-                    );
-                  }
+                      if (servicesProvider.isLoading && service == null) {
+                        return const Center(
+                          child: CircularProgressIndicator(),
+                        );
+                      }
 
-                  if (servicesProvider.errorMessage != null &&
-                      service == null) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 24),
-                            child: Text(
-                              servicesProvider.errorMessage!,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.red,
+                      if (servicesProvider.errorMessage != null &&
+                          service == null) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 24),
+                                child: Text(
+                                  servicesProvider.errorMessage!,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.red,
+                                  ),
+                                ),
                               ),
+                              const SizedBox(height: 12),
+                              ElevatedButton(
+                                onPressed: () {
+                                  servicesProvider
+                                      .getServiceById(widget.serviceId);
+                                },
+                                child: const Text('إعادة المحاولة'),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      if (service == null) {
+                        return const Center(
+                          child: Text(
+                            'لم يتم العثور على هذه الخدمة',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textSecondary,
                             ),
                           ),
-                          const SizedBox(height: 12),
-                          ElevatedButton(
-                            onPressed: () {
-                              servicesProvider
-                                  .getServiceById(widget.serviceId);
-                            },
-                            child: const Text('إعادة المحاولة'),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-
-                  if (service == null) {
-                    return const Center(
-                      child: Text(
-                        'لم يتم العثور على هذه الخدمة',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    );
-                  }
+                        );
+                      }
 
                       return ResponsiveMaxWidth(
                         child: SingleChildScrollView(
@@ -132,12 +132,14 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
                             children: [
                             _buildProductImage(service),
                             _buildProductInfo(service),
-                            _buildFlavorSelector(),
+                            if (service.options != null && service.options!.isNotEmpty)
+                              _buildFlavorSelector(service),
                             _buildQuantitySelector(),
                             _buildSpecialInstructions(),
-                            _buildProductsWithOrder(),
+                            if (service.options != null && service.options!.isNotEmpty)
+                              _buildProductsWithOrder(service),
                             _buildSellerInfo(service),
-                            _buildYouMightAlsoLike(),
+                            _buildYouMightAlsoLike(servicesProvider),
                           ],
                         ),
                       ),
@@ -225,14 +227,43 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
       max: 400.0,
     );
     
+    // Get images from API or fall back to main imageUrl
+    final imageUrls = <String>[];
+    if (service.images != null && service.images!.isNotEmpty) {
+      for (final img in service.images!) {
+        final url = _buildImageUrl(img.imageUrl);
+        if (url != null) imageUrls.add(url);
+      }
+    } else if (service.imageUrl.isNotEmpty) {
+      final url = _buildImageUrl(service.imageUrl);
+      if (url != null) imageUrls.add(url);
+    }
+    
+    if (imageUrls.isEmpty) {
+      imageUrls.add(''); // Will use fallback asset
+    }
+    
+    // Clamp image index
+    if (_currentImageIndex >= imageUrls.length) {
+      _currentImageIndex = 0;
+    }
+    
     return Stack(
       children: [
-        service.imageUrl.isNotEmpty
+        imageUrls[_currentImageIndex].isNotEmpty
             ? Image.network(
-                service.imageUrl,
+                imageUrls[_currentImageIndex],
                 width: double.infinity,
                 height: imageHeight,
                 fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Image.asset(
+                    AppAssets.cookie,
+                    width: double.infinity,
+                    height: imageHeight,
+                    fit: BoxFit.cover,
+                  );
+                },
               )
             : Image.asset(
                 AppAssets.cookie,
@@ -240,29 +271,41 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
                 height: imageHeight,
                 fit: BoxFit.cover,
               ),
-        Positioned(
-          bottom: 16,
-          left: 0,
-          right: 0,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(3, (index) {
-              return Container(
-                width: index == _currentImageIndex ? 8 : 6,
-                height: index == _currentImageIndex ? 8 : 6,
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: index == _currentImageIndex
-                      ? Colors.white
-                      : Colors.white.withOpacity(0.5),
-                ),
-              );
-            }),
+        if (imageUrls.length > 1)
+          Positioned(
+            bottom: 16,
+            left: 0,
+            right: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(imageUrls.length, (index) {
+                return GestureDetector(
+                  onTap: () => setState(() => _currentImageIndex = index),
+                  child: Container(
+                    width: index == _currentImageIndex ? 8 : 6,
+                    height: index == _currentImageIndex ? 8 : 6,
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: index == _currentImageIndex
+                          ? Colors.white
+                          : Colors.white.withOpacity(0.5),
+                    ),
+                  ),
+                );
+              }),
+            ),
           ),
-        ),
       ],
     );
+  }
+  
+  String? _buildImageUrl(String imageUrl) {
+    if (imageUrl.isEmpty) return null;
+    if (imageUrl.startsWith('http')) return imageUrl;
+    final base = ApiConstants.baseUrl;
+    final normalizedBase = base.endsWith('/') ? base : '$base/';
+    return '$normalizedBase$imageUrl';
   }
 
   Widget _buildProductInfo(ServiceItem service) {
@@ -379,14 +422,17 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
     );
   }
 
-  Widget _buildFlavorSelector() {
+  Widget _buildFlavorSelector(ServiceItem service) {
+    final options = service.options ?? [];
+    if (options.isEmpty) return const SizedBox.shrink();
+    
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 22)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'اختر النكهة',
+            'اختر الخيار',
             style: TextStyle(
               fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 16),
               fontWeight: FontWeight.w700,
@@ -394,34 +440,56 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
             ),
           ),
           SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12)),
-          GestureDetector(
-            onTap: () {},
-            child: Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16),
-                vertical: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 14),
-              ),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF5F5F5),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE0E0E0)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Icon(Icons.keyboard_arrow_down, color: AppColors.textSecondary),
-                  Text(
-                    _selectedFlavor,
-                    style: TextStyle(
-                      fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 14),
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.textPrimary,
+          ...options.map((option) {
+            final isSelected = _selectedOptionId == option.id.toString();
+            return Padding(
+              padding: EdgeInsets.only(bottom: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 8)),
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _selectedOptionId = option.id.toString();
+                  });
+                },
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16),
+                    vertical: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 14),
+                  ),
+                  decoration: BoxDecoration(
+                    color: isSelected ? AppColors.primary.withOpacity(0.1) : const Color(0xFFF5F5F5),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isSelected ? AppColors.primary : const Color(0xFFE0E0E0),
+                      width: isSelected ? 2 : 1,
                     ),
                   ),
-                ],
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          option.serviceOptionName,
+                          style: TextStyle(
+                            fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 14),
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        '${option.price.toInt()} جنيه',
+                        style: TextStyle(
+                          fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 14),
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ),
+            );
+          }),
         ],
       ),
     );
@@ -536,7 +604,10 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
     );
   }
 
-  Widget _buildProductsWithOrder() {
+  Widget _buildProductsWithOrder(ServiceItem service) {
+    final options = service.options ?? [];
+    if (options.isEmpty) return const SizedBox.shrink();
+    
     return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 22),
@@ -546,7 +617,7 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'منتجات مع الطلب',
+            'خيارات إضافية',
             style: TextStyle(
               fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 18, tablet: 20),
               fontWeight: FontWeight.w800,
@@ -554,15 +625,16 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
             ),
           ),
           SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16)),
-          ..._selectedProducts.keys.map((product) {
+          ...options.map((option) {
+            final isSelected = _selectedOptions[option.id] ?? false;
             return Padding(
               padding: EdgeInsets.only(bottom: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12)),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Flexible(
+                  Expanded(
                     child: Text(
-                      '$product - 120 جنيه',
+                      '${option.serviceOptionName} - ${option.price.toInt()} جنيه',
                       style: TextStyle(
                         fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 14),
                         fontWeight: FontWeight.w500,
@@ -572,10 +644,10 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
                     ),
                   ),
                   Checkbox(
-                    value: _selectedProducts[product],
+                    value: isSelected,
                     onChanged: (value) {
                       setState(() {
-                        _selectedProducts[product] = value ?? false;
+                        _selectedOptions[option.id] = value ?? false;
                       });
                     },
                     activeColor: AppColors.primary,
@@ -590,6 +662,11 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
   }
 
   Widget _buildSellerInfo(ServiceItem service) {
+    final provider = service.provider;
+    final providerName = provider?.fullName ?? service.providerName;
+    final providerRating = provider?.rating ?? service.rating;
+    final reviewsCount = provider?.reviewsNo ?? 0;
+    
     return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 22),
@@ -642,7 +719,7 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        service.providerName,
+                        providerName,
                         style: TextStyle(
                           fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 16),
                           fontWeight: FontWeight.w700,
@@ -653,7 +730,7 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
                       Row(
                         children: [
                           Text(
-                            '4.9',
+                            providerRating.toStringAsFixed(1),
                             style: TextStyle(
                               fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 14),
                               fontWeight: FontWeight.w600,
@@ -662,15 +739,17 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
                           ),
                           SizedBox(width: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 4)),
                           Icon(Icons.star, color: Colors.amber, size: ResponsiveHelper.responsiveValueCompat(context, mobile: 16.0)),
-                          SizedBox(width: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 4)),
-                          Text(
-                            '(284) تقييم',
-                            style: TextStyle(
-                              fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 12),
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.textSecondary,
+                          if (reviewsCount > 0) ...[
+                            SizedBox(width: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 4)),
+                            Text(
+                              '($reviewsCount) تقييم',
+                              style: TextStyle(
+                                fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 12),
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.textSecondary,
+                              ),
                             ),
-                          ),
+                          ],
                         ],
                       ),
                     ],
@@ -684,7 +763,15 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
     );
   }
 
-  Widget _buildYouMightAlsoLike() {
+  Widget _buildYouMightAlsoLike(ServicesProvider servicesProvider) {
+    // Get other services excluding current one
+    final otherServices = servicesProvider.services
+        .where((s) => s.id != widget.serviceId)
+        .take(4)
+        .toList();
+    
+    if (otherServices.isEmpty) return const SizedBox.shrink();
+    
     return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 22),
@@ -704,62 +791,78 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
           SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16)),
           LayoutBuilder(
             builder: (context, constraints) {
-                      final crossAxisCount = ResponsiveHelper.gridColumnCount(
-                        context,
-                        xs: 1,
-                        sm: 2,
-                        md: 3,
-                        lg: 4,
-                        xl: 5,
-                      );
+              final crossAxisCount = ResponsiveHelper.gridColumnCount(
+                context,
+                xs: 1,
+                sm: 2,
+                md: 3,
+                lg: 4,
+                xl: 5,
+              );
               
               if (crossAxisCount >= 2) {
                 return Row(
-                  children: [
-                    Expanded(
-                      child: FoodCard(
-                        imagePath: AppAssets.strawberryCake,
-                        name: 'كيكة بالفراولة',
-                        sellerName: 'ليلى أحمد',
-                        price: 120,
-                        rating: 4.8,
-                        badge: 'مرشحه',
+                  children: otherServices.take(2).map((service) {
+                    final imageUrl = _buildImageUrl(service.imageUrl);
+                    return Expanded(
+                      child: Padding(
+                        padding: EdgeInsets.only(
+                          right: service == otherServices.first
+                              ? ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12)
+                              : 0,
+                        ),
+                        child: FoodCard(
+                          imagePath: AppAssets.donuts, // fallback
+                          networkImageUrl: imageUrl,
+                          name: service.title,
+                          sellerName: service.providerName,
+                          price: service.basePrice.toDouble(),
+                          rating: service.rating.toDouble(),
+                          onTap: () {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ServiceDetailsView(
+                                  serviceId: service.id,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                       ),
-                    ),
-                    SizedBox(width: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12)),
-                    Expanded(
-                      child: FoodCard(
-                        imagePath: AppAssets.cookie,
-                        name: 'كيكة بالفراولة',
-                        sellerName: 'ليلى أحمد',
-                        price: 120,
-                        rating: 4.8,
-                      ),
-                    ),
-                  ],
+                    );
+                  }).toList(),
                 );
               } else {
                 return SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
-                    children: [
-                      FoodCard(
-                        imagePath: AppAssets.strawberryCake,
-                        name: 'كيكة بالفراولة',
-                        sellerName: 'ليلى أحمد',
-                        price: 120,
-                        rating: 4.8,
-                        badge: 'مرشحه',
-                      ),
-                      SizedBox(width: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12)),
-                      FoodCard(
-                        imagePath: AppAssets.cookie,
-                        name: 'كيكة بالفراولة',
-                        sellerName: 'ليلى أحمد',
-                        price: 120,
-                        rating: 4.8,
-                      ),
-                    ],
+                    children: otherServices.map((service) {
+                      final imageUrl = _buildImageUrl(service.imageUrl);
+                      return Padding(
+                        padding: EdgeInsets.only(
+                          left: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12),
+                        ),
+                        child: FoodCard(
+                          imagePath: AppAssets.donuts, // fallback
+                          networkImageUrl: imageUrl,
+                          name: service.title,
+                          sellerName: service.providerName,
+                          price: service.basePrice.toDouble(),
+                          rating: service.rating.toDouble(),
+                          onTap: () {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ServiceDetailsView(
+                                  serviceId: service.id,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    }).toList(),
                   ),
                 );
               }

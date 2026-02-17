@@ -191,40 +191,53 @@ class ReviewsView extends StatelessWidget {
             color: AppColors.textPrimary,
           ),
         ),
-        SizedBox(width: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12)),
+        SizedBox(width: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 8)),
+        // Wrap the bar + stars in Expanded so they can shrink on small widths
         Expanded(
-          child: Container(
-            height: ResponsiveHelper.responsiveValueCompat(context, mobile: 8.0),
-            decoration: BoxDecoration(
-              color: const Color(0xFFE0E0E0),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: FractionallySizedBox(
-              alignment: Alignment.centerRight,
-              widthFactor: percentage,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(4),
+          child: Row(
+            children: [
+              Expanded(
+                child: Container(
+                  height: ResponsiveHelper.responsiveValueCompat(context, mobile: 8.0),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE0E0E0),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: FractionallySizedBox(
+                    alignment: Alignment.centerRight,
+                    widthFactor: percentage,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
-        ),
-        SizedBox(width: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12)),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.star, color: AppColors.primary, size: ResponsiveHelper.responsiveValueCompat(context, mobile: 16.0)),
-            Text(
-              ' $stars',
-              style: TextStyle(
-                fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 14),
-                fontWeight: FontWeight.w500,
-                color: AppColors.textPrimary,
+              SizedBox(width: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 8)),
+              Flexible(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.star,
+                      color: AppColors.primary,
+                      size: ResponsiveHelper.responsiveValueCompat(context, mobile: 16.0),
+                    ),
+                    Text(
+                      ' $stars',
+                      style: TextStyle(
+                        fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 14),
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );
@@ -300,32 +313,37 @@ class ReviewsView extends StatelessWidget {
                       ),
                     ),
                     SizedBox(width: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12)),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          name,
-                          style: TextStyle(
-                            fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 16),
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            name,
+                            style: TextStyle(
+                              fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 16),
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                        SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 4)),
-                        Row(
-                          children: List.generate(5, (index) {
-                            return Icon(
-                              index < rating ? Icons.star : Icons.star_border,
-                              color: AppColors.primary,
-                              size: ResponsiveHelper.responsiveValueCompat(context, mobile: 16.0),
-                            );
-                          }),
-                        ),
-                      ],
+                          SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 4)),
+                          Row(
+                            children: List.generate(5, (index) {
+                              return Icon(
+                                index < rating ? Icons.star : Icons.star_border,
+                                color: AppColors.primary,
+                                size: ResponsiveHelper.responsiveValueCompat(context, mobile: 16.0),
+                              );
+                            }),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
               ),
+              SizedBox(width: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 8)),
               Text(
                 date,
                 style: TextStyle(

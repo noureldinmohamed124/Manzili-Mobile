@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:manzili_mobile/data/models/service_models.dart';
+import 'package:manzili_mobile/presentation/providers/services_provider.dart';
+import 'package:manzili_mobile/presentation/views/service_details_view.dart';
 import 'package:manzili_mobile/presentation/widgets/home/food_card.dart';
 import 'package:manzili_mobile/presentation/widgets/home/food_list_section.dart';
 import 'package:manzili_mobile/presentation/widgets/home/bottom_nav_bar.dart';
 import 'package:manzili_mobile/presentation/views/services_view.dart';
 import '../../../core/constants/app_assets.dart';
+import '../../../core/network/api_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/responsive_helper.dart';
 import '../../../core/widgets/responsive_max_width.dart';
@@ -17,6 +22,19 @@ class HomeView extends StatefulWidget {
 
 class _HomeViewState extends State<HomeView> {
   int _currentNavIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final servicesProvider = context.read<ServicesProvider>();
+      // General services list for the "الخدمات" section and ServicesView.
+      servicesProvider.fetchServices(page: 1, pageSize: 10);
+      // Additional curated lists for the Home sections.
+      servicesProvider.fetchFeaturedServices(page: 1, pageSize: 10);
+      servicesProvider.fetchRecommendedServices(page: 1, pageSize: 10);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -224,149 +242,117 @@ class _HomeViewState extends State<HomeView> {
                                 top: Radius.circular(ResponsiveHelper.responsiveValueFromConstraints(constraints, base: 30.0, lg: 32.0)),
                               ),
                             ),
-                            child: SingleChildScrollView(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // أقوى العروض (Strongest Offers)
-                                  FoodListSection(
-                            title: 'أقوى العروض',
-                            titleIcon: Icons.percent,
-                            titleIconColor: Colors.red,
-                            foodItems: [
-                              FoodCard(
-                                imagePath: AppAssets.donuts,
-                                name: 'دوناتس',
-                                sellerName: 'أمينه حسان',
-                                price: 120,
-                                originalPrice: 250,
-                                rating: 4.8,
-                                badge: 'خصم 50%',
-                              ),
-                              FoodCard(
-                                imagePath: AppAssets.cookie,
-                                name: 'كوكيز',
-                                sellerName: 'سارة محمد',
-                                price: 80,
-                                originalPrice: 160,
-                                rating: 4.9,
-                                badge: 'خصم 50%',
-                              ),
-                            ],
-                          ),
+                            child: Consumer<ServicesProvider>(
+                              builder: (context, servicesProvider, _) {
+                                final featured = servicesProvider.featuredServices;
+                                final recommended = servicesProvider.recommendedServices;
+                                final allServices = servicesProvider.services;
 
-                                  SizedBox(height: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 8.0)),
+                                final bool isInitialLoading =
+                                    servicesProvider.isLoading &&
+                                    featured.isEmpty &&
+                                    recommended.isEmpty &&
+                                    allServices.isEmpty;
 
-                                  // خدمات مرشحه (Recommended Services)
-                                  FoodListSection(
-                            title: 'خدمات مرشحه',
-                            foodItems: [
-                              FoodCard(
-                                imagePath: AppAssets.donuts,
-                                name: 'دوناتس',
-                                sellerName: 'أمينه حسان',
-                                price: 120,
-                                rating: 4.8,
-                                badge: 'مرشحه',
-                              ),
-                              FoodCard(
-                                imagePath: AppAssets.cupcake,
-                                name: 'كاب كيك',
-                                sellerName: 'ليلى أحمد',
-                                price: 150,
-                                rating: 4.7,
-                                badge: 'مرشحه',
-                              ),
-                            ],
-                          ),
-
-                                  SizedBox(height: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 8.0)),
-
-                                  // الأكثر مبيعًا (Bestsellers)
-                                  FoodListSection(
-                            title: 'الأكثر مبيعًا',
-                            titleIcon: Icons.star,
-                            titleIconColor: Colors.amber,
-                            foodItems: [
-                              FoodCard(
-                                imagePath: AppAssets.donuts,
-                                name: 'دوناتس',
-                                sellerName: 'أمينه حسان',
-                                price: 120,
-                                rating: 4.8,
-                                badge: 'أفضل',
-                              ),
-                              FoodCard(
-                                imagePath: AppAssets.kunafa,
-                                name: 'كنافة',
-                                sellerName: 'فاطمة علي',
-                                price: 200,
-                                rating: 5.0,
-                                badge: 'أفضل',
-                              ),
-                            ],
-                          ),
-
-                                  SizedBox(height: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 8.0)),
-
-                                  // الخدمات (Services)
-                                  FoodListSection(
-                            title: 'الخدمات',
-                            viewAllText: 'عرض الكل',
-                            onViewAllTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const ServicesView(),
-                                ),
-                              );
-                            },
-                            onTitleTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const ServicesView(),
-                                ),
-                              );
-                            },
-                            foodItems: [
-                              FoodCard(
-                                imagePath: AppAssets.cupcake,
-                                name: 'كاب كيك',
-                                sellerName: 'ليلى أحمد',
-                                price: 150,
-                                rating: 4.7,
-                                badge: 'مرشحه',
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => const ServicesView(),
-                                    ),
+                                if (isInitialLoading) {
+                                  return const Center(
+                                    child: CircularProgressIndicator(),
                                   );
-                                },
-                              ),
-                              FoodCard(
-                                imagePath: AppAssets.strawberryCake,
-                                name: 'كيكة بالفراولة',
-                                sellerName: 'نورا خالد',
-                                price: 180,
-                                rating: 4.6,
-                                badge: 'أفضل',
-                              ),
-                              FoodCard(
-                                imagePath: AppAssets.kunafa,
-                                name: 'كنافة',
-                                sellerName: 'فاطمة علي',
-                                price: 200,
-                                rating: 5.0,
-                              ),
-                            ],
-                          ),
+                                }
 
-                                  SizedBox(height: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 20.0)),
-                                ],
-                              ),
+                                return SingleChildScrollView(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      // أقوى العروض (Strongest Offers) - uses featured services
+                                      if (featured.isNotEmpty)
+                                        FoodListSection(
+                                          title: 'أقوى العروض',
+                                          titleIcon: Icons.percent,
+                                          titleIconColor: Colors.red,
+                                          foodItems: _buildFoodCardsFromServices(
+                                            context,
+                                            constraints,
+                                            featured,
+                                          ),
+                                        ),
+
+                                      if (featured.isNotEmpty)
+                                        SizedBox(
+                                          height: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 8.0),
+                                        ),
+
+                                      // خدمات مرشحه (Recommended Services)
+                                      if (recommended.isNotEmpty)
+                                        FoodListSection(
+                                          title: 'خدمات مرشحه',
+                                          foodItems: _buildFoodCardsFromServices(
+                                            context,
+                                            constraints,
+                                            recommended,
+                                            badge: 'مرشحه',
+                                          ),
+                                        ),
+
+                                      if (recommended.isNotEmpty)
+                                        SizedBox(
+                                          height: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 8.0),
+                                        ),
+
+                                      // الأكثر مبيعًا (Bestsellers) - fall back to general services
+                                      if (allServices.isNotEmpty)
+                                        FoodListSection(
+                                          title: 'الأكثر مبيعًا',
+                                          titleIcon: Icons.star,
+                                          titleIconColor: Colors.amber,
+                                          foodItems: _buildFoodCardsFromServices(
+                                            context,
+                                            constraints,
+                                            allServices.take(10).toList(),
+                                            badge: 'أفضل',
+                                          ),
+                                        ),
+
+                                      if (allServices.isNotEmpty)
+                                        SizedBox(
+                                          height: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 8.0),
+                                        ),
+
+                                      // الخدمات (Services) - preview of the services list
+                                      if (allServices.isNotEmpty)
+                                        FoodListSection(
+                                          title: 'الخدمات',
+                                          viewAllText: 'عرض الكل',
+                                          onViewAllTap: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) => const ServicesView(),
+                                              ),
+                                            );
+                                          },
+                                          onTitleTap: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) => const ServicesView(),
+                                              ),
+                                            );
+                                          },
+                                          foodItems: _buildFoodCardsFromServices(
+                                            context,
+                                            constraints,
+                                            allServices.take(10).toList(),
+                                          ),
+                                        ),
+
+                                      SizedBox(
+                                        height: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 20.0),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
                             ),
                           ),
                         ),
@@ -389,7 +375,49 @@ class _HomeViewState extends State<HomeView> {
       ),
     );
   }
-  
+
+  List<FoodCard> _buildFoodCardsFromServices(
+    BuildContext context,
+    BoxConstraints constraints,
+    List<ServiceItem> services, {
+    String? badge,
+  }) {
+    return services.map((service) {
+      // API currently returns only a file name (e.g. "cakes_1.jpg").
+      // Build a full HTTP URL using the API base when needed.
+      String? imageUrl;
+      if (service.imageUrl.isNotEmpty) {
+        if (service.imageUrl.startsWith('http')) {
+          imageUrl = service.imageUrl;
+        } else {
+          final base = ApiConstants.baseUrl;
+          final normalizedBase = base.endsWith('/') ? base : '$base/';
+          imageUrl = '$normalizedBase${service.imageUrl}';
+        }
+      }
+
+      return FoodCard(
+        imagePath: AppAssets.donuts, // fallback asset
+        networkImageUrl: imageUrl,
+        name: service.title,
+        sellerName: service.providerName,
+        price: service.basePrice.toDouble(),
+        rating: service.rating.toDouble(),
+        badge: badge,
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ServiceDetailsView(
+                serviceId: service.id,
+              ),
+            ),
+          );
+        },
+      );
+    }).toList();
+  }
+
   Widget _buildIconButton(IconData icon, Color iconColor, Color bgColor, double size, VoidCallback onPressed) {
     return Container(
       width: size,

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:provider/provider.dart';
 import 'package:manzili_mobile/presentation/providers/auth_provider.dart';
-import 'package:manzili_mobile/presentation/views/home_view.dart';
 import 'package:manzili_mobile/presentation/widgets/auth/custom_text_field.dart';
 import 'package:manzili_mobile/presentation/widgets/auth/login_row_cta.dart';
 import 'package:manzili_mobile/presentation/widgets/auth/role_button.dart';
@@ -80,7 +79,7 @@ class _SignupViewState extends State<SignupView> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => const HomeView(),
+          builder: (context) => const SigninView(),
         ),
       );
     } else {

@@ -11,5 +11,6 @@ class ApiConstants {
   // Services
   static const String services = '/api/Services';
   static String serviceById(int id) => '/api/services/$id';
+  static String serviceByName(String name) => '/api/services/name/$name';
 }
 

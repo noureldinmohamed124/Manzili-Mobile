@@ -297,10 +297,10 @@ class _SigninViewState extends State<SigninView> {
                                     },
                                   ),
                                   SizedBox(height: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 24.0)),
-                                  Consumer<AuthProvider>(
-                                    builder: (context, auth, _) {
-                                      final isLoading =
-                                          auth.status == AuthStatus.authenticating;
+                                  Selector<AuthProvider, AuthStatus>(
+                                    selector: (context, auth) => auth.status,
+                                    builder: (context, status, _) {
+                                      final isLoading = status == AuthStatus.authenticating;
 
                                       return Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -319,18 +319,33 @@ class _SigninViewState extends State<SigninView> {
                                               ),
                                             ),
                                           ),
-                                          if (auth.errorMessage != null) ...[
-                                            SizedBox(height: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 8.0)),
-                                            Text(
-                                              auth.errorMessage!,
-                                              textAlign: TextAlign.right,
-                                              style: TextStyle(
-                                                fontSize: ResponsiveHelper.responsiveFontSize(context, base: 13.0, min: 11.0, max: 15.0),
-                                                fontWeight: FontWeight.w600,
-                                                color: Colors.red,
+                                          SizedBox(
+                                            height: ResponsiveHelper.responsiveSpacingFromConstraints(
+                                              constraints,
+                                              base: 10.0,
+                                            ),
+                                          ),
+                                          Center(
+                                            child: TextButton(
+                                              onPressed: isLoading
+                                                  ? null
+                                                  : () {
+                                                      Navigator.push(
+                                                        context,
+                                                        MaterialPageRoute(
+                                                          builder: (context) => const SignupView(),
+                                                        ),
+                                                      );
+                                                    },
+                                              child: const Text(
+                                                'إنشاء حساب',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.w800,
+                                                  color: AppColors.primary,
+                                                ),
                                               ),
                                             ),
-                                          ],
+                                          ),
                                         ],
                                       );
                                     },

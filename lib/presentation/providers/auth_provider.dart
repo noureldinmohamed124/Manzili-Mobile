@@ -87,8 +87,35 @@ class AuthProvider extends ChangeNotifier {
         data: body,
       );
 
-      final tokenResponse =
-          TokenResponse.fromJson(response.data as Map<String, dynamic>);
+      final raw = response.data;
+      if (raw == null || raw.toString().isEmpty) {
+        _errorMessage = 'Empty response from server';
+        _status = AuthStatus.unauthenticated;
+        return false;
+      }
+      if (raw is! Map<String, dynamic>) {
+        _errorMessage = 'Unexpected response from server';
+        _status = AuthStatus.unauthenticated;
+        return false;
+      }
+
+      // Handle both formats:
+      // 1. Direct: { "accessToken": "...", "refreshToken": "..." }
+      // 2. Wrapped: { "success": true, "message": "...", "data": { "accessToken": "...", "refreshToken": "..." } }
+      Map<String, dynamic> tokenJson;
+      if (raw.containsKey('accessToken') && raw.containsKey('refreshToken')) {
+        // Direct format
+        tokenJson = raw;
+      } else if (raw['success'] == true && raw['data'] is Map<String, dynamic>) {
+        // Wrapped format
+        tokenJson = raw['data'] as Map<String, dynamic>;
+      } else {
+        _errorMessage = raw['message']?.toString() ?? 'Login failed';
+        _status = AuthStatus.unauthenticated;
+        return false;
+      }
+
+      final tokenResponse = TokenResponse.fromJson(tokenJson);
 
       _accessToken = tokenResponse.accessToken;
       _refreshToken = tokenResponse.refreshToken;
@@ -131,8 +158,35 @@ class AuthProvider extends ChangeNotifier {
         data: body,
       );
 
-      final tokenResponse =
-          TokenResponse.fromJson(response.data as Map<String, dynamic>);
+      final raw = response.data;
+      if (raw == null || raw.toString().isEmpty) {
+        _errorMessage = 'Empty response from server';
+        notifyListeners();
+        return false;
+      }
+      if (raw is! Map<String, dynamic>) {
+        _errorMessage = 'Unexpected response from server';
+        notifyListeners();
+        return false;
+      }
+
+      // Handle both formats:
+      // 1. Direct: { "accessToken": "...", "refreshToken": "..." }
+      // 2. Wrapped: { "success": true, "message": "...", "data": { "accessToken": "...", "refreshToken": "..." } }
+      Map<String, dynamic> tokenJson;
+      if (raw.containsKey('accessToken') && raw.containsKey('refreshToken')) {
+        // Direct format
+        tokenJson = raw;
+      } else if (raw['success'] == true && raw['data'] is Map<String, dynamic>) {
+        // Wrapped format
+        tokenJson = raw['data'] as Map<String, dynamic>;
+      } else {
+        _errorMessage = raw['message']?.toString() ?? 'Refresh failed';
+        notifyListeners();
+        return false;
+      }
+
+      final tokenResponse = TokenResponse.fromJson(tokenJson);
 
       _accessToken = tokenResponse.accessToken;
       _refreshToken = tokenResponse.refreshToken;

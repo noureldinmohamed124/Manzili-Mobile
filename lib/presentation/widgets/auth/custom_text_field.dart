@@ -61,7 +61,9 @@ class CustomTextField extends StatelessWidget {
             enabled: enabled,
             onChanged: onChanged,
             textDirection: TextDirection.rtl,
-            textAlignVertical: TextAlignVertical.center, 
+            textAlignVertical: TextAlignVertical.center,
+            enableInteractiveSelection: true,
+            keyboardAppearance: Brightness.light, 
             style: TextStyle(
               fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 16),
               fontWeight: FontWeight.w600,

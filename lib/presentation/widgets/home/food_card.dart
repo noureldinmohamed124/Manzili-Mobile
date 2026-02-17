@@ -4,6 +4,9 @@ import '../../../../core/utils/responsive_helper.dart';
 
 class FoodCard extends StatelessWidget {
   final String imagePath;
+
+ 
+  final String? networkImageUrl;
   final String name;
   final String sellerName;
   final double price;
@@ -17,6 +20,7 @@ class FoodCard extends StatelessWidget {
   const FoodCard({
     super.key,
     required this.imagePath,
+    this.networkImageUrl,
     required this.name,
     required this.sellerName,
     required this.price,
@@ -64,12 +68,7 @@ class FoodCard extends StatelessWidget {
                   borderRadius: BorderRadius.vertical(
                     top: Radius.circular(ResponsiveHelper.responsiveValueCompat(context, mobile: 16.0)),
                   ),
-                  child: Image.asset(
-                    imagePath,
-                    width: double.infinity,
-                    height: ResponsiveHelper.clampScaledValue(context, 35, min: 120.0, max: 180.0),
-                    fit: BoxFit.cover,
-                  ),
+                  child: _buildImage(context),
                 ),
                 Positioned(
                   top: 8,
@@ -207,6 +206,40 @@ class FoodCard extends StatelessWidget {
       ),
     );
       },
+    );
+  }
+
+  Widget _buildImage(BuildContext context) {
+    final height = ResponsiveHelper.clampScaledValue(
+      context,
+      35,
+      min: 120.0,
+      max: 180.0,
+    );
+
+    if (networkImageUrl != null && networkImageUrl!.isNotEmpty) {
+      return Image.network(
+        networkImageUrl!,
+        width: double.infinity,
+        height: height,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          // Fallback to asset if network image fails.
+          return Image.asset(
+            imagePath,
+            width: double.infinity,
+            height: height,
+            fit: BoxFit.cover,
+          );
+        },
+      );
+    }
+
+    return Image.asset(
+      imagePath,
+      width: double.infinity,
+      height: height,
+      fit: BoxFit.cover,
     );
   }
 
