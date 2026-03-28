@@ -11,8 +11,8 @@ class OrdersRepository {
   /// Returns server message on failure; `null` on success.
   Future<String?> requestService(OrderRequestBody body) async {
     try {
-      final res = await _dio.post<Map<String, dynamic>>(
-        ApiConstants.orderRequest,
+      final res = await _dio.postUri(
+        ApiConstants.orderRequestUri,
         data: body.toJson(),
       );
       final data = res.data;

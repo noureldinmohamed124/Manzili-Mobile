@@ -5,7 +5,6 @@ import 'package:manzili_mobile/data/models/service_models.dart';
 import 'package:manzili_mobile/presentation/providers/services_provider.dart';
 import 'package:manzili_mobile/presentation/widgets/home/food_card.dart';
 import 'package:manzili_mobile/presentation/widgets/home/food_list_section.dart';
-import '../../../core/constants/app_assets.dart';
 import '../../../core/strings/app_strings.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/responsive_helper.dart';
@@ -39,13 +38,6 @@ class _HomeViewState extends State<HomeView> {
       child: LayoutBuilder(
         builder: (context, constraints) {
           // Use effective width for scaling to prevent over-scaling on ultra-wide screens
-          final effectiveW = ResponsiveHelper.effectiveWidthFromConstraints(constraints);
-          final gradientWidth = ResponsiveHelper.scaleValue(
-            168.75, // 45% of 375 base width
-            effectiveW,
-            min: 100.0,
-            max: effectiveW * 0.45,
-          );
           final spacing = ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 8.0);
           final horizontalPadding = ResponsiveHelper.responsiveHorizontalPaddingFromConstraints(constraints);
 
@@ -53,49 +45,7 @@ class _HomeViewState extends State<HomeView> {
             backgroundColor: Colors.white,
             body: SafeArea(
               bottom: false,
-              child: Stack(
-                children: [
-                  Positioned(
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    child: SizedBox(
-                      width: double.infinity,
-                      height: gradientWidth * 0.88,
-                      child: Stack(
-                        clipBehavior: Clip.none,
-                        alignment: Alignment.bottomCenter,
-                        children: [
-                          Positioned(
-                            left: 0,
-                            bottom: 0,
-                            child: Image.asset(
-                              AppAssets.gradientBottomLeft,
-                              width: gradientWidth,
-                              height: gradientWidth * 0.88,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                          Positioned(
-                            right: 0,
-                            bottom: 0,
-                            child: Transform.flip(
-                              flipX: true,
-                              child: Image.asset(
-                                AppAssets.gradientBottomLeft,
-                                width: gradientWidth,
-                                height: gradientWidth * 0.88,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  // Main Content with max width constraint
-                  ResponsiveMaxWidth(
+              child: ResponsiveMaxWidth(
                     child: Column(
                       children: [
                         // Header
@@ -148,7 +98,7 @@ class _HomeViewState extends State<HomeView> {
                             borderRadius: BorderRadius.circular(12),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
+                                color: Colors.black.withValues(alpha: 0.05),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
                               ),
@@ -427,8 +377,6 @@ class _HomeViewState extends State<HomeView> {
                       ],
                     ),
                   ),
-                ],
-              ),
             ),
           );
         },

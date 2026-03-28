@@ -19,7 +19,14 @@ class ApiConstants {
   static String serviceByName(String name) => '/api/services/name/$name';
   static String homeServices(int no) => '/api/services/home/$no';
 
-  // Orders
-  static const String orderRequest = '/api/orders/request';
+  // Orders — POST body: OrderRequestBody (camelCase).
+  static const String orderRequestPath = '/api/orders/request';
+
+  /// Resolves to `{baseUrl without trailing slash}/api/orders/request` so Dio never misparses the path.
+  static Uri get orderRequestUri {
+    final b = baseUrl.trim();
+    final root = b.endsWith('/') ? b.substring(0, b.length - 1) : b;
+    return Uri.parse('$root/api/orders/request');
+  }
 }
 
