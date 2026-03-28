@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:manzili_mobile/presentation/providers/auth_provider.dart';
 import 'package:manzili_mobile/presentation/widgets/auth/custom_text_field.dart';
 import 'package:manzili_mobile/presentation/widgets/auth/login_row_cta.dart';
 import 'package:manzili_mobile/presentation/widgets/auth/role_button.dart';
 import 'package:manzili_mobile/presentation/widgets/auth/social_login_button.dart';
-import 'package:manzili_mobile/presentation/views/signin_view.dart';
 import '../../../core/constants/app_assets.dart';
+import '../../../core/strings/app_strings.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/responsive_helper.dart';
 import '../../../core/widgets/responsive_max_width.dart';
@@ -22,6 +23,7 @@ class SignupView extends StatefulWidget {
 class _SignupViewState extends State<SignupView> {
   bool _obscurePassword = true;
   String _selectedRole = 'seller';
+  String? _validationHint;
 
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
@@ -53,13 +55,12 @@ class _SignupViewState extends State<SignupView> {
     final password = _passwordController.text;
 
     if (fullName.isEmpty || email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('من فضلك أكمل جميع البيانات'),
-        ),
-      );
+      setState(() {
+        _validationHint = 'كمّل كل الحقول الأول';
+      });
       return;
     }
+    setState(() => _validationHint = null);
 
     final success = await auth.register(
       fullName: fullName,
@@ -71,24 +72,7 @@ class _SignupViewState extends State<SignupView> {
     if (!mounted) return;
 
     if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('تم إنشاء الحساب بنجاح، يمكنك تسجيل الدخول الآن'),
-        ),
-      );
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const SigninView(),
-        ),
-      );
-    } else {
-      final message = auth.errorMessage ?? 'فشل إنشاء الحساب، حاول مرة أخرى';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-        ),
-      );
+      context.go('/signin');
     }
   }
 
@@ -131,12 +115,12 @@ class _SignupViewState extends State<SignupView> {
                     top: 0,
                     left: 0,
                     right: 0,
-                    child: SizedBox(
+                    child: Image.asset(
+                      AppAssets.gradientTop,
                       height: gradientHeight,
-                      child: Image.asset(
-                        AppAssets.gradientTop,
-                        fit: BoxFit.fill,
-                      ),
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      alignment: Alignment.topCenter,
                     ),
                   ),
                   Column(
@@ -159,12 +143,12 @@ class _SignupViewState extends State<SignupView> {
                               child: Column(
                                   children: [
                                   Text(
-                                    'انشأ حساب جديد',
+                                    AppStrings.signupScreenTitle,
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 38, tablet: 42, desktop: 46),
                                     fontWeight: FontWeight.w800,
-                                    color: const Color(0xFF0F172A),
+                                    color: AppColors.textPrimary,
                                   ),
                                 ),
                                 SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 24)),
@@ -231,20 +215,32 @@ class _SignupViewState extends State<SignupView> {
                                             child: Align(
                                               alignment: Alignment.centerLeft,
                                               child: LoginRowCTA(
-                                                text: 'إنشاء حساب',
+                                                text: AppStrings.signUpCta,
                                                 onTap: () => _handleRegister(context),
                                               ),
                                             ),
                                           ),
+                                          if (_validationHint != null) ...[
+                                            SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 8)),
+                                            Text(
+                                              _validationHint!,
+                                              textAlign: TextAlign.center,
+                                              style: TextStyle(
+                                                fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 13),
+                                                fontWeight: FontWeight.w600,
+                                                color: AppColors.error,
+                                              ),
+                                            ),
+                                          ],
                                           if (auth.errorMessage != null) ...[
                                             SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 8)),
                                             Text(
                                               auth.errorMessage!,
-                                              textAlign: TextAlign.right,
+                                              textAlign: TextAlign.center,
                                               style: TextStyle(
                                                 fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 13),
                                                 fontWeight: FontWeight.w600,
-                                                color: Colors.red,
+                                                color: AppColors.error,
                                               ),
                                             ),
                                           ],
@@ -262,7 +258,7 @@ class _SignupViewState extends State<SignupView> {
                                             Padding(
                                               padding: EdgeInsets.symmetric(vertical: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 8)),
                                               child: Text(
-                                                'أو سجل باستخدام وسائل التواصل الاجتماعي',
+                                                AppStrings.signupSocialDivider,
                                                 textAlign: TextAlign.center,
                                                 style: TextStyle(
                                                   fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 12),
@@ -282,7 +278,7 @@ class _SignupViewState extends State<SignupView> {
                                           Padding(
                                             padding: EdgeInsets.symmetric(horizontal: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12)),
                                             child: Text(
-                                              'أو سجل باستخدام وسائل التواصل الاجتماعي',
+                                              AppStrings.signupSocialDivider,
                                               style: TextStyle(
                                                 fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 12),
                                                 fontWeight: FontWeight.w600,
@@ -309,7 +305,7 @@ class _SignupViewState extends State<SignupView> {
                                   RichText(
                                     textAlign: TextAlign.center,
                                     text: TextSpan(
-                                      text: 'لديك حساب؟ ',
+                                      text: AppStrings.signupHasAccountPrefix,
                                       style: TextStyle(
                                         fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 14),
                                         fontWeight: FontWeight.w600,
@@ -317,19 +313,14 @@ class _SignupViewState extends State<SignupView> {
                                       ),
                                       children: [
                                         TextSpan(
-                                          text: 'سجل الدخول',
+                                          text: AppStrings.signupSignInLink,
                                           style: const TextStyle(
                                             fontWeight: FontWeight.w800,
-                                            color: AppColors.primary,
+                                            color: AppColors.accent,
                                           ),
                                           recognizer: TapGestureRecognizer()
                                             ..onTap = () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) => const SigninView(),
-                                                ),
-                                              );
+                                              context.go('/signin');
                                             },
                                         ),
                                       ],
@@ -346,14 +337,11 @@ class _SignupViewState extends State<SignupView> {
                   Positioned(
                     bottom: 0,
                     left: 0,
-                    child: SizedBox(
+                    child: Image.asset(
+                      AppAssets.gradientBottomLeft,
                       width: gradientBottomWidth,
                       height: gradientBottomHeight,
-                      child: Image.asset(
-                        AppAssets.gradientBottomLeft,
-                        fit: BoxFit.fill,
-                        alignment: Alignment.bottomLeft,
-                      ),
+                      fit: BoxFit.cover,
                     ),
                   ),
                 ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
 import 'sort_option.dart';
 
 class SortModal extends StatelessWidget {
@@ -36,18 +37,18 @@ class SortModal extends StatelessWidget {
                     child: const Icon(
                       Icons.close,
                       size: 20,
-                      color: Color(0xFF64748B),
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ),
-                const Expanded(
+                Expanded(
                   child: Text(
                     'ترتيب بواسطة السعر',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF0F172A),
+                      color: AppColors.textPrimary,
                     ),
                   ),
                 ),

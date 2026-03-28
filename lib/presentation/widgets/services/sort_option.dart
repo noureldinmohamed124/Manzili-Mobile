@@ -34,8 +34,8 @@ class SortOption extends StatelessWidget {
                       ? FontWeight.w600
                       : FontWeight.w500,
                   color: isSelected
-                      ? const Color(0xFF0F172A)
-                      : const Color(0xFF64748B),
+                      ? AppColors.textPrimary
+                      : AppColors.textSecondary,
                 ),
               ),
             ),

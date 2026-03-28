@@ -1,15 +1,57 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:manzili_mobile/data/models/service_models.dart';
+import 'package:manzili_mobile/presentation/providers/services_provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/responsive_helper.dart';
 import '../../core/widgets/responsive_max_width.dart';
 
-class ReviewsView extends StatelessWidget {
-  final String productName;
-  
+class ReviewsView extends StatefulWidget {
   const ReviewsView({
     super.key,
-    this.productName = 'كوكيز بالشكولاتة',
+    this.serviceId,
   });
+
+  final int? serviceId;
+
+  @override
+  State<ReviewsView> createState() => _ReviewsViewState();
+}
+
+class _ReviewsViewState extends State<ReviewsView> {
+  ServiceItem? _service;
+  bool _loading = false;
+  String? _loadError;
+
+  @override
+  void initState() {
+    super.initState();
+    final id = widget.serviceId ?? 0;
+    if (id > 0) {
+      _loading = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        final provider = context.read<ServicesProvider>();
+        final item = await provider.getServiceById(id);
+        if (!mounted) return;
+        setState(() {
+          _service = item;
+          _loading = false;
+          _loadError = item == null ? provider.errorMessage : null;
+        });
+      });
+    }
+  }
+
+  String get _title => _service?.title ?? 'خدمة';
+
+  Map<int, int> _starCounts(List<ServiceReview> reviews) {
+    final m = {for (var s = 1; s <= 5; s++) s: 0};
+    for (final r in reviews) {
+      final k = r.rating.round().clamp(1, 5);
+      m[k] = (m[k] ?? 0) + 1;
+    }
+    return m;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,22 +64,64 @@ class ReviewsView extends StatelessWidget {
             _buildHeader(context),
             Expanded(
               child: ResponsiveMaxWidth(
-                child: SingleChildScrollView(
-                  padding: ResponsiveHelper.responsivePadding(context),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildRatingSummary(context),
-                      _buildIndividualReviews(context),
-                      _buildShowMore(context),
-                      SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 20)),
-                    ],
-                  ),
-                ),
+                child: _buildBody(context),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildBody(BuildContext context) {
+    final id = widget.serviceId ?? 0;
+    if (id <= 0) {
+      return Center(
+        child: Padding(
+          padding: ResponsiveHelper.responsivePadding(context),
+          child: Text(
+            'مفيش خدمة محددة.',
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 15),
+            ),
+          ),
+        ),
+      );
+    }
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_service == null) {
+      return Center(
+        child: Padding(
+          padding: ResponsiveHelper.responsivePadding(context),
+          child: Text(
+            _loadError ?? 'مش قدرنا نحمّل تفاصيل الخدمة',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 15),
+            ),
+          ),
+        ),
+      );
+    }
+
+    final service = _service!;
+    final reviews = service.reviews ?? [];
+    final reviewCount = service.provider?.reviewsNo ?? reviews.length;
+    final avg = service.rating;
+
+    return SingleChildScrollView(
+      padding: ResponsiveHelper.responsivePadding(context),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildRatingSummary(context, avg, reviewCount, reviews),
+          _buildIndividualReviews(context, reviews),
+          SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 20)),
+        ],
       ),
     );
   }
@@ -72,7 +156,7 @@ class ReviewsView extends StatelessWidget {
                 ),
                 SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 4)),
                 Text(
-                  productName,
+                  _title,
                   style: TextStyle(
                     fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 14),
                     fontWeight: FontWeight.w500,
@@ -87,67 +171,82 @@ class ReviewsView extends StatelessWidget {
     );
   }
 
-  Widget _buildRatingSummary(BuildContext context) {
+  Widget _buildRatingSummary(
+    BuildContext context,
+    num avg,
+    int reviewCount,
+    List<ServiceReview> reviews,
+  ) {
+    final fullStars = avg.round().clamp(0, 5);
+    final counts = reviews.isNotEmpty ? _starCounts(reviews) : null;
+    final totalForBars = reviews.length;
+
     return Container(
       margin: EdgeInsets.all(ResponsiveHelper.responsiveSpacingCompat(context, mobile: 22)),
       padding: EdgeInsets.all(ResponsiveHelper.responsiveSpacingCompat(context, mobile: 20)),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F5F5),
+        color: AppColors.surfaceMuted,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (counts != null && totalForBars > 0) ...[
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (var stars = 5; stars >= 1; stars--) ...[
+                        if (stars < 5)
+                          SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12)),
+                        _buildRatingBreakdownItem(
+                          context,
+                          stars,
+                          counts[stars] ?? 0,
+                          totalForBars,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                SizedBox(width: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 24)),
+              ],
               Expanded(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    _buildRatingBreakdownItem(context, 5, 3, 5),
-                    SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12)),
-                    _buildRatingBreakdownItem(context, 4, 1, 5),
-                    SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12)),
-                    _buildRatingBreakdownItem(context, 3, 1, 5),
-                    SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12)),
-                    _buildRatingBreakdownItem(context, 2, 0, 5),
-                    SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12)),
-                    _buildRatingBreakdownItem(context, 1, 0, 5),
+                    Text(
+                      avg.toDouble().toStringAsFixed(1),
+                      style: TextStyle(
+                        fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 48, tablet: 52, desktop: 56),
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 8)),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: List.generate(5, (index) {
+                        return Icon(
+                          index < fullStars ? Icons.star : Icons.star_border,
+                          color: AppColors.primary,
+                          size: ResponsiveHelper.responsiveValueCompat(context, mobile: 24.0),
+                        );
+                      }),
+                    ),
+                    SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 8)),
+                    Text(
+                      '$reviewCount تقييم',
+                      style: TextStyle(
+                        fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 14),
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
                   ],
                 ),
-              ),
-              SizedBox(width: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 24)),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Text(
-                    '4.4',
-                    style: TextStyle(
-                      fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 48, tablet: 52, desktop: 56),
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 8)),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: List.generate(5, (index) {
-                      return Icon(
-                        index < 4 ? Icons.star : Icons.star_border,
-                        color: AppColors.primary,
-                        size: ResponsiveHelper.responsiveValueCompat(context, mobile: 24.0),
-                      );
-                    }),
-                  ),
-                  SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 8)),
-                  Text(
-                    '5 تقييم',
-                    style: TextStyle(
-                      fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 14),
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
               ),
             ],
           ),
@@ -155,20 +254,20 @@ class ReviewsView extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () {},
+              onPressed: null,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.success,
+                backgroundColor: AppColors.success.withValues(alpha: 0.5),
                 padding: EdgeInsets.symmetric(vertical: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16)),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(ResponsiveHelper.responsiveValueCompat(context, mobile: 12.0)),
                 ),
               ),
               child: Text(
-                'اكتب تقييم',
+                'اكتب تقييم (قريباً)',
                 style: TextStyle(
                   fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 16),
                   fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  color: Colors.white.withValues(alpha: 0.9),
                 ),
               ),
             ),
@@ -180,7 +279,7 @@ class ReviewsView extends StatelessWidget {
 
   Widget _buildRatingBreakdownItem(BuildContext context, int stars, int count, int total) {
     final percentage = total > 0 ? count / total : 0.0;
-    
+
     return Row(
       children: [
         Text(
@@ -192,7 +291,6 @@ class ReviewsView extends StatelessWidget {
           ),
         ),
         SizedBox(width: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 8)),
-        // Wrap the bar + stars in Expanded so they can shrink on small widths
         Expanded(
           child: Row(
             children: [
@@ -243,7 +341,7 @@ class ReviewsView extends StatelessWidget {
     );
   }
 
-  Widget _buildIndividualReviews(BuildContext context) {
+  Widget _buildIndividualReviews(BuildContext context, List<ServiceReview> reviews) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 22)),
       child: Column(
@@ -258,21 +356,28 @@ class ReviewsView extends StatelessWidget {
             ),
           ),
           SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16)),
-          _buildReviewCard(
-            context: context,
-            name: 'ليلى أحمد',
-            date: '12-11-2025',
-            rating: 4,
-            review: 'حب هذا المنتج حقا! الشحن سريع والجودة ممتازة. خدمة العملاء كانت مفيدة جدا عندما كان لدي أسئلة. أوصي به للجميع!',
-          ),
-          SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16)),
-          _buildReviewCard(
-            context: context,
-            name: 'ليلى أحمد',
-            date: '12-11-2025',
-            rating: 4,
-            review: 'حب هذا المنتج حقا! الشحن سريع والجودة ممتازة. خدمة العملاء كانت مفيدة جدا عندما كان لدي أسئلة. أوصي به للجميع!',
-          ),
+          if (reviews.isEmpty)
+            Text(
+              'مافيش آراء متاحة حالياً. لو السيرفر بعت قائمة تقييمات مع تفاصيل الخدمة، هتظهر هنا.',
+              style: TextStyle(
+                fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 14),
+                color: AppColors.textSecondary,
+                height: 1.45,
+              ),
+            )
+          else
+            ...reviews.map((r) {
+              return Padding(
+                padding: EdgeInsets.only(bottom: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16)),
+                child: _buildReviewCard(
+                  context: context,
+                  name: r.reviewerName ?? 'مستخدم',
+                  date: r.createdAt ?? '',
+                  rating: r.rating.round().clamp(0, 5),
+                  review: r.comment ?? '',
+                ),
+              );
+            }),
         ],
       ),
     );
@@ -288,7 +393,7 @@ class ReviewsView extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16)),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F5F5),
+        color: AppColors.surfaceMuted,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -302,13 +407,13 @@ class ReviewsView extends StatelessWidget {
                     Container(
                       width: ResponsiveHelper.responsiveValueCompat(context, mobile: 40.0, tablet: 44.0),
                       height: ResponsiveHelper.responsiveValueCompat(context, mobile: 40.0, tablet: 44.0),
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Colors.blue,
+                        color: AppColors.primary.withValues(alpha: 0.2),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.person,
-                        color: Colors.white,
+                        color: AppColors.primary,
                         size: 24,
                       ),
                     ),
@@ -343,48 +448,32 @@ class ReviewsView extends StatelessWidget {
                   ],
                 ),
               ),
-              SizedBox(width: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 8)),
-              Text(
-                date,
-                style: TextStyle(
-                  fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 12),
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.textSecondary,
+              if (date.isNotEmpty) ...[
+                SizedBox(width: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 8)),
+                Text(
+                  date,
+                  style: TextStyle(
+                    fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 12),
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
-          SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12)),
-          Text(
-            review,
-            style: TextStyle(
-              fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 14),
-              fontWeight: FontWeight.w400,
-              color: AppColors.textPrimary,
-              height: 1.5,
+          if (review.isNotEmpty) ...[
+            SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12)),
+            Text(
+              review,
+              style: TextStyle(
+                fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 14),
+                fontWeight: FontWeight.w400,
+                color: AppColors.textPrimary,
+                height: 1.5,
+              ),
             ),
-          ),
+          ],
         ],
-      ),
-    );
-  }
-
-  Widget _buildShowMore(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.all(ResponsiveHelper.responsiveSpacingCompat(context, mobile: 22)),
-        child: GestureDetector(
-          onTap: () {},
-          child: Text(
-            'عرض المزيد',
-            style: TextStyle(
-              fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 16),
-              fontWeight: FontWeight.w600,
-              color: AppColors.primary,
-              decoration: TextDecoration.underline,
-            ),
-          ),
-        ),
       ),
     );
   }
