@@ -10,6 +10,8 @@ class ServicesProvider extends ChangeNotifier {
   List<ServiceItem> _services = [];
   List<ServiceItem> _featuredServices = [];
   List<ServiceItem> _recommendedServices = [];
+  List<ServiceItem> _mostPurchasedServices = [];
+  HomeServicesBuckets? _homeBuckets;
   ServiceItem? _currentServiceDetails;
   bool _isLoading = false;
   String? _errorMessage;
@@ -21,6 +23,8 @@ class ServicesProvider extends ChangeNotifier {
   List<ServiceItem> get services => _services;
   List<ServiceItem> get featuredServices => _featuredServices;
   List<ServiceItem> get recommendedServices => _recommendedServices;
+  List<ServiceItem> get mostPurchasedServices => _mostPurchasedServices;
+  HomeServicesBuckets? get homeBuckets => _homeBuckets;
   ServiceItem? get currentServiceDetails => _currentServiceDetails;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
@@ -29,13 +33,52 @@ class ServicesProvider extends ChangeNotifier {
   int get pageSize => _pageSize;
   int get totalPages => _totalPages;
 
-  /// Fetches paginated list of services.
+  /// Loads home sections when [GET /api/services/home/{no}] exists; otherwise callers use fallbacks.
+  Future<void> fetchHomeBuckets(int no) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        ApiConstants.homeServices(no),
+      );
+
+      final raw = response.data;
+      if (raw == null) {
+        _homeBuckets = null;
+        return;
+      }
+
+      final data = raw['data'] is Map<String, dynamic>
+          ? raw['data'] as Map<String, dynamic>
+          : raw;
+      _homeBuckets = HomeServicesBuckets.fromJson(data);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        _homeBuckets = null;
+        _errorMessage = null;
+      } else {
+        _homeBuckets = null;
+        _errorMessage = _mapDioError(e);
+      }
+    } catch (_) {
+      _homeBuckets = null;
+      _errorMessage = 'مش قدرنا نحمّل أقسام الرئيسية';
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Fetches paginated list of services (camelCase query names per API spec).
   Future<void> fetchServices({
     int page = 1,
     int pageSize = 10,
     int? categoryId,
-    bool? isFeatured,
     bool? isRecommended,
+    bool? topDiscounts,
+    bool? mostPurchased,
   }) async {
     _isLoading = true;
     _errorMessage = null;
@@ -44,17 +87,20 @@ class ServicesProvider extends ChangeNotifier {
     try {
       final queryParameters = <String, dynamic>{
         'page': page,
-        'page_size': pageSize,
+        'pageSize': pageSize,
       };
 
       if (categoryId != null) {
-        queryParameters['category_id'] = categoryId;
-      }
-      if (isFeatured != null) {
-        queryParameters['is_featured'] = isFeatured;
+        queryParameters['categoryId'] = categoryId;
       }
       if (isRecommended != null) {
-        queryParameters['is_recommended'] = isRecommended;
+        queryParameters['isRecommended'] = isRecommended;
+      }
+      if (topDiscounts != null) {
+        queryParameters['topDiscounts'] = topDiscounts;
+      }
+      if (mostPurchased != null) {
+        queryParameters['mostPurchased'] = mostPurchased;
       }
 
       final response = await _dio.get(
@@ -63,13 +109,13 @@ class ServicesProvider extends ChangeNotifier {
       );
 
       if (response.data == null || response.data.toString().isEmpty) {
-        _errorMessage = 'Empty response from server';
+        _errorMessage = 'السيرفر ماردش بيانات';
         return;
       }
 
       final raw = response.data as Map<String, dynamic>?;
       if (raw == null) {
-        _errorMessage = 'Invalid response format';
+        _errorMessage = 'الرد مش صحيح';
         return;
       }
 
@@ -82,14 +128,14 @@ class ServicesProvider extends ChangeNotifier {
     } on DioException catch (e) {
       _errorMessage = _mapDioError(e);
     } catch (e) {
-      _errorMessage = 'Unexpected error occurred';
+      _errorMessage = 'حصل خطأ غير متوقع';
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  /// Fetches featured services list (e.g. for Home view).
+  /// Strong offers / discounts section (does not overwrite main [services] list).
   Future<void> fetchFeaturedServices({
     int page = 1,
     int pageSize = 10,
@@ -99,25 +145,23 @@ class ServicesProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final queryParameters = <String, dynamic>{
-        'page': page,
-        'page_size': pageSize,
-        'is_featured': true,
-      };
-
       final response = await _dio.get(
         ApiConstants.services,
-        queryParameters: queryParameters,
+        queryParameters: <String, dynamic>{
+          'page': page,
+          'pageSize': pageSize,
+          'topDiscounts': true,
+        },
       );
 
       if (response.data == null || response.data.toString().isEmpty) {
-        _errorMessage = 'Empty response from server';
+        _errorMessage = 'السيرفر ماردش بيانات';
         return;
       }
 
       final raw = response.data as Map<String, dynamic>?;
       if (raw == null) {
-        _errorMessage = 'Invalid response format';
+        _errorMessage = 'الرد مش صحيح';
         return;
       }
 
@@ -126,14 +170,14 @@ class ServicesProvider extends ChangeNotifier {
     } on DioException catch (e) {
       _errorMessage = _mapDioError(e);
     } catch (e) {
-      _errorMessage = 'Unexpected error occurred';
+      _errorMessage = 'حصل خطأ غير متوقع';
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  /// Fetches recommended services list (e.g. for Home view).
+  /// Recommended strip.
   Future<void> fetchRecommendedServices({
     int page = 1,
     int pageSize = 10,
@@ -143,25 +187,23 @@ class ServicesProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final queryParameters = <String, dynamic>{
-        'page': page,
-        'page_size': pageSize,
-        'is_recommended': true,
-      };
-
       final response = await _dio.get(
         ApiConstants.services,
-        queryParameters: queryParameters,
+        queryParameters: <String, dynamic>{
+          'page': page,
+          'pageSize': pageSize,
+          'isRecommended': true,
+        },
       );
 
       if (response.data == null || response.data.toString().isEmpty) {
-        _errorMessage = 'Empty response from server';
+        _errorMessage = 'السيرفر ماردش بيانات';
         return;
       }
 
       final raw = response.data as Map<String, dynamic>?;
       if (raw == null) {
-        _errorMessage = 'Invalid response format';
+        _errorMessage = 'الرد مش صحيح';
         return;
       }
 
@@ -170,7 +212,48 @@ class ServicesProvider extends ChangeNotifier {
     } on DioException catch (e) {
       _errorMessage = _mapDioError(e);
     } catch (e) {
-      _errorMessage = 'Unexpected error occurred';
+      _errorMessage = 'حصل خطأ غير متوقع';
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> fetchMostPurchasedServices({
+    int page = 1,
+    int pageSize = 10,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final response = await _dio.get(
+        ApiConstants.services,
+        queryParameters: <String, dynamic>{
+          'page': page,
+          'pageSize': pageSize,
+          'mostPurchased': true,
+        },
+      );
+
+      if (response.data == null || response.data.toString().isEmpty) {
+        _errorMessage = 'السيرفر ماردش بيانات';
+        return;
+      }
+
+      final raw = response.data as Map<String, dynamic>?;
+      if (raw == null) {
+        _errorMessage = 'الرد مش صحيح';
+        return;
+      }
+
+      final data = PaginatedServicesResponse.fromJson(raw);
+      _mostPurchasedServices = data.items;
+    } on DioException catch (e) {
+      _errorMessage = _mapDioError(e);
+    } catch (e) {
+      _errorMessage = 'حصل خطأ غير متوقع';
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -189,26 +272,25 @@ class ServicesProvider extends ChangeNotifier {
       );
 
       if (response.data == null || response.data.toString().isEmpty) {
-        _errorMessage = 'Empty response from server';
+        _errorMessage = 'السيرفر ماردش بيانات';
         return null;
       }
 
       final raw = response.data as Map<String, dynamic>?;
       if (raw == null) {
-        _errorMessage = 'Invalid response format';
+        _errorMessage = 'الرد مش صحيح';
         return null;
       }
 
       final dataJson = raw['data'] as Map<String, dynamic>? ?? raw;
       if (dataJson.isEmpty) {
-        _errorMessage = 'Service not found';
+        _errorMessage = 'مش لاقي الخدمة دي';
         return null;
       }
 
       final item = ServiceItem.fromJson(dataJson);
       _currentServiceDetails = item;
 
-      // Optionally update local cache
       final index = _services.indexWhere((s) => s.id == item.id);
       if (index >= 0) {
         _services[index] = item;
@@ -220,7 +302,7 @@ class ServicesProvider extends ChangeNotifier {
       _errorMessage = _mapDioError(e);
       return null;
     } catch (e) {
-      _errorMessage = 'Unexpected error occurred';
+      _errorMessage = 'حصل خطأ غير متوقع';
       return null;
     } finally {
       _isLoading = false;
@@ -228,8 +310,13 @@ class ServicesProvider extends ChangeNotifier {
     }
   }
 
-  /// Fetches a single service by its name with full details.
-  Future<ServiceItem?> getServiceByName(String name) async {
+  /// GET /api/services/name/{name} with query params per spec.
+  Future<ServiceItem?> getServiceByName(
+    String name, {
+    String? keyword,
+    int pageNumber = 1,
+    int pageSize = 20,
+  }) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -237,29 +324,33 @@ class ServicesProvider extends ChangeNotifier {
     try {
       final response = await _dio.get(
         ApiConstants.serviceByName(name),
+        queryParameters: <String, dynamic>{
+          if (keyword != null && keyword.isNotEmpty) 'keyword': keyword,
+          'pageNumber': pageNumber,
+          'pageSize': pageSize,
+        },
       );
 
       if (response.data == null || response.data.toString().isEmpty) {
-        _errorMessage = 'Empty response from server';
+        _errorMessage = 'السيرفر ماردش بيانات';
         return null;
       }
 
       final raw = response.data as Map<String, dynamic>?;
       if (raw == null) {
-        _errorMessage = 'Invalid response format';
+        _errorMessage = 'الرد مش صحيح';
         return null;
       }
 
       final dataJson = raw['data'] as Map<String, dynamic>? ?? raw;
       if (dataJson.isEmpty) {
-        _errorMessage = 'Service not found';
+        _errorMessage = 'مش لاقي الخدمة دي';
         return null;
       }
 
       final item = ServiceItem.fromJson(dataJson);
       _currentServiceDetails = item;
 
-      // Optionally update local cache
       final index = _services.indexWhere((s) => s.id == item.id);
       if (index >= 0) {
         _services[index] = item;
@@ -271,12 +362,23 @@ class ServicesProvider extends ChangeNotifier {
       _errorMessage = _mapDioError(e);
       return null;
     } catch (e) {
-      _errorMessage = 'Unexpected error occurred';
+      _errorMessage = 'حصل خطأ غير متوقع';
       return null;
     } finally {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  /// Client filter on the last loaded [services] list (works when API has no text search).
+  List<ServiceItem> filterServicesLocally(String query) {
+    final q = query.trim().toLowerCase();
+    if (q.isEmpty) return List<ServiceItem>.from(_services);
+    return _services
+        .where((s) =>
+            s.title.toLowerCase().contains(q) ||
+            s.providerName.toLowerCase().contains(q))
+        .toList();
   }
 
   String _mapDioError(DioException e) {
@@ -285,18 +387,19 @@ class ServicesProvider extends ChangeNotifier {
       case DioExceptionType.sendTimeout:
       case DioExceptionType.receiveTimeout:
       case DioExceptionType.connectionError:
-        return 'Network error. Please check your connection.';
+        return 'مشكلة في النت، جرّب تاني';
       case DioExceptionType.badResponse:
         final statusCode = e.response?.statusCode;
-        if (statusCode == 400) return 'Bad request';
-        if (statusCode == 401) return 'Unauthorized';
-        return 'Server error ($statusCode)';
+        if (statusCode == 400) return 'البيانات مش صح';
+        if (statusCode == 401) return 'محتاج تسجّل دخول';
+        if (statusCode == 403) return 'مش مسموح بالخطوة دي';
+        if (statusCode == 404) return 'مش لاقي اللي بتدور عليه';
+        return 'مشكلة من السيرفر ($statusCode)';
       case DioExceptionType.cancel:
-        return 'Request cancelled';
+        return 'اتلغى الطلب';
       case DioExceptionType.unknown:
       default:
-        return 'Something went wrong';
+        return 'حصل حاجة غلط، جرّب تاني';
     }
   }
 }
-

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_assets.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class LoginRowCTA extends StatelessWidget {
   final String text;
@@ -28,9 +29,9 @@ class LoginRowCTA extends StatelessWidget {
           Text(
             text,
             style: const TextStyle(
-              fontSize: 20, 
+              fontSize: 20,
               fontWeight: FontWeight.w800,
-              color: Color(0xFF0F172A),
+              color: AppColors.textPrimary,
             ),
           ),
         ],

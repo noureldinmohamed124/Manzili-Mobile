@@ -23,7 +23,9 @@ class RoleButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : const Color(0xFFEFF1F4),
+          color: isSelected
+              ? AppColors.secondary
+              : AppColors.roleUnselectedBackground,
           borderRadius: BorderRadius.circular(14),
         ),
         child: Row(

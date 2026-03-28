@@ -2,6 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:manzili_mobile/core/network/api_constants.dart';
 import 'package:manzili_mobile/core/network/dio_client.dart';
+import 'package:manzili_mobile/core/network/json_parse.dart';
+import 'package:manzili_mobile/core/utils/jwt_payload.dart';
 import 'package:manzili_mobile/data/models/auth_models.dart';
 
 enum AuthStatus {
@@ -17,13 +19,37 @@ class AuthProvider extends ChangeNotifier {
   String? _accessToken;
   String? _refreshToken;
   String? _errorMessage;
+  /// From JWT: 1 = buyer, 2 = seller, 3 = admin (null if not in token).
+  int? _userRole;
 
   AuthStatus get status => _status;
   String? get accessToken => _accessToken;
   String? get refreshToken => _refreshToken;
   String? get errorMessage => _errorMessage;
+  int? get userRole => _userRole;
 
   bool get isAuthenticated => _status == AuthStatus.authenticated;
+
+  /// First screen after successful login/signup flow.
+  String get postLoginRoute {
+    switch (_userRole) {
+      case 2:
+        return '/seller';
+      case 3:
+        return '/admin';
+      case 1:
+      default:
+        return '/home';
+    }
+  }
+
+  void _applyClaimsFromAccessToken(String? token) {
+    _userRole = null;
+    if (token == null || token.isEmpty) return;
+    final payload = decodeJwtPayload(token);
+    if (payload == null) return;
+    _userRole = parseRoleClaim(payload);
+  }
 
   /// Registers a new user.
   Future<bool> register({
@@ -34,6 +60,9 @@ class AuthProvider extends ChangeNotifier {
   }) async {
     _errorMessage = null;
     notifyListeners();
+
+    // Register must not send a stale Bearer token; some APIs return success without tokens.
+    DioClient.instance.setAccessToken(null);
 
     final body = RegisterRequest(
       fullName: fullName,
@@ -48,22 +77,25 @@ class AuthProvider extends ChangeNotifier {
         data: body,
       );
 
-      // Expecting: { "success": true, "message": "User Registered Successfully" }
-      final data = response.data as Map<String, dynamic>;
+      final data = tryParseJsonMap(response.data);
+      if (data == null) {
+        _errorMessage = 'السيرفر ردّ بشكل غريب';
+        return false;
+      }
       final success = data['success'] == true;
       if (!success) {
-        _errorMessage = data['message']?.toString() ?? 'Registration failed';
+        _errorMessage = data['message']?.toString() ?? 'التسجيل متمش';
       }
       return success;
     } on DioException catch (e) {
       if (e.response?.statusCode == 409) {
-        _errorMessage = 'Email already exists';
+        _errorMessage = 'الإيميل ده مسجل قبل كده';
       } else {
-        _errorMessage = _mapDioError(e);
+        _errorMessage = _messageFromDio(e);
       }
       return false;
     } catch (e) {
-      _errorMessage = 'Unexpected error occurred';
+      _errorMessage = 'حصل خطأ غير متوقع';
       return false;
     } finally {
       notifyListeners();
@@ -79,6 +111,10 @@ class AuthProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
+    // Critical: login must be anonymous. A leftover Bearer token often makes the server
+    // return { success: true, message: "..." } without new tokens in the body.
+    DioClient.instance.setAccessToken(null);
+
     final body = LoginRequest(email: email, password: password).toJson();
 
     try {
@@ -87,53 +123,58 @@ class AuthProvider extends ChangeNotifier {
         data: body,
       );
 
-      final raw = response.data;
-      if (raw == null || raw.toString().isEmpty) {
-        _errorMessage = 'Empty response from server';
-        _status = AuthStatus.unauthenticated;
-        return false;
-      }
-      if (raw is! Map<String, dynamic>) {
-        _errorMessage = 'Unexpected response from server';
+      final map = tryParseJsonMap(response.data);
+      if (map == null) {
+        _errorMessage = 'السيرفر ماردش بيانات صحيحة';
         _status = AuthStatus.unauthenticated;
         return false;
       }
 
-      // Handle both formats:
-      // 1. Direct: { "accessToken": "...", "refreshToken": "..." }
-      // 2. Wrapped: { "success": true, "message": "...", "data": { "accessToken": "...", "refreshToken": "..." } }
-      Map<String, dynamic> tokenJson;
-      if (raw.containsKey('accessToken') && raw.containsKey('refreshToken')) {
-        // Direct format
-        tokenJson = raw;
-      } else if (raw['success'] == true && raw['data'] is Map<String, dynamic>) {
-        // Wrapped format
-        tokenJson = raw['data'] as Map<String, dynamic>;
-      } else {
-        _errorMessage = raw['message']?.toString() ?? 'Login failed';
+      final tokens = TokenResponse.tryDecode(map);
+      if (tokens != null) {
+        _accessToken = tokens.accessToken;
+        _refreshToken = tokens.refreshToken;
+        DioClient.instance.setAccessToken(_accessToken);
+        _applyClaimsFromAccessToken(_accessToken);
+        _status = AuthStatus.authenticated;
+        _errorMessage = null;
+        return true;
+      }
+
+      if (map['success'] == true) {
+        if (kDebugMode) {
+          debugPrint(
+            'Auth login: success=true but tokens not parsed. keys=${map.keys.toList()}',
+          );
+        }
+        _errorMessage =
+            'مش لاقي توكنات الدخول في رد السيرفر. كلم الدعم أو جرّب تاني.';
         _status = AuthStatus.unauthenticated;
         return false;
       }
 
-      final tokenResponse = TokenResponse.fromJson(tokenJson);
+      if (map['success'] == false) {
+        _errorMessage = map['message']?.toString() ?? 'تسجيل الدخول فشل';
+        _status = AuthStatus.unauthenticated;
+        return false;
+      }
 
-      _accessToken = tokenResponse.accessToken;
-      _refreshToken = tokenResponse.refreshToken;
-
-      DioClient.instance.setAccessToken(_accessToken);
-
-      _status = AuthStatus.authenticated;
-      return true;
+      _errorMessage = 'رد السيرفر ناقص التوكنات';
+      _status = AuthStatus.unauthenticated;
+      return false;
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
-        _errorMessage = 'Invalid email or password';
+        _errorMessage = _extractServerMessage(e) ?? 'الإيميل أو الباسورد غلط';
       } else {
-        _errorMessage = _mapDioError(e);
+        _errorMessage = _messageFromDio(e);
       }
       _status = AuthStatus.unauthenticated;
       return false;
-    } catch (e) {
-      _errorMessage = 'Unexpected error occurred';
+    } catch (e, st) {
+      debugPrint('login parse: $e\n$st');
+      _errorMessage = e is FormatException
+          ? 'السيرفر ردّ بشكل مش متوقع'
+          : 'حصل خطأ غير متوقع';
       _status = AuthStatus.unauthenticated;
       return false;
     } finally {
@@ -144,7 +185,7 @@ class AuthProvider extends ChangeNotifier {
   /// Uses the stored refresh token to obtain a new access token.
   Future<bool> refreshTokens() async {
     if (_refreshToken == null) {
-      _errorMessage = 'No refresh token available';
+      _errorMessage = 'مفيش توكن تجديد';
       notifyListeners();
       return false;
     }
@@ -158,40 +199,25 @@ class AuthProvider extends ChangeNotifier {
         data: body,
       );
 
-      final raw = response.data;
-      if (raw == null || raw.toString().isEmpty) {
-        _errorMessage = 'Empty response from server';
-        notifyListeners();
-        return false;
-      }
-      if (raw is! Map<String, dynamic>) {
-        _errorMessage = 'Unexpected response from server';
+      final map = tryParseJsonMap(response.data);
+      if (map == null) {
+        _errorMessage = 'السيرفر ماردش بيانات';
         notifyListeners();
         return false;
       }
 
-      // Handle both formats:
-      // 1. Direct: { "accessToken": "...", "refreshToken": "..." }
-      // 2. Wrapped: { "success": true, "message": "...", "data": { "accessToken": "...", "refreshToken": "..." } }
-      Map<String, dynamic> tokenJson;
-      if (raw.containsKey('accessToken') && raw.containsKey('refreshToken')) {
-        // Direct format
-        tokenJson = raw;
-      } else if (raw['success'] == true && raw['data'] is Map<String, dynamic>) {
-        // Wrapped format
-        tokenJson = raw['data'] as Map<String, dynamic>;
-      } else {
-        _errorMessage = raw['message']?.toString() ?? 'Refresh failed';
+      final tokens = TokenResponse.tryDecode(map);
+      if (tokens == null) {
+        _errorMessage = map['message']?.toString() ?? 'تجديد الجلسة فشل';
         notifyListeners();
         return false;
       }
 
-      final tokenResponse = TokenResponse.fromJson(tokenJson);
-
-      _accessToken = tokenResponse.accessToken;
-      _refreshToken = tokenResponse.refreshToken;
+      _accessToken = tokens.accessToken;
+      _refreshToken = tokens.refreshToken;
 
       DioClient.instance.setAccessToken(_accessToken);
+      _applyClaimsFromAccessToken(_accessToken);
 
       _status = AuthStatus.authenticated;
       _errorMessage = null;
@@ -199,25 +225,78 @@ class AuthProvider extends ChangeNotifier {
       return true;
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
-        _errorMessage = 'Invalid refresh token';
+        _errorMessage =
+            _extractServerMessage(e) ?? 'جلسة الدخول خلصت، سجّل دخول تاني';
       } else {
-        _errorMessage = _mapDioError(e);
+        _errorMessage = _messageFromDio(e);
       }
       _status = AuthStatus.unauthenticated;
       _accessToken = null;
       _refreshToken = null;
+      _userRole = null;
       DioClient.instance.setAccessToken(null);
       notifyListeners();
       return false;
     } catch (e) {
-      _errorMessage = 'Unexpected error occurred';
+      _errorMessage = 'حصل خطأ غير متوقع';
       _status = AuthStatus.unauthenticated;
       _accessToken = null;
       _refreshToken = null;
+      _userRole = null;
       DioClient.instance.setAccessToken(null);
       notifyListeners();
       return false;
     }
+  }
+
+  String _messageFromDio(DioException e) {
+    final server = _extractServerMessage(e);
+    if (server != null && server.isNotEmpty) {
+      return server;
+    }
+    return _mapDioError(e);
+  }
+
+  /// ASP.NET ProblemDetails + plain string bodies.
+  String? _extractServerMessage(DioException e) {
+    final parsed = tryParseJsonMap(e.response?.data);
+    if (parsed != null) {
+      final errors = parsed['errors'];
+      if (errors is Map) {
+        final parts = <String>[];
+        for (final v in errors.values) {
+          if (v is List) {
+            for (final item in v) {
+              parts.add(item.toString());
+            }
+          } else if (v != null) {
+            parts.add(v.toString());
+          }
+        }
+        if (parts.isNotEmpty) {
+          return parts.join(' ');
+        }
+      }
+      final msg = parsed['message'];
+      if (msg is String && msg.trim().isNotEmpty) {
+        return msg.trim();
+      }
+      final title = parsed['title'];
+      if (title is String && title.trim().isNotEmpty) {
+        final t = title.trim();
+        if (!t.toLowerCase().contains('validation errors')) {
+          return t;
+        }
+      }
+    }
+    final data = e.response?.data;
+    if (data is String) {
+      final s = data.trim();
+      if (s.isNotEmpty && s.length < 300) {
+        return s;
+      }
+    }
+    return null;
   }
 
   void logout() {
@@ -225,6 +304,7 @@ class AuthProvider extends ChangeNotifier {
     _accessToken = null;
     _refreshToken = null;
     _errorMessage = null;
+    _userRole = null;
     DioClient.instance.setAccessToken(null);
     notifyListeners();
   }
@@ -235,18 +315,21 @@ class AuthProvider extends ChangeNotifier {
       case DioExceptionType.sendTimeout:
       case DioExceptionType.receiveTimeout:
       case DioExceptionType.connectionError:
-        return 'Network error. Please check your connection.';
+        return 'مشكلة في النت، جرّب تاني';
       case DioExceptionType.badResponse:
         final statusCode = e.response?.statusCode;
-        if (statusCode == 400) return 'Bad request';
-        if (statusCode == 401) return 'Unauthorized';
-        if (statusCode == 409) return 'Conflict';
-        return 'Server error ($statusCode)';
+        if (statusCode == 400) return 'البيانات مش صح';
+        if (statusCode == 401) return 'محتاج تسجّل دخول';
+        if (statusCode == 403) return 'مش مسموحلك بالخطوة دي';
+        if (statusCode == 404) return 'المطلوب مش موجود';
+        if (statusCode == 409) return 'الإيميل مسجل قبل كده';
+        if (statusCode == 500) return 'حصل خطأ في السيرفر، جرّب بعدين';
+        return 'مشكلة من السيرفر ($statusCode)';
       case DioExceptionType.cancel:
-        return 'Request cancelled';
+        return 'اتلغى الطلب';
       case DioExceptionType.unknown:
       default:
-        return 'Something went wrong';
+        return 'حصل حاجة غلط، جرّب تاني';
     }
   }
 }

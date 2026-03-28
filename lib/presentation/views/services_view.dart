@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:manzili_mobile/data/models/service_models.dart';
 import 'package:manzili_mobile/presentation/providers/services_provider.dart';
-import 'package:manzili_mobile/presentation/views/service_details_view.dart';
 import 'package:manzili_mobile/presentation/widgets/services/filter_button.dart';
 import 'package:manzili_mobile/presentation/widgets/services/service_grid_card.dart';
 import 'package:manzili_mobile/presentation/widgets/services/sort_modal.dart';
+import '../../../core/strings/app_strings.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/responsive_helper.dart';
 import '../../../core/widgets/responsive_max_width.dart';
@@ -20,13 +21,54 @@ class ServicesView extends StatefulWidget {
 class _ServicesViewState extends State<ServicesView> {
   String _selectedFilter = 'اكتشف افضل الخدمات';
   String _selectedSortOption = 'الافتراضي';
+  String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ServicesProvider>().fetchServices();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final q = GoRouter.of(context).state.uri.queryParameters['q'] ?? '';
+      setState(() => _searchQuery = q);
+      await context.read<ServicesProvider>().fetchServices(page: 1, pageSize: 50);
     });
+  }
+
+  void _openSearchDialog() {
+    final controller = TextEditingController(text: _searchQuery);
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          title: const Text(AppStrings.servicesSearchDialogTitle),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            textInputAction: TextInputAction.search,
+            decoration: const InputDecoration(
+              hintText: AppStrings.servicesSearchFieldHint,
+            ),
+            onSubmitted: (v) {
+              setState(() => _searchQuery = v.trim());
+              Navigator.of(ctx).pop();
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('إلغاء'),
+            ),
+            FilledButton(
+              onPressed: () {
+                setState(() => _searchQuery = controller.text.trim());
+                Navigator.of(ctx).pop();
+              },
+              child: const Text(AppStrings.servicesSearchAction),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _showSortModal(BuildContext context) {
@@ -39,7 +81,7 @@ class _ServicesViewState extends State<ServicesView> {
           setState(() {
             _selectedSortOption = option;
           });
-          Navigator.pop(context);
+          context.pop();
         },
       ),
     );
@@ -81,14 +123,14 @@ class _ServicesViewState extends State<ServicesView> {
                         width: ResponsiveHelper.scaleValue(40.0, constraints.maxWidth, min: 36.0, max: 48.0),
                         height: ResponsiveHelper.scaleValue(40.0, constraints.maxWidth, min: 36.0, max: 48.0),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF5F5F5),
+                          color: AppColors.surfaceMuted,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: IconButton(
                           padding: EdgeInsets.zero,
                           icon: const Icon(Icons.search),
                           color: AppColors.textPrimary,
-                          onPressed: () {},
+                          onPressed: _openSearchDialog,
                         ),
                       ),
                       SizedBox(width: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 8.0)),
@@ -103,7 +145,7 @@ class _ServicesViewState extends State<ServicesView> {
                           padding: EdgeInsets.zero,
                           icon: const Icon(Icons.shopping_cart_outlined),
                           color: Colors.white,
-                          onPressed: () {},
+                          onPressed: () => context.push('/cart'),
                         ),
                       ),
                     ],
@@ -122,11 +164,11 @@ class _ServicesViewState extends State<ServicesView> {
                           ),
                           SizedBox(width: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 8.0)),
                         GestureDetector(
-                          onTap: () => Navigator.pop(context),
+                          onTap: () => context.pop(),
                           child: Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF5F5F5),
+                              color: AppColors.surfaceMuted,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Icon(
@@ -281,27 +323,31 @@ class _ServicesViewState extends State<ServicesView> {
                                 const SizedBox(height: 12),
                                 ElevatedButton(
                                   onPressed: () {
-                                    servicesProvider.fetchServices();
+                                    servicesProvider.fetchServices(page: 1, pageSize: 50);
                                   },
-                                  child: const Text('إعادة المحاولة'),
+                                  child: const Text('جرّب تاني'),
                                 ),
                               ],
                             ),
                           );
                         }
 
-                        final List<ServiceItem> services =
-                            servicesProvider.services;
+                        final List<ServiceItem> services = _searchQuery.isEmpty
+                            ? servicesProvider.services
+                            : servicesProvider.filterServicesLocally(_searchQuery);
 
                         if (services.isEmpty) {
-                          return const Center(
+                          return Center(
                             child: Text(
-                              'لا توجد خدمات متاحة حالياً',
-                              style: TextStyle(
+                              _searchQuery.isEmpty
+                                  ? 'مفيش خدمات دلوقتي، جرّب تاني بعدين'
+                                  : 'مفيش نتيجة للبحث "$_searchQuery"',
+                              style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.textSecondary,
                               ),
+                              textAlign: TextAlign.center,
                             ),
                           );
                         }
@@ -356,16 +402,8 @@ class _ServicesViewState extends State<ServicesView> {
                               itemBuilder: (context, index) {
                                 final service = services[index];
                                 return GestureDetector(
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => ServiceDetailsView(
-                                          serviceId: service.id,
-                                        ),
-                                      ),
-                                    );
-                                  },
+                                  onTap: () =>
+                                      context.push('/service/${service.id}'),
                                   child: ServiceGridCard(service: service),
                                 );
                               },

@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:manzili_mobile/presentation/widgets/common/service_cover_image.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/responsive_helper.dart';
 
 class FoodCard extends StatelessWidget {
-  final String imagePath;
-
- 
   final String? networkImageUrl;
   final String name;
   final String sellerName;
@@ -19,7 +17,6 @@ class FoodCard extends StatelessWidget {
 
   const FoodCard({
     super.key,
-    required this.imagePath,
     this.networkImageUrl,
     required this.name,
     required this.sellerName,
@@ -47,7 +44,9 @@ class FoodCard extends StatelessWidget {
           onTap: onTap,
           child: Container(
             width: cardWidth,
-            margin: EdgeInsets.only(left: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12)),
+            margin: EdgeInsetsDirectional.only(
+              start: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12),
+            ),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(ResponsiveHelper.responsiveValueCompat(context, mobile: 16.0)),
@@ -217,26 +216,8 @@ class FoodCard extends StatelessWidget {
       max: 180.0,
     );
 
-    if (networkImageUrl != null && networkImageUrl!.isNotEmpty) {
-      return Image.network(
-        networkImageUrl!,
-        width: double.infinity,
-        height: height,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          // Fallback to asset if network image fails.
-          return Image.asset(
-            imagePath,
-            width: double.infinity,
-            height: height,
-            fit: BoxFit.cover,
-          );
-        },
-      );
-    }
-
-    return Image.asset(
-      imagePath,
+    return ServiceCoverImage(
+      imageUrlRaw: networkImageUrl,
       width: double.infinity,
       height: height,
       fit: BoxFit.cover,

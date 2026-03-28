@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:manzili_mobile/data/models/service_models.dart';
 import 'package:manzili_mobile/presentation/providers/services_provider.dart';
-import 'package:manzili_mobile/presentation/views/service_details_view.dart';
 import 'package:manzili_mobile/presentation/widgets/home/food_card.dart';
 import 'package:manzili_mobile/presentation/widgets/home/food_list_section.dart';
-import 'package:manzili_mobile/presentation/widgets/home/bottom_nav_bar.dart';
-import 'package:manzili_mobile/presentation/views/services_view.dart';
-import '../../../core/constants/app_assets.dart';
-import '../../../core/network/api_constants.dart';
+import '../../../core/strings/app_strings.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/responsive_helper.dart';
 import '../../../core/widgets/responsive_max_width.dart';
@@ -21,18 +18,16 @@ class HomeView extends StatefulWidget {
 }
 
 class _HomeViewState extends State<HomeView> {
-  int _currentNavIndex = 0;
-
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final servicesProvider = context.read<ServicesProvider>();
-      // General services list for the "الخدمات" section and ServicesView.
+      servicesProvider.fetchHomeBuckets(1);
       servicesProvider.fetchServices(page: 1, pageSize: 10);
-      // Additional curated lists for the Home sections.
       servicesProvider.fetchFeaturedServices(page: 1, pageSize: 10);
       servicesProvider.fetchRecommendedServices(page: 1, pageSize: 10);
+      servicesProvider.fetchMostPurchasedServices(page: 1, pageSize: 10);
     });
   }
 
@@ -43,13 +38,6 @@ class _HomeViewState extends State<HomeView> {
       child: LayoutBuilder(
         builder: (context, constraints) {
           // Use effective width for scaling to prevent over-scaling on ultra-wide screens
-          final effectiveW = ResponsiveHelper.effectiveWidthFromConstraints(constraints);
-          final gradientWidth = ResponsiveHelper.scaleValue(
-            168.75, // 45% of 375 base width
-            effectiveW,
-            min: 100.0,
-            max: effectiveW * 0.45,
-          );
           final spacing = ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 8.0);
           final horizontalPadding = ResponsiveHelper.responsiveHorizontalPaddingFromConstraints(constraints);
 
@@ -57,32 +45,7 @@ class _HomeViewState extends State<HomeView> {
             backgroundColor: Colors.white,
             body: SafeArea(
               bottom: false,
-              child: Stack(
-                children: [
-                  // Bottom Gradients only
-                  Positioned(
-                    bottom: 0,
-                    left: 0,
-                    child: Image.asset(
-                      AppAssets.gradientBottomLeft,
-                      width: gradientWidth,
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: Transform(
-                      alignment: Alignment.center,
-                      transform: Matrix4.identity()..scale(-1.0, 1.0),
-                      child: Image.asset(
-                        AppAssets.gradientBottomLeft,
-                        width: gradientWidth,
-                      ),
-                    ),
-                  ),
-
-                  // Main Content with max width constraint
-                  ResponsiveMaxWidth(
+              child: ResponsiveMaxWidth(
                     child: Column(
                       children: [
                         // Header
@@ -110,23 +73,17 @@ class _HomeViewState extends State<HomeView> {
                                         return Wrap(
                                           spacing: spacing,
                                           children: [
-                                            _buildIconButton(Icons.settings_outlined, AppColors.textPrimary, const Color(0xFFF5F5F5), iconSize, () {}),
-                                            _buildIconButton(Icons.notifications_outlined, AppColors.textSecondary, Colors.white, iconSize, () {}),
-                                            _buildIconButton(Icons.shopping_cart_outlined, Colors.white, AppColors.primary, iconSize, () {}),
+                                            _buildIconButton(Icons.notifications_outlined, AppColors.textSecondary, Colors.white, iconSize, () => context.push('/notifications')),
+                                            _buildIconButton(Icons.shopping_cart_outlined, Colors.white, AppColors.primary, iconSize, () => context.push('/cart')),
                                           ],
                                         );
                                       }
                                       
                                       return Row(
                                         children: [
-                                          // Settings Button
-                                          _buildIconButton(Icons.settings_outlined, AppColors.textPrimary, const Color(0xFFF5F5F5), iconSize, () {}),
+                                          _buildIconButton(Icons.notifications_outlined, AppColors.textSecondary, Colors.white, iconSize, () => context.push('/notifications')),
                                           SizedBox(width: spacing),
-                                          // Notifications Button
-                                          _buildIconButton(Icons.notifications_outlined, AppColors.textSecondary, Colors.white, iconSize, () {}),
-                                          SizedBox(width: spacing),
-                                          // Shopping Cart Button
-                                          _buildIconButton(Icons.shopping_cart_outlined, Colors.white, AppColors.primary, iconSize, () {}),
+                                          _buildIconButton(Icons.shopping_cart_outlined, Colors.white, AppColors.primary, iconSize, () => context.push('/cart')),
                                         ],
                                       );
                                     },
@@ -141,18 +98,29 @@ class _HomeViewState extends State<HomeView> {
                             borderRadius: BorderRadius.circular(12),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
+                                color: Colors.black.withValues(alpha: 0.05),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
                               ),
                             ],
                           ),
                                       child: TextField(
+                                        textInputAction: TextInputAction.search,
+                                        onSubmitted: (value) {
+                                          final q = value.trim();
+                                          if (q.isEmpty) return;
+                                          context.go(
+                                            Uri(
+                                              path: '/services',
+                                              queryParameters: {'q': q},
+                                            ).toString(),
+                                          );
+                                        },
                                         style: TextStyle(
                                           fontSize: ResponsiveHelper.responsiveFontSize(context, base: 14.0, min: 12.0, max: 16.0),
                                         ),
                                         decoration: InputDecoration(
-                                          hintText: 'نفسك فأيه؟',
+                                          hintText: 'دور على إيه؟ اكتب هنا',
                                           hintStyle: TextStyle(
                                             color: AppColors.textHint,
                                             fontSize: ResponsiveHelper.responsiveFontSize(context, base: 14.0, min: 12.0, max: 16.0),
@@ -167,25 +135,32 @@ class _HomeViewState extends State<HomeView> {
                                     ),
                                   ),
                                   SizedBox(width: spacing),
-                                  // Profile Picture
-                                  Container(
-                                    width: iconSize,
-                                    height: iconSize,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: Colors.blue.shade200,
-                            width: 2,
-                          ),
-                        ),
-                        child: ClipOval(
-                          child: Container(
-                            color: Colors.blue.shade100,
-                            child: const Icon(
-                              Icons.person,
-                              color: Colors.blue,
-                            ),
-                          ),
+                                  Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      onTap: () => context.push('/profile'),
+                                      customBorder: const CircleBorder(),
+                                      child: Container(
+                                        width: iconSize,
+                                        height: iconSize,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: AppColors.coolSteel.withValues(alpha: 0.45),
+                                            width: 2,
+                                          ),
+                                        ),
+                                        child: ClipOval(
+                                          child: Container(
+                                            color: AppColors.surfaceMuted,
+                                            child: Icon(
+                                              Icons.person_rounded,
+                                              color: AppColors.heading,
+                                              size: iconSize * 0.55,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -201,12 +176,22 @@ class _HomeViewState extends State<HomeView> {
                           ),
                           child: Column(
                             children: [
-                              Text(
-                                'منزلي',
-                                style: TextStyle(
-                                  fontSize: ResponsiveHelper.responsiveFontSize(context, base: 32.0, min: 24.0, max: 48.0),
-                                  fontWeight: FontWeight.w900,
-                                  color: AppColors.textPrimary,
+                              GestureDetector(
+                                onTap: () {
+                                  final p = context.read<ServicesProvider>();
+                                  p.fetchHomeBuckets(1);
+                                  p.fetchServices(page: 1, pageSize: 10);
+                                  p.fetchFeaturedServices(page: 1, pageSize: 10);
+                                  p.fetchRecommendedServices(page: 1, pageSize: 10);
+                                  p.fetchMostPurchasedServices(page: 1, pageSize: 10);
+                                },
+                                child: Text(
+                                  AppStrings.appName,
+                                  style: TextStyle(
+                                    fontSize: ResponsiveHelper.responsiveFontSize(context, base: 32.0, min: 24.0, max: 48.0),
+                                    fontWeight: FontWeight.w900,
+                                    color: AppColors.heading,
+                                  ),
                                 ),
                               ),
                               SizedBox(height: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 4.0)),
@@ -244,14 +229,24 @@ class _HomeViewState extends State<HomeView> {
                             ),
                             child: Consumer<ServicesProvider>(
                               builder: (context, servicesProvider, _) {
-                                final featured = servicesProvider.featuredServices;
-                                final recommended = servicesProvider.recommendedServices;
-                                final allServices = servicesProvider.services;
+                                final buckets = servicesProvider.homeBuckets;
+                                final featured = buckets != null && buckets.topDiscounts.isNotEmpty
+                                    ? buckets.topDiscounts
+                                    : servicesProvider.featuredServices;
+                                final recommended = buckets != null && buckets.recommended.isNotEmpty
+                                    ? buckets.recommended
+                                    : servicesProvider.recommendedServices;
+                                final mostSold = buckets != null && buckets.mostPurchased.isNotEmpty
+                                    ? buckets.mostPurchased
+                                    : servicesProvider.mostPurchasedServices;
+                                final allServices = buckets != null && buckets.regular.isNotEmpty
+                                    ? buckets.regular
+                                    : servicesProvider.services;
 
-                                final bool isInitialLoading =
-                                    servicesProvider.isLoading &&
+                                final bool isInitialLoading = servicesProvider.isLoading &&
                                     featured.isEmpty &&
                                     recommended.isEmpty &&
+                                    mostSold.isEmpty &&
                                     allServices.isEmpty;
 
                                 if (isInitialLoading) {
@@ -260,11 +255,50 @@ class _HomeViewState extends State<HomeView> {
                                   );
                                 }
 
+                                if (servicesProvider.errorMessage != null &&
+                                    featured.isEmpty &&
+                                    recommended.isEmpty &&
+                                    mostSold.isEmpty &&
+                                    allServices.isEmpty) {
+                                  return Center(
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(24),
+                                      child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            servicesProvider.errorMessage!,
+                                            textAlign: TextAlign.center,
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w600,
+                                              color: AppColors.error,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 16),
+                                          FilledButton(
+                                            onPressed: () {
+                                              servicesProvider.fetchHomeBuckets(1);
+                                              servicesProvider.fetchServices(page: 1, pageSize: 10);
+                                              servicesProvider.fetchFeaturedServices(page: 1, pageSize: 10);
+                                              servicesProvider.fetchRecommendedServices(page: 1, pageSize: 10);
+                                              servicesProvider.fetchMostPurchasedServices(page: 1, pageSize: 10);
+                                            },
+                                            child: const Text('جرّب تاني'),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                }
+
                                 return SingleChildScrollView(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      // أقوى العروض (Strongest Offers) - uses featured services
+                                      _HomeQuickCategories(
+                                        onCategoryTap: () => context.go('/services'),
+                                      ),
                                       if (featured.isNotEmpty)
                                         FoodListSection(
                                           title: 'أقوى العروض',
@@ -274,6 +308,7 @@ class _HomeViewState extends State<HomeView> {
                                             context,
                                             constraints,
                                             featured,
+                                            badge: AppStrings.badgeDiscount,
                                           ),
                                         ),
 
@@ -282,15 +317,14 @@ class _HomeViewState extends State<HomeView> {
                                           height: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 8.0),
                                         ),
 
-                                      // خدمات مرشحه (Recommended Services)
                                       if (recommended.isNotEmpty)
                                         FoodListSection(
-                                          title: 'خدمات مرشحه',
+                                          title: 'خدمات مرشّحة ليك',
                                           foodItems: _buildFoodCardsFromServices(
                                             context,
                                             constraints,
                                             recommended,
-                                            badge: 'مرشحه',
+                                            badge: 'مرشّح',
                                           ),
                                         ),
 
@@ -299,50 +333,34 @@ class _HomeViewState extends State<HomeView> {
                                           height: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 8.0),
                                         ),
 
-                                      // الأكثر مبيعًا (Bestsellers) - fall back to general services
-                                      if (allServices.isNotEmpty)
+                                      if (mostSold.isNotEmpty)
                                         FoodListSection(
-                                          title: 'الأكثر مبيعًا',
+                                          title: 'الأكتر مبيعًا',
                                           titleIcon: Icons.star,
                                           titleIconColor: Colors.amber,
                                           foodItems: _buildFoodCardsFromServices(
                                             context,
                                             constraints,
-                                            allServices.take(10).toList(),
-                                            badge: 'أفضل',
+                                            mostSold,
+                                            badge: AppStrings.badgeTopSold,
                                           ),
                                         ),
 
-                                      if (allServices.isNotEmpty)
+                                      if (mostSold.isNotEmpty)
                                         SizedBox(
                                           height: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 8.0),
                                         ),
 
-                                      // الخدمات (Services) - preview of the services list
                                       if (allServices.isNotEmpty)
                                         FoodListSection(
-                                          title: 'الخدمات',
+                                          title: 'كل الخدمات',
                                           viewAllText: 'عرض الكل',
-                                          onViewAllTap: () {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) => const ServicesView(),
-                                              ),
-                                            );
-                                          },
-                                          onTitleTap: () {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) => const ServicesView(),
-                                              ),
-                                            );
-                                          },
+                                          onViewAllTap: () => context.go('/services'),
+                                          onTitleTap: () => context.go('/services'),
                                           foodItems: _buildFoodCardsFromServices(
                                             context,
                                             constraints,
-                                            allServices.take(10).toList(),
+                                            allServices,
                                           ),
                                         ),
 
@@ -359,16 +377,6 @@ class _HomeViewState extends State<HomeView> {
                       ],
                     ),
                   ),
-                ],
-              ),
-            ),
-            bottomNavigationBar: BottomNavBar(
-              currentIndex: _currentNavIndex,
-              onTap: (index) {
-                setState(() {
-                  _currentNavIndex = index;
-                });
-              },
             ),
           );
         },
@@ -383,37 +391,14 @@ class _HomeViewState extends State<HomeView> {
     String? badge,
   }) {
     return services.map((service) {
-      // API currently returns only a file name (e.g. "cakes_1.jpg").
-      // Build a full HTTP URL using the API base when needed.
-      String? imageUrl;
-      if (service.imageUrl.isNotEmpty) {
-        if (service.imageUrl.startsWith('http')) {
-          imageUrl = service.imageUrl;
-        } else {
-          final base = ApiConstants.baseUrl;
-          final normalizedBase = base.endsWith('/') ? base : '$base/';
-          imageUrl = '$normalizedBase${service.imageUrl}';
-        }
-      }
-
       return FoodCard(
-        imagePath: AppAssets.donuts, // fallback asset
-        networkImageUrl: imageUrl,
+        networkImageUrl: service.imageUrl,
         name: service.title,
         sellerName: service.providerName,
         price: service.basePrice.toDouble(),
         rating: service.rating.toDouble(),
         badge: badge,
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ServiceDetailsView(
-                serviceId: service.id,
-              ),
-            ),
-          );
-        },
+        onTap: () => context.push('/service/${service.id}'),
       );
     }).toList();
   }
@@ -431,6 +416,54 @@ class _HomeViewState extends State<HomeView> {
         icon: Icon(icon),
         color: iconColor,
         onPressed: onPressed,
+      ),
+    );
+  }
+}
+
+/// Spec: quick categories horizontal scroll (filters → services list).
+class _HomeQuickCategories extends StatelessWidget {
+  const _HomeQuickCategories({required this.onCategoryTap});
+
+  final VoidCallback onCategoryTap;
+
+  static const _labels = [
+    'الكل',
+    'أكل',
+    'هاند ميد',
+    'خدمات منزلية',
+    'تجميل',
+    'تعليم',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        ResponsiveHelper.responsiveSpacingCompat(context, mobile: 22),
+        ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12),
+        ResponsiveHelper.responsiveSpacingCompat(context, mobile: 22),
+        ResponsiveHelper.responsiveSpacingCompat(context, mobile: 8),
+      ),
+      child: SizedBox(
+        height: 40,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          itemCount: _labels.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 8),
+          itemBuilder: (context, i) {
+            return ActionChip(
+              label: Text(
+                _labels[i],
+                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+              ),
+              backgroundColor: AppColors.surfaceMuted,
+              side: BorderSide(color: AppColors.border),
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              onPressed: onCategoryTap,
+            );
+          },
+        ),
       ),
     );
   }

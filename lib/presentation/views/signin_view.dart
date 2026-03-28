@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/gestures.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:manzili_mobile/presentation/providers/auth_provider.dart';
-import 'package:manzili_mobile/presentation/views/home_view.dart';
 import 'package:manzili_mobile/presentation/widgets/auth/custom_text_field.dart';
 import 'package:manzili_mobile/presentation/widgets/auth/login_row_cta.dart';
 import 'package:manzili_mobile/presentation/widgets/auth/role_button.dart';
 import 'package:manzili_mobile/presentation/widgets/auth/social_login_button.dart';
-import 'package:manzili_mobile/presentation/views/signup_view.dart';
 import '../../../core/constants/app_assets.dart';
+import '../../../core/strings/app_strings.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/responsive_helper.dart';
 import '../../../core/widgets/responsive_max_width.dart';
@@ -24,6 +25,8 @@ class _SigninViewState extends State<SigninView> {
   bool _obscurePassword = true;
   bool _rememberMe = false;
   String _selectedRole = 'seller';
+  /// Client-side validation only (server errors come from [AuthProvider.errorMessage]).
+  String? _validationHint;
 
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -42,37 +45,23 @@ class _SigninViewState extends State<SigninView> {
     final password = _passwordController.text;
 
     if (email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('من فضلك أدخل البريد الإلكتروني وكلمة المرور'),
-        ),
-      );
+      setState(() {
+        _validationHint = 'اكتب الإيميل والباسورد الأول';
+      });
       return;
     }
+    setState(() => _validationHint = null);
 
     final success = await auth.login(email: email, password: password);
 
     if (!mounted) return;
 
     if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('تم تسجيل الدخول بنجاح'),
-        ),
-      );
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const HomeView(),
-        ),
-      );
-    } else {
-      final message = auth.errorMessage ?? 'فشل تسجيل الدخول، حاول مرة أخرى';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-        ),
-      );
+      // Defer so router + listeners settle (avoids rare no-op navigation).
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        if (!context.mounted) return;
+        context.go(auth.postLoginRoute);
+      });
     }
   }
 
@@ -114,12 +103,12 @@ class _SigninViewState extends State<SigninView> {
                     top: 0,
                     left: 0,
                     right: 0,
-                    child: SizedBox(
+                    child: Image.asset(
+                      AppAssets.gradientTop,
                       height: gradientHeight,
-                      child: Image.asset(
-                        AppAssets.gradientTop,
-                        fit: BoxFit.fill,
-                      ),
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      alignment: Alignment.topCenter,
                     ),
                   ),
                   Column(
@@ -147,7 +136,7 @@ class _SigninViewState extends State<SigninView> {
                                     style: TextStyle(
                                       fontSize: ResponsiveHelper.responsiveFontSize(context, base: 38.0, min: 28.0, max: 48.0),
                                       fontWeight: FontWeight.w800,
-                                      color: const Color(0xFF0F172A),
+                                      color: AppColors.textPrimary,
                                     ),
                                   ),
                                   SizedBox(height: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 6.0)),
@@ -218,7 +207,7 @@ class _SigninViewState extends State<SigninView> {
                                             TextButton(
                                               onPressed: () {},
                                               child: Text(
-                                                'نسيت كلمة المرور؟',
+                                                AppStrings.forgotPassword,
                                                 style: TextStyle(
                                                   fontSize: ResponsiveHelper.responsiveFontSize(context, base: 13.0, min: 11.0, max: 15.0),
                                                   fontWeight: FontWeight.w600,
@@ -233,14 +222,14 @@ class _SigninViewState extends State<SigninView> {
                                                   value: _rememberMe,
                                                   onChanged: (v) => setState(
                                                       () => _rememberMe = v ?? false),
-                                                  activeColor: AppColors.primary,
+                                                  activeColor: AppColors.accent,
                                                   side: const BorderSide(
-                                                    color: AppColors.primary,
+                                                    color: AppColors.accent,
                                                     width: 1.4,
                                                   ),
                                                 ),
                                                 Text(
-                                                  'تذكرني',
+                                                  AppStrings.rememberMe,
                                                   style: TextStyle(
                                                     fontSize: ResponsiveHelper.responsiveFontSize(context, base: 13.0, min: 11.0, max: 15.0),
                                                     fontWeight: FontWeight.w600,
@@ -259,7 +248,7 @@ class _SigninViewState extends State<SigninView> {
                                           TextButton(
                                             onPressed: () {},
                                             child: Text(
-                                              'نسيت كلمة المرور؟',
+                                              AppStrings.forgotPassword,
                                               style: TextStyle(
                                                 fontSize: ResponsiveHelper.responsiveFontSize(context, base: 13.0, min: 11.0, max: 15.0),
                                                 fontWeight: FontWeight.w600,
@@ -275,14 +264,14 @@ class _SigninViewState extends State<SigninView> {
                                                   value: _rememberMe,
                                                   onChanged: (v) => setState(
                                                       () => _rememberMe = v ?? false),
-                                                  activeColor: AppColors.primary,
+                                                  activeColor: AppColors.accent,
                                                   side: const BorderSide(
-                                                    color: AppColors.primary,
+                                                    color: AppColors.accent,
                                                     width: 1.4,
                                                   ),
                                                 ),
                                                 Text(
-                                                  'تذكرني',
+                                                  AppStrings.rememberMe,
                                                   style: TextStyle(
                                                     fontSize: ResponsiveHelper.responsiveFontSize(context, base: 13.0, min: 11.0, max: 15.0),
                                                     fontWeight: FontWeight.w600,
@@ -311,8 +300,8 @@ class _SigninViewState extends State<SigninView> {
                                               alignment: Alignment.centerLeft,
                                               child: LoginRowCTA(
                                                 text: isLoading
-                                                    ? 'جارٍ تسجيل الدخول...'
-                                                    : 'سجل الدخول',
+                                                    ? AppStrings.signInLoading
+                                                    : AppStrings.signInCta,
                                                 onTap: isLoading
                                                     ? null
                                                     : () => _handleLogin(context),
@@ -325,23 +314,51 @@ class _SigninViewState extends State<SigninView> {
                                               base: 10.0,
                                             ),
                                           ),
+                                          if (_validationHint != null)
+                                            Padding(
+                                              padding: const EdgeInsets.only(bottom: 8),
+                                              child: Text(
+                                                _validationHint!,
+                                                textAlign: TextAlign.center,
+                                                style: const TextStyle(
+                                                  color: AppColors.error,
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ),
+                                          Selector<AuthProvider, String?>(
+                                            selector: (_, a) => a.errorMessage,
+                                            builder: (context, err, _) {
+                                              if (err == null || err.isEmpty) {
+                                                return const SizedBox.shrink();
+                                              }
+                                              return Padding(
+                                                padding: const EdgeInsets.only(bottom: 8),
+                                                child: Text(
+                                                  err,
+                                                  textAlign: TextAlign.center,
+                                                  style: const TextStyle(
+                                                    color: AppColors.error,
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                          ),
                                           Center(
                                             child: TextButton(
                                               onPressed: isLoading
                                                   ? null
                                                   : () {
-                                                      Navigator.push(
-                                                        context,
-                                                        MaterialPageRoute(
-                                                          builder: (context) => const SignupView(),
-                                                        ),
-                                                      );
+                                                      context.push('/signup');
                                                     },
                                               child: const Text(
-                                                'إنشاء حساب',
+                                                AppStrings.noAccountSignUp,
                                                 style: TextStyle(
                                                   fontWeight: FontWeight.w800,
-                                                  color: AppColors.primary,
+                                                  color: AppColors.accent,
                                                 ),
                                               ),
                                             ),
@@ -419,16 +436,11 @@ class _SigninViewState extends State<SigninView> {
                                           text: 'إنشاء حساب',
                                           style: const TextStyle(
                                             fontWeight: FontWeight.w800,
-                                            color: AppColors.primary,
+                                            color: AppColors.accent,
                                           ),
                                           recognizer: TapGestureRecognizer()
                                             ..onTap = () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) => const SignupView(),
-                                                ),
-                                              );
+                                              context.push('/signup');
                                             },
                                         ),
                                       ],
@@ -445,14 +457,11 @@ class _SigninViewState extends State<SigninView> {
                   Positioned(
                     bottom: 0,
                     left: 0,
-                    child: SizedBox(
+                    child: Image.asset(
+                      AppAssets.gradientBottomLeft,
                       width: gradientBottomWidth,
                       height: gradientBottomHeight,
-                      child: Image.asset(
-                        AppAssets.gradientBottomLeft,
-                        fit: BoxFit.fill,
-                        alignment: Alignment.bottomLeft,
-                      ),
+                      fit: BoxFit.cover,
                     ),
                   ),
                 ],

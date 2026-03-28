@@ -18,9 +18,9 @@ class AppTheme {
         elevation: 0,
         iconTheme: IconThemeData(color: AppColors.textPrimary),
         titleTextStyle: TextStyle(
-          color: AppColors.textPrimary,
+          color: AppColors.heading,
           fontSize: 20,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w700,
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(

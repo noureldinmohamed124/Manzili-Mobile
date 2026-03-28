@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:manzili_mobile/data/models/order_models.dart';
 import 'package:manzili_mobile/data/models/service_models.dart';
+import 'package:manzili_mobile/data/repositories/orders_repository.dart';
+import 'package:manzili_mobile/presentation/providers/auth_provider.dart';
 import 'package:manzili_mobile/presentation/providers/services_provider.dart';
-import '../../core/constants/app_assets.dart';
-import '../../core/network/api_constants.dart';
+import '../../core/strings/app_strings.dart';
 import '../../core/theme/app_colors.dart';
+import '../widgets/common/service_cover_image.dart';
 import '../../core/utils/responsive_helper.dart';
 import '../../core/widgets/responsive_max_width.dart';
 import '../widgets/home/food_card.dart';
-import 'reviews_view.dart';
 
 class ServiceDetailsView extends StatefulWidget {
   final int serviceId;
@@ -25,6 +28,8 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
   String? _selectedOptionId;
   bool _isFavorite = false;
   final Map<int, bool> _selectedOptions = {};
+  final TextEditingController _notesController = TextEditingController();
+  bool _submittingOrder = false;
 
   @override
   void initState() {
@@ -32,6 +37,87 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ServicesProvider>().getServiceById(widget.serviceId);
     });
+  }
+
+  @override
+  void dispose() {
+    _notesController.dispose();
+    super.dispose();
+  }
+
+  List<OrderOptionGroup> _optionGroupsForRequest(ServiceItem service) {
+    final options = service.options ?? [];
+    if (options.isEmpty) return [];
+
+    final items = <OrderOptionItem>[];
+    if (_selectedOptionId != null) {
+      final id = int.tryParse(_selectedOptionId!);
+      if (id != null) {
+        items.add(OrderOptionItem(optionId: id, quantity: _quantity));
+      }
+    } else {
+      for (final o in options) {
+        if (_selectedOptions[o.id] == true) {
+          items.add(OrderOptionItem(optionId: o.id, quantity: 1));
+        }
+      }
+    }
+
+    if (items.isEmpty) return [];
+    return [OrderOptionGroup(groupId: 1, items: items)];
+  }
+
+  Future<void> _submitOrderRequest() async {
+    final auth = context.read<AuthProvider>();
+    if (!auth.isAuthenticated) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('سجّل دخول الأول عشان تطلب الخدمة')),
+      );
+      context.push('/signin');
+      return;
+    }
+
+    final servicesProvider = context.read<ServicesProvider>();
+    final service = servicesProvider.currentServiceDetails;
+    if (service == null || service.id != widget.serviceId) {
+      return;
+    }
+
+    final options = service.options ?? [];
+    if (options.isNotEmpty) {
+      final hasRadio = _selectedOptionId != null;
+      final hasBox = _selectedOptions.values.any((v) => v);
+      if (!hasRadio && !hasBox) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('اختار نوع الخدمة أو الإضافة الأول')),
+        );
+        return;
+      }
+    }
+
+    setState(() => _submittingOrder = true);
+    final body = OrderRequestBody(
+      serviceId: widget.serviceId,
+      customizationText: _notesController.text.trim(),
+      quantity: _quantity,
+      optionGroups: _optionGroupsForRequest(service),
+    );
+
+    final err = await OrdersRepository().requestService(body);
+    if (!mounted) return;
+    setState(() => _submittingOrder = false);
+
+    if (err == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('تمام! طلبك اتسجل بنجاح')),
+      );
+      context.push('/order-placed');
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(err)),
+      );
+    }
   }
 
   @override
@@ -203,7 +289,7 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
                   padding: EdgeInsets.zero,
                   icon: const Icon(Icons.shopping_cart_outlined),
                   color: Colors.white,
-                  onPressed: () {},
+                  onPressed: () => context.push('/cart'),
                 ),
               ),
             ],
@@ -212,7 +298,7 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
             padding: EdgeInsets.zero,
             icon: const Icon(Icons.arrow_forward_ios, size: 20),
             color: AppColors.textPrimary,
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => context.pop(),
           ),
         ],
       ),
@@ -227,58 +313,35 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
       max: 400.0,
     );
     
-    // Get images from API or fall back to main imageUrl
-    final imageUrls = <String>[];
+    final rawImagePaths = <String>[];
     if (service.images != null && service.images!.isNotEmpty) {
       for (final img in service.images!) {
-        final url = _buildImageUrl(img.imageUrl);
-        if (url != null) imageUrls.add(url);
+        if (img.imageUrl.trim().isNotEmpty) rawImagePaths.add(img.imageUrl);
       }
-    } else if (service.imageUrl.isNotEmpty) {
-      final url = _buildImageUrl(service.imageUrl);
-      if (url != null) imageUrls.add(url);
+    } else if (service.imageUrl.trim().isNotEmpty) {
+      rawImagePaths.add(service.imageUrl);
     }
-    
-    if (imageUrls.isEmpty) {
-      imageUrls.add(''); // Will use fallback asset
-    }
-    
-    // Clamp image index
-    if (_currentImageIndex >= imageUrls.length) {
+
+    if (_currentImageIndex >= rawImagePaths.length && rawImagePaths.isNotEmpty) {
       _currentImageIndex = 0;
     }
-    
+
     return Stack(
       children: [
-        imageUrls[_currentImageIndex].isNotEmpty
-            ? Image.network(
-                imageUrls[_currentImageIndex],
-                width: double.infinity,
-                height: imageHeight,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Image.asset(
-                    AppAssets.cookie,
-                    width: double.infinity,
-                    height: imageHeight,
-                    fit: BoxFit.cover,
-                  );
-                },
-              )
-            : Image.asset(
-                AppAssets.cookie,
-                width: double.infinity,
-                height: imageHeight,
-                fit: BoxFit.cover,
-              ),
-        if (imageUrls.length > 1)
+        ServiceCoverImage(
+          imageUrlRaw: rawImagePaths.isEmpty ? null : rawImagePaths[_currentImageIndex],
+          width: double.infinity,
+          height: imageHeight,
+          fit: BoxFit.cover,
+        ),
+        if (rawImagePaths.length > 1)
           Positioned(
             bottom: 16,
             left: 0,
             right: 0,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(imageUrls.length, (index) {
+              children: List.generate(rawImagePaths.length, (index) {
                 return GestureDetector(
                   onTap: () => setState(() => _currentImageIndex = index),
                   child: Container(
@@ -299,14 +362,6 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
       ],
     );
   }
-  
-  String? _buildImageUrl(String imageUrl) {
-    if (imageUrl.isEmpty) return null;
-    if (imageUrl.startsWith('http')) return imageUrl;
-    final base = ApiConstants.baseUrl;
-    final normalizedBase = base.endsWith('/') ? base : '$base/';
-    return '$normalizedBase$imageUrl';
-  }
 
   Widget _buildProductInfo(ServiceItem service) {
     return Padding(
@@ -326,14 +381,7 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
           ),
           SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 8)),
           GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const ReviewsView(),
-                ),
-              );
-            },
+            onTap: () => context.push('/reviews/${widget.serviceId}'),
             child: Row(
               children: [
                 Icon(
@@ -456,7 +504,7 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
                     vertical: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 14),
                   ),
                   decoration: BoxDecoration(
-                    color: isSelected ? AppColors.primary.withOpacity(0.1) : const Color(0xFFF5F5F5),
+                    color: isSelected ? AppColors.primary.withOpacity(0.1) : AppColors.surfaceMuted,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: isSelected ? AppColors.primary : const Color(0xFFE0E0E0),
@@ -525,7 +573,7 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
                   width: ResponsiveHelper.responsiveValueCompat(context, mobile: 40.0),
                   height: ResponsiveHelper.responsiveValueCompat(context, mobile: 40.0),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF5F5F5),
+                    color: AppColors.surfaceMuted,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.remove, color: AppColors.textPrimary),
@@ -580,16 +628,17 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
           Container(
             padding: EdgeInsets.all(ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16)),
             decoration: BoxDecoration(
-              color: const Color(0xFFF5F5F5),
+              color: AppColors.surfaceMuted,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: const Color(0xFFE0E0E0)),
             ),
             child: TextField(
+              controller: _notesController,
               style: TextStyle(
                 fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 14),
               ),
               decoration: InputDecoration(
-                hintText: 'أضف أي طلبات خاصة.....',
+                hintText: AppStrings.orderNotesHint,
                 hintStyle: TextStyle(
                   color: AppColors.textHint,
                   fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 14),
@@ -803,7 +852,6 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
               if (crossAxisCount >= 2) {
                 return Row(
                   children: otherServices.take(2).map((service) {
-                    final imageUrl = _buildImageUrl(service.imageUrl);
                     return Expanded(
                       child: Padding(
                         padding: EdgeInsets.only(
@@ -812,22 +860,14 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
                               : 0,
                         ),
                         child: FoodCard(
-                          imagePath: AppAssets.donuts, // fallback
-                          networkImageUrl: imageUrl,
+                          networkImageUrl: service.imageUrl,
                           name: service.title,
                           sellerName: service.providerName,
                           price: service.basePrice.toDouble(),
                           rating: service.rating.toDouble(),
-                          onTap: () {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ServiceDetailsView(
-                                  serviceId: service.id,
-                                ),
+                          onTap: () => context.pushReplacement(
+                                '/service/${service.id}',
                               ),
-                            );
-                          },
                         ),
                       ),
                     );
@@ -838,28 +878,19 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: otherServices.map((service) {
-                      final imageUrl = _buildImageUrl(service.imageUrl);
                       return Padding(
                         padding: EdgeInsets.only(
                           left: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12),
                         ),
                         child: FoodCard(
-                          imagePath: AppAssets.donuts, // fallback
-                          networkImageUrl: imageUrl,
+                          networkImageUrl: service.imageUrl,
                           name: service.title,
                           sellerName: service.providerName,
                           price: service.basePrice.toDouble(),
                           rating: service.rating.toDouble(),
-                          onTap: () {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ServiceDetailsView(
-                                  serviceId: service.id,
-                                ),
+                          onTap: () => context.pushReplacement(
+                                '/service/${service.id}',
                               ),
-                            );
-                          },
                         ),
                       );
                     }).toList(),
@@ -895,49 +926,74 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
             ),
           ],
         ),
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.success,
-                  padding: EdgeInsets.symmetric(vertical: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16)),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(ResponsiveHelper.responsiveValueCompat(context, mobile: 12.0)),
-                  ),
-                ),
-                child: Text(
-                  'أضف الي عربة التسوق',
-                  style: TextStyle(
-                    fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 16),
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(width: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12)),
-            IconButton(
-              onPressed: () {
-                setState(() => _isFavorite = !_isFavorite);
-              },
-              icon: Icon(
-                _isFavorite ? Icons.favorite : Icons.favorite_border,
-                color: _isFavorite ? Colors.red : AppColors.textSecondary,
-                size: ResponsiveHelper.responsiveValueCompat(context, mobile: 28.0),
-              ),
-            ),
-            SizedBox(width: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 8)),
-            IconButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              icon: Icon(
-                Icons.home_outlined,
+            Text(
+              AppStrings.serviceRequestHelper,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 12),
                 color: AppColors.textSecondary,
-                size: ResponsiveHelper.responsiveValueCompat(context, mobile: 28.0),
+                height: 1.35,
               ),
+            ),
+            SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 10)),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: _submittingOrder ? null : _submitOrderRequest,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      padding: EdgeInsets.symmetric(vertical: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(ResponsiveHelper.responsiveValueCompat(context, mobile: 12.0)),
+                      ),
+                    ),
+                    child: _submittingOrder
+                        ? const SizedBox(
+                            height: 22,
+                            width: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Text(
+                            'اطلب الخدمة',
+                            style: TextStyle(
+                              fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 16),
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                  ),
+                ),
+                SizedBox(width: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12)),
+                IconButton(
+                  onPressed: () {
+                    setState(() => _isFavorite = !_isFavorite);
+                  },
+                  icon: Icon(
+                    _isFavorite ? Icons.favorite : Icons.favorite_border,
+                    color: _isFavorite ? Colors.red : AppColors.textSecondary,
+                    size: ResponsiveHelper.responsiveValueCompat(context, mobile: 28.0),
+                  ),
+                ),
+                SizedBox(width: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 8)),
+                IconButton(
+                  onPressed: () {
+                    context.pop();
+                  },
+                  icon: Icon(
+                    Icons.home_outlined,
+                    color: AppColors.textSecondary,
+                    size: ResponsiveHelper.responsiveValueCompat(context, mobile: 28.0),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

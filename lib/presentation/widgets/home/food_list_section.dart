@@ -83,7 +83,11 @@ class FoodListSection extends StatelessWidget {
           height: ResponsiveHelper.scaleValueFromContext(context, 280.0, min: 260.0, max: 320.0),
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            padding: EdgeInsets.only(right: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 22)),
+            primary: false,
+            physics: const BouncingScrollPhysics(),
+            padding: EdgeInsetsDirectional.only(
+              start: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 22),
+            ),
             itemCount: foodItems.length,
             itemBuilder: (context, index) => foodItems[index],
           ),
