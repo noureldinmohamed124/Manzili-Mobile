@@ -118,7 +118,7 @@ class _SellerCreateServiceViewState extends State<SellerCreateServiceView> {
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
-                      value: _category,
+                      initialValue: _category,
                       hint: const Text(AppStrings.fieldCategory),
                       items: _categories
                           .map(

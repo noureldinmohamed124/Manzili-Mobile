@@ -101,7 +101,7 @@ class _SellerComposePostViewState extends State<SellerComposePostView> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              value: _visibility,
+              initialValue: _visibility,
               decoration: const InputDecoration(labelText: AppStrings.fieldVisibility),
               items: const [
                 DropdownMenuItem(value: 'الكل', child: Text('الكل')),

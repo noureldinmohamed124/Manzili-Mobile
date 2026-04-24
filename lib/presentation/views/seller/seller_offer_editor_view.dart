@@ -73,7 +73,7 @@ class _SellerOfferEditorViewState extends State<SellerOfferEditorView> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              value: _service,
+              initialValue: _service,
               decoration: const InputDecoration(
                 labelText: AppStrings.fieldLinkedService,
               ),

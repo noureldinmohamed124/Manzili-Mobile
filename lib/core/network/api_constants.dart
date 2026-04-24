@@ -3,6 +3,7 @@ class ApiConstants {
 
   /// HTTPS avoids IIS 307 redirect from http:// (Dio often surfaces that as an error on POST).
   static const String baseUrl = 'https://manzili-app.runasp.net/';
+  static const String localBaseUrl = 'https://localhost:6001'; // use port 6000 for http
 
   /// When the API returns a bare filename (e.g. `cakes_1.jpg`), it is loaded from this path under [baseUrl].
   /// Change to match your static files (e.g. `uploads/`, `ServiceImages/`, or `''` if files sit at site root).
@@ -29,4 +30,3 @@ class ApiConstants {
     return Uri.parse('$root/api/orders/request');
   }
 }
-

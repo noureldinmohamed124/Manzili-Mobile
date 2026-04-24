@@ -65,7 +65,7 @@ class _SupportFormViewState extends State<SupportFormView> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              value: _issue,
+              initialValue: _issue,
               decoration: const InputDecoration(
                 labelText: AppStrings.fieldIssueType,
               ),
