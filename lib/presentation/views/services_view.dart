@@ -29,8 +29,16 @@ class _ServicesViewState extends State<ServicesView> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final q = GoRouter.of(context).state.uri.queryParameters['q'] ?? '';
       setState(() => _searchQuery = q);
-      await context.read<ServicesProvider>().fetchServices(page: 1, pageSize: 50);
+      _fetchData();
     });
+  }
+
+  Future<void> _fetchData() async {
+    await context.read<ServicesProvider>().fetchServices(
+      page: 1, 
+      pageSize: 50,
+      searchQuery: _searchQuery,
+    );
   }
 
   void _openSearchDialog() {
@@ -51,6 +59,7 @@ class _ServicesViewState extends State<ServicesView> {
             onSubmitted: (v) {
               setState(() => _searchQuery = v.trim());
               Navigator.of(ctx).pop();
+              _fetchData();
             },
           ),
           actions: [
@@ -62,6 +71,7 @@ class _ServicesViewState extends State<ServicesView> {
               onPressed: () {
                 setState(() => _searchQuery = controller.text.trim());
                 Navigator.of(ctx).pop();
+                _fetchData();
               },
               child: const Text(AppStrings.servicesSearchAction),
             ),

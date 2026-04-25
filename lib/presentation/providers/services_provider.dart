@@ -79,6 +79,7 @@ class ServicesProvider extends ChangeNotifier {
     bool? isRecommended,
     bool? topDiscounts,
     bool? mostPurchased,
+    String? searchQuery,
   }) async {
     _isLoading = true;
     _errorMessage = null;
@@ -103,10 +104,18 @@ class ServicesProvider extends ChangeNotifier {
         queryParameters['mostPurchased'] = mostPurchased;
       }
 
-      final response = await _dio.get(
-        ApiConstants.services,
-        queryParameters: queryParameters,
-      );
+      Response response;
+      if (searchQuery != null && searchQuery.isNotEmpty) {
+        response = await _dio.get(
+          ApiConstants.serviceByName(searchQuery),
+          queryParameters: queryParameters,
+        );
+      } else {
+        response = await _dio.get(
+          ApiConstants.services,
+          queryParameters: queryParameters,
+        );
+      }
 
       if (response.data == null || response.data.toString().isEmpty) {
         _errorMessage = 'السيرفر ماردش بيانات';

@@ -22,6 +22,8 @@ class ApiConstants {
 
   // Orders — POST body: OrderRequestBody (camelCase).
   static const String orderRequestPath = '/api/orders/request';
+  static const String orders = '/api/orders';
+  static const String orderPaymentSummary = '/api/orders/payment-summary';
 
   /// Resolves to `{baseUrl without trailing slash}/api/orders/request` so Dio never misparses the path.
   static Uri get orderRequestUri {

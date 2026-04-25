@@ -52,7 +52,11 @@ class _SigninViewState extends State<SigninView> {
     }
     setState(() => _validationHint = null);
 
-    final success = await auth.login(email: email, password: password);
+    final success = await auth.login(
+      email: email,
+      password: password,
+      uiRoleFallback: _selectedRole == 'buyer' ? 1 : 2,
+    );
 
     if (!mounted) return;
 

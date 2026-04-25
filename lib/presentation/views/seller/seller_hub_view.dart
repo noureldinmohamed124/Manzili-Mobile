@@ -10,15 +10,11 @@ class SellerHubView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = <_HubItem>[
-      _HubItem('اعمل خدمة', Icons.add_circle_outline, '/seller/create-service'),
-      _HubItem('تعديل خدمة', Icons.edit_outlined, '/seller/edit-service'),
-      _HubItem(AppStrings.earningsTitle, Icons.insights_rounded, '/seller/earnings'),
-      _HubItem(AppStrings.vipTitle, Icons.workspace_premium_outlined, '/seller/vip'),
-      _HubItem(AppStrings.offersTitle, Icons.local_offer_outlined, '/seller/offers'),
-      _HubItem('بوست جديد', Icons.post_add_outlined, '/seller/compose'),
-      _HubItem(AppStrings.scheduledPostsTitle, Icons.schedule, '/seller/scheduled'),
-      _HubItem(AppStrings.templatesTitle, Icons.article_outlined, '/seller/templates'),
-      _HubItem(AppStrings.autoAcceptTitle, Icons.rule_folder_outlined, '/seller/auto-accept'),
+      _HubItem('خدماتي', Icons.design_services_outlined, '/seller/my-services'),
+      _HubItem('إدارة الطلبات', Icons.receipt_long_outlined, '/seller/manage-orders'),
+      _HubItem('الخصومات والعروض', Icons.local_offer_outlined, '/seller/discounts'),
+      _HubItem(AppStrings.earningsTitle, Icons.account_balance_wallet_outlined, '/seller/earnings'),
+      _HubItem('إضافة خدمة جديدة', Icons.add_circle_outline, '/seller/create-service'),
     ];
 
     return Scaffold(

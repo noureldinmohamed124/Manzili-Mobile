@@ -23,7 +23,7 @@ class _HomeViewState extends State<HomeView> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final servicesProvider = context.read<ServicesProvider>();
-      servicesProvider.fetchHomeBuckets(1);
+      servicesProvider.fetchHomeBuckets(4);
       servicesProvider.fetchServices(page: 1, pageSize: 10);
       servicesProvider.fetchFeaturedServices(page: 1, pageSize: 10);
       servicesProvider.fetchRecommendedServices(page: 1, pageSize: 10);
@@ -179,7 +179,7 @@ class _HomeViewState extends State<HomeView> {
                               GestureDetector(
                                 onTap: () {
                                   final p = context.read<ServicesProvider>();
-                                  p.fetchHomeBuckets(1);
+                                  p.fetchHomeBuckets(4);
                                   p.fetchServices(page: 1, pageSize: 10);
                                   p.fetchFeaturedServices(page: 1, pageSize: 10);
                                   p.fetchRecommendedServices(page: 1, pageSize: 10);
@@ -278,7 +278,7 @@ class _HomeViewState extends State<HomeView> {
                                           const SizedBox(height: 16),
                                           FilledButton(
                                             onPressed: () {
-                                              servicesProvider.fetchHomeBuckets(1);
+                                              servicesProvider.fetchHomeBuckets(4);
                                               servicesProvider.fetchServices(page: 1, pageSize: 10);
                                               servicesProvider.fetchFeaturedServices(page: 1, pageSize: 10);
                                               servicesProvider.fetchRecommendedServices(page: 1, pageSize: 10);

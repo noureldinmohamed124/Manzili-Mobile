@@ -4,6 +4,8 @@ import 'package:manzili_mobile/core/router/app_router.dart';
 import 'package:manzili_mobile/core/theme/app_theme.dart';
 import 'package:manzili_mobile/presentation/providers/auth_provider.dart';
 import 'package:manzili_mobile/presentation/providers/services_provider.dart';
+import 'package:manzili_mobile/presentation/providers/cart_provider.dart';
+import 'package:manzili_mobile/presentation/providers/orders_provider.dart';
 import 'package:provider/provider.dart';
 
 void main() {
@@ -24,6 +26,12 @@ class MyApp extends StatelessWidget {
         ),
         ChangeNotifierProvider<ServicesProvider>(
           create: (_) => ServicesProvider(),
+        ),
+        ChangeNotifierProvider<CartProvider>(
+          create: (_) => CartProvider(),
+        ),
+        ChangeNotifierProvider<OrdersProvider>(
+          create: (_) => OrdersProvider(),
         ),
       ],
       child: MaterialApp.router(

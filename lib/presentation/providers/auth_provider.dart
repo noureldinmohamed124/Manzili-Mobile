@@ -106,6 +106,7 @@ class AuthProvider extends ChangeNotifier {
   Future<bool> login({
     required String email,
     required String password,
+    int? uiRoleFallback,
   }) async {
     _status = AuthStatus.authenticating;
     _errorMessage = null;
@@ -136,6 +137,9 @@ class AuthProvider extends ChangeNotifier {
         _refreshToken = tokens.refreshToken;
         DioClient.instance.setAccessToken(_accessToken);
         _applyClaimsFromAccessToken(_accessToken);
+        if (_userRole == null && uiRoleFallback != null) {
+          _userRole = uiRoleFallback;
+        }
         _status = AuthStatus.authenticated;
         _errorMessage = null;
         return true;

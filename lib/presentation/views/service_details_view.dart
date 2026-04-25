@@ -5,6 +5,7 @@ import 'package:manzili_mobile/data/models/order_models.dart';
 import 'package:manzili_mobile/data/models/service_models.dart';
 import 'package:manzili_mobile/data/repositories/orders_repository.dart';
 import 'package:manzili_mobile/presentation/providers/auth_provider.dart';
+import 'package:manzili_mobile/presentation/providers/cart_provider.dart';
 import 'package:manzili_mobile/presentation/providers/services_provider.dart';
 import '../../core/strings/app_strings.dart';
 import '../../core/theme/app_colors.dart';
@@ -67,6 +68,27 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
     return [OrderOptionGroup(groupId: 1, items: items)];
   }
 
+  double _calculateTotalPrice(ServiceItem service) {
+    double total = service.basePrice.toDouble();
+    final options = service.options ?? [];
+
+    if (_selectedOptionId != null) {
+      final opt = options.firstWhere(
+        (o) => o.id.toString() == _selectedOptionId,
+        orElse: () => ServiceOption(id: 0, serviceOptionName: '', price: 0),
+      );
+      total += opt.price;
+    }
+
+    for (final o in options) {
+      if (_selectedOptions[o.id] == true) {
+        total += o.price;
+      }
+    }
+
+    return total * _quantity;
+  }
+
   Future<void> _submitOrderRequest() async {
     final auth = context.read<AuthProvider>();
     if (!auth.isAuthenticated) {
@@ -79,8 +101,29 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
     }
 
     final servicesProvider = context.read<ServicesProvider>();
-    final service = servicesProvider.currentServiceDetails;
-    if (service == null || service.id != widget.serviceId) {
+    ServiceItem? service = servicesProvider.currentServiceDetails;
+    if (service == null || service.id.toString() != widget.serviceId.toString()) {
+      for (final s in servicesProvider.services) {
+        if (s.id.toString() == widget.serviceId.toString()) {
+          service = s;
+          break;
+        }
+      }
+    }
+
+    if (service == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('تفاصيل الخدمة لسه بتحمل، حاول تاني بعد شوية')),
+      );
+      return;
+    }
+
+    if (service.options != null && service.options!.isNotEmpty && _selectedOptionId == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('اختار كل التفاصيل المطلوبة')),
+      );
       return;
     }
 
@@ -96,28 +139,24 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
       }
     }
 
-    setState(() => _submittingOrder = true);
-    final body = OrderRequestBody(
-      serviceId: widget.serviceId,
-      customizationText: _notesController.text.trim(),
+    final totalPrice = _calculateTotalPrice(service);
+
+    final cartItem = CartItem(
+      serviceId: service.id,
+      title: service.title,
+      providerName: service.providerName,
+      imageUrl: service.imageUrl,
       quantity: _quantity,
+      pricePerItem: totalPrice / _quantity,
+      customizationText: _notesController.text.trim(),
       optionGroups: _optionGroupsForRequest(service),
     );
 
-    final err = await OrdersRepository().requestService(body);
-    if (!mounted) return;
-    setState(() => _submittingOrder = false);
+    context.read<CartProvider>().addToCart(cartItem);
 
-    if (err == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تمام! طلبك اتسجل بنجاح')),
-      );
-      context.push('/order-placed');
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(err)),
-      );
-    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('اتضافت للسلة 👌')),
+    );
   }
 
   @override
@@ -421,7 +460,7 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
           ),
           SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16)),
           Text(
-            '${service.basePrice} جنيه',
+            '${_calculateTotalPrice(service)} جنيه',
             style: TextStyle(
               fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 28, tablet: 30, desktop: 32),
               fontWeight: FontWeight.w800,
@@ -962,7 +1001,7 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
                             ),
                           )
                         : Text(
-                            'اطلب الخدمة',
+                            'أضف للسلة',
                             style: TextStyle(
                               fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 16),
                               fontWeight: FontWeight.w700,
