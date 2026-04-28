@@ -6,7 +6,6 @@ import 'package:provider/provider.dart';
 import 'package:manzili_mobile/presentation/providers/auth_provider.dart';
 import 'package:manzili_mobile/presentation/widgets/auth/custom_text_field.dart';
 import 'package:manzili_mobile/presentation/widgets/auth/login_row_cta.dart';
-import 'package:manzili_mobile/presentation/widgets/auth/role_button.dart';
 import 'package:manzili_mobile/presentation/widgets/auth/social_login_button.dart';
 import '../../../core/constants/app_assets.dart';
 import '../../../core/strings/app_strings.dart';
@@ -24,7 +23,6 @@ class SigninView extends StatefulWidget {
 class _SigninViewState extends State<SigninView> {
   bool _obscurePassword = true;
   bool _rememberMe = false;
-  String _selectedRole = 'seller';
   /// Client-side validation only (server errors come from [AuthProvider.errorMessage]).
   String? _validationHint;
 
@@ -55,7 +53,6 @@ class _SigninViewState extends State<SigninView> {
     final success = await auth.login(
       email: email,
       password: password,
-      uiRoleFallback: _selectedRole == 'buyer' ? 1 : 2,
     );
 
     if (!mounted) return;
@@ -153,30 +150,7 @@ class _SigninViewState extends State<SigninView> {
                                     ),
                                   ),
                                   SizedBox(height: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 24.0)),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: RoleButton(
-                                          label: 'مشتري',
-                                          icon: Icons.shopping_cart_outlined,
-                                          isSelected: _selectedRole == 'buyer',
-                                          onTap: () =>
-                                              setState(() => _selectedRole = 'buyer'),
-                                        ),
-                                      ),
-                                      SizedBox(width: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 12.0)),
-                                      Expanded(
-                                        child: RoleButton(
-                                          label: 'بائع',
-                                          icon: Icons.shopping_bag_outlined,
-                                          isSelected: _selectedRole == 'seller',
-                                          onTap: () =>
-                                              setState(() => _selectedRole = 'seller'),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  SizedBox(height: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 26.0)),
+                                  // No role picker: role is determined by backend token (buyer/seller/admin).
                                   CustomTextField(
                                     label: 'البريد الالكتروني',
                                     keyboardType: TextInputType.emailAddress,

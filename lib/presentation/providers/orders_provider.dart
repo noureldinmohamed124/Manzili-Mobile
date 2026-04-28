@@ -9,6 +9,7 @@ class OrdersProvider extends ChangeNotifier {
   PaymentSummaryData? _paymentSummary;
   
   bool _isLoading = false;
+  bool _isSubmittingPaymentProof = false;
   String? _errorMessage;
 
   int _currentPage = 1;
@@ -19,6 +20,7 @@ class OrdersProvider extends ChangeNotifier {
   PaymentSummaryData? get paymentSummary => _paymentSummary;
   
   bool get isLoading => _isLoading;
+  bool get isSubmittingPaymentProof => _isSubmittingPaymentProof;
   String? get errorMessage => _errorMessage;
 
   int get currentPage => _currentPage;
@@ -70,5 +72,47 @@ class OrdersProvider extends ChangeNotifier {
     }
 
     notifyListeners();
+  }
+
+  Future<bool> submitPaymentProof({
+    required String paymentScreenshot,
+    String? notes,
+  }) async {
+    if (_paymentSummary == null) {
+      _errorMessage = 'مفيش ملخص دفع عشان نعرف الطلبات';
+      notifyListeners();
+      return false;
+    }
+    final orderIds =
+        _paymentSummary!.services.map((e) => e.orderId).where((id) => id > 0).toList();
+    if (orderIds.isEmpty) {
+      _errorMessage = 'مفيش طلبات صالحة لإرسال الإثبات';
+      notifyListeners();
+      return false;
+    }
+    if (paymentScreenshot.trim().isEmpty) {
+      _errorMessage = 'ارفع/ابعت صورة الإيصال الأول';
+      notifyListeners();
+      return false;
+    }
+
+    _isSubmittingPaymentProof = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    final (_, err) = await _repository.submitPaymentProof(
+      orderIds: orderIds,
+      paymentScreenshot: paymentScreenshot.trim(),
+      notes: notes,
+    );
+
+    _isSubmittingPaymentProof = false;
+    if (err != null) {
+      _errorMessage = err;
+      notifyListeners();
+      return false;
+    }
+    notifyListeners();
+    return true;
   }
 }

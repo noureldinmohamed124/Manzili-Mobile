@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:manzili_mobile/data/models/order_models.dart';
-import 'package:manzili_mobile/data/models/service_models.dart';
 import 'package:manzili_mobile/data/repositories/orders_repository.dart';
 
 class CartItem {

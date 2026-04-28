@@ -192,7 +192,14 @@ GoRouter createAppRouter() {
       ),
       GoRoute(
         path: '/seller/edit-service',
-        builder: (context, state) => const SellerEditServiceView(),
+        redirect: (context, state) => '/seller/my-services',
+      ),
+      GoRoute(
+        path: '/seller/edit-service/:id',
+        builder: (context, state) {
+          final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
+          return SellerEditServiceView(serviceId: id);
+        },
       ),
       GoRoute(
         path: '/seller/my-services',

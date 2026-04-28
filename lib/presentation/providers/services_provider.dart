@@ -40,9 +40,17 @@ class ServicesProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await _dio.get<Map<String, dynamic>>(
-        ApiConstants.homeServices(no),
-      );
+      Response<Map<String, dynamic>> response;
+      try {
+        response = await _dio.get<Map<String, dynamic>>(
+          ApiConstants.homeServices(no),
+        );
+      } on DioException catch (e) {
+        if (e.response?.statusCode != 404) rethrow;
+        response = await _dio.get<Map<String, dynamic>>(
+          ApiConstants.homeServicesLegacy(no),
+        );
+      }
 
       final raw = response.data;
       if (raw == null) {
@@ -106,15 +114,31 @@ class ServicesProvider extends ChangeNotifier {
 
       Response response;
       if (searchQuery != null && searchQuery.isNotEmpty) {
-        response = await _dio.get(
-          ApiConstants.serviceByName(searchQuery),
-          queryParameters: queryParameters,
-        );
+        try {
+          response = await _dio.get(
+            ApiConstants.serviceByName(searchQuery),
+            queryParameters: queryParameters,
+          );
+        } on DioException catch (e) {
+          if (e.response?.statusCode != 404) rethrow;
+          response = await _dio.get(
+            ApiConstants.serviceByNameLegacy(searchQuery),
+            queryParameters: queryParameters,
+          );
+        }
       } else {
-        response = await _dio.get(
-          ApiConstants.services,
-          queryParameters: queryParameters,
-        );
+        try {
+          response = await _dio.get(
+            ApiConstants.services,
+            queryParameters: queryParameters,
+          );
+        } on DioException catch (e) {
+          if (e.response?.statusCode != 404) rethrow;
+          response = await _dio.get(
+            ApiConstants.servicesLegacy,
+            queryParameters: queryParameters,
+          );
+        }
       }
 
       if (response.data == null || response.data.toString().isEmpty) {
@@ -276,9 +300,13 @@ class ServicesProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await _dio.get(
-        ApiConstants.serviceById(id),
-      );
+      Response response;
+      try {
+        response = await _dio.get(ApiConstants.serviceById(id));
+      } on DioException catch (e) {
+        if (e.response?.statusCode != 404) rethrow;
+        response = await _dio.get(ApiConstants.serviceByIdLegacy(id));
+      }
 
       if (response.data == null || response.data.toString().isEmpty) {
         _errorMessage = 'السيرفر ماردش بيانات';
@@ -331,14 +359,27 @@ class ServicesProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await _dio.get(
-        ApiConstants.serviceByName(name),
-        queryParameters: <String, dynamic>{
-          if (keyword != null && keyword.isNotEmpty) 'keyword': keyword,
-          'pageNumber': pageNumber,
-          'pageSize': pageSize,
-        },
-      );
+      Response response;
+      try {
+        response = await _dio.get(
+          ApiConstants.serviceByName(name),
+          queryParameters: <String, dynamic>{
+            if (keyword != null && keyword.isNotEmpty) 'keyword': keyword,
+            'pageNumber': pageNumber,
+            'pageSize': pageSize,
+          },
+        );
+      } on DioException catch (e) {
+        if (e.response?.statusCode != 404) rethrow;
+        response = await _dio.get(
+          ApiConstants.serviceByNameLegacy(name),
+          queryParameters: <String, dynamic>{
+            if (keyword != null && keyword.isNotEmpty) 'keyword': keyword,
+            'pageNumber': pageNumber,
+            'pageSize': pageSize,
+          },
+        );
+      }
 
       if (response.data == null || response.data.toString().isEmpty) {
         _errorMessage = 'السيرفر ماردش بيانات';

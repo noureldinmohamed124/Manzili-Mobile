@@ -72,10 +72,18 @@ class AuthProvider extends ChangeNotifier {
     ).toJson();
 
     try {
-      final response = await _dio.post(
-        ApiConstants.register,
-        data: body,
-      );
+      Response response;
+      try {
+        response = await _dio.post(ApiConstants.register, data: body);
+      } on DioException catch (e) {
+        if (e.response?.statusCode != 404) rethrow;
+        try {
+          response = await _dio.post(ApiConstants.registerLegacy, data: body);
+        } on DioException catch (e2) {
+          if (e2.response?.statusCode != 404) rethrow;
+          response = await _dio.post(ApiConstants.registerApiLegacy, data: body);
+        }
+      }
 
       final data = tryParseJsonMap(response.data);
       if (data == null) {
@@ -119,10 +127,18 @@ class AuthProvider extends ChangeNotifier {
     final body = LoginRequest(email: email, password: password).toJson();
 
     try {
-      final response = await _dio.post(
-        ApiConstants.login,
-        data: body,
-      );
+      Response response;
+      try {
+        response = await _dio.post(ApiConstants.login, data: body);
+      } on DioException catch (e) {
+        if (e.response?.statusCode != 404) rethrow;
+        try {
+          response = await _dio.post(ApiConstants.loginLegacy, data: body);
+        } on DioException catch (e2) {
+          if (e2.response?.statusCode != 404) rethrow;
+          response = await _dio.post(ApiConstants.loginApiLegacy, data: body);
+        }
+      }
 
       final map = tryParseJsonMap(response.data);
       if (map == null) {
@@ -198,10 +214,18 @@ class AuthProvider extends ChangeNotifier {
       final body =
           RefreshTokenRequest(refreshToken: _refreshToken!).toJson();
 
-      final response = await _dio.post(
-        ApiConstants.refresh,
-        data: body,
-      );
+      Response response;
+      try {
+        response = await _dio.post(ApiConstants.refresh, data: body);
+      } on DioException catch (e) {
+        if (e.response?.statusCode != 404) rethrow;
+        try {
+          response = await _dio.post(ApiConstants.refreshLegacy, data: body);
+        } on DioException catch (e2) {
+          if (e2.response?.statusCode != 404) rethrow;
+          response = await _dio.post(ApiConstants.refreshApiLegacy, data: body);
+        }
+      }
 
       final map = tryParseJsonMap(response.data);
       if (map == null) {

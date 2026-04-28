@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:manzili_mobile/core/theme/app_colors.dart';
 import 'package:manzili_mobile/presentation/widgets/common/soft_card.dart';
+import 'package:manzili_mobile/presentation/providers/orders_provider.dart';
+import 'package:provider/provider.dart';
 
 class PaymentMethodView extends StatefulWidget {
   const PaymentMethodView({super.key});
@@ -12,18 +14,28 @@ class PaymentMethodView extends StatefulWidget {
 
 class _PaymentMethodViewState extends State<PaymentMethodView> {
   String _selectedMethod = 'cash';
-  bool _isUploading = false;
+  final _receipt = TextEditingController();
+  final _notes = TextEditingController();
 
   void _submitPayment() async {
     if (_selectedMethod == 'bank_transfer') {
-      setState(() => _isUploading = true);
-      // Fake upload delay
-      await Future.delayed(const Duration(seconds: 2));
-      setState(() => _isUploading = false);
+      final ok = await context.read<OrdersProvider>().submitPaymentProof(
+            paymentScreenshot: _receipt.text,
+            notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
+          );
+      if (!mounted) return;
+      if (!ok) return;
     }
 
     if (!mounted) return;
     context.go('/order-placed');
+  }
+
+  @override
+  void dispose() {
+    _receipt.dispose();
+    _notes.dispose();
+    super.dispose();
   }
 
   @override
@@ -83,16 +95,43 @@ class _PaymentMethodViewState extends State<PaymentMethodView> {
                       ],
                     ),
                     const Divider(height: 24),
-                    const Text('بعد التحويل، ارفع صورة إيصال الدفع هنا.'),
+                    const Text('بعد التحويل، ابعت صورة الإيصال/سكرين التحويل.'),
                     const SizedBox(height: 12),
-                    OutlinedButton.icon(
-                      onPressed: () {},
-                      icon: const Icon(Icons.upload_file),
-                      label: const Text('إرفاق الإيصال (صورة أو PDF)'),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        minimumSize: const Size(double.infinity, 50),
+                    TextField(
+                      controller: _receipt,
+                      minLines: 1,
+                      maxLines: 4,
+                      decoration: const InputDecoration(
+                        labelText: 'PaymentScreenshot',
+                        hintText: 'حط هنا Base64 أو لينك للصورة (حسب السيرفر)',
                       ),
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: _notes,
+                      minLines: 1,
+                      maxLines: 3,
+                      decoration: const InputDecoration(
+                        labelText: 'ملاحظات (اختياري)',
+                        hintText: 'أي تفاصيل زيادة عن التحويل…',
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Consumer<OrdersProvider>(
+                      builder: (context, orders, _) {
+                        final err = orders.errorMessage;
+                        if (err == null || err.isEmpty) return const SizedBox.shrink();
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: Text(
+                            err,
+                            style: const TextStyle(
+                              color: AppColors.error,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -100,11 +139,20 @@ class _PaymentMethodViewState extends State<PaymentMethodView> {
             ),
           ],
           const SizedBox(height: 32),
-          FilledButton(
-            onPressed: _isUploading ? null : _submitPayment,
-            child: _isUploading
-                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                : const Text('تأكيد وإتمام الدفع'),
+          Consumer<OrdersProvider>(
+            builder: (context, orders, _) {
+              final busy = orders.isSubmittingPaymentProof;
+              return FilledButton(
+                onPressed: busy ? null : _submitPayment,
+                child: busy
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                      )
+                    : const Text('تأكيد وإتمام الدفع'),
+              );
+            },
           ),
         ],
       ),

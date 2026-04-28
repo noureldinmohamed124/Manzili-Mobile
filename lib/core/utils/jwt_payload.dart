@@ -28,11 +28,22 @@ int? parseRoleClaim(Map<String, dynamic> payload) {
   const claimKeys = [
     'role',
     'Role',
+    'roleId',
+    'RoleId',
+    'userRole',
+    'UserRole',
     'http://schemas.microsoft.com/ws/2008/06/identity/claims/role',
   ];
   for (final key in claimKeys) {
     final v = payload[key];
     if (v == null) continue;
+    if (v is List) {
+      for (final item in v) {
+        final n = _roleToInt(item);
+        if (n != null) return n;
+      }
+      continue;
+    }
     final n = _roleToInt(v);
     if (n != null) return n;
   }

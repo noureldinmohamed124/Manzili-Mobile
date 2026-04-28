@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:manzili_mobile/core/network/api_constants.dart';
 import 'package:manzili_mobile/core/network/dio_client.dart';
+import 'package:manzili_mobile/core/network/json_parse.dart';
 import 'package:manzili_mobile/data/models/order_models.dart';
 
 class OrdersRepository {
@@ -11,17 +12,25 @@ class OrdersRepository {
   /// Returns server message on failure; `null` on success.
   Future<String?> requestService(OrderRequestBody body) async {
     try {
-      final res = await _dio.postUri(
-        ApiConstants.orderRequestUri,
-        data: body.toJson(),
-      );
-      final data = res.data;
-      if (data == null) return 'مفيش رد من السيرفر';
-      final ok = data['success'] == true;
-      if (!ok) {
-        return data['message']?.toString() ?? 'الطلب ماتمش';
+      // New API returns { requestId, totalPrice, requestDate } (no wrapper).
+      // We try the new URI first, then fall back to legacy /api path on 404.
+      try {
+        final res = await _dio.postUri(ApiConstants.orderRequestUri, data: body.toJson());
+        final raw = tryParseJsonMap(res.data);
+        if (raw == null) return null; // Some servers may return empty on success.
+        if (raw['success'] == false) {
+          return raw['message']?.toString() ?? 'الطلب ماتمش';
+        }
+        return null;
+      } on DioException catch (e) {
+        if (e.response?.statusCode != 404) rethrow;
+        final res = await _dio.postUri(ApiConstants.orderRequestUriLegacy, data: body.toJson());
+        final raw = tryParseJsonMap(res.data);
+        if (raw == null) return 'مفيش رد من السيرفر';
+        final ok = raw['success'] == true || raw.containsKey('requestId');
+        if (!ok) return raw['message']?.toString() ?? 'الطلب ماتمش';
+        return null;
       }
-      return null;
     } on DioException catch (e) {
       return _mapDioError(e);
     } catch (_) {
@@ -43,15 +52,21 @@ class OrdersRepository {
         queryParams['status'] = status;
       }
 
-      final res = await _dio.get(
-        ApiConstants.orders,
-        queryParameters: queryParams,
-      );
+      Response res;
+      try {
+        res = await _dio.get(ApiConstants.orders, queryParameters: queryParams);
+      } on DioException catch (e) {
+        if (e.response?.statusCode != 404) rethrow;
+        res = await _dio.get(ApiConstants.ordersLegacy, queryParameters: queryParams);
+      }
 
       final raw = res.data;
       if (raw == null) return (null, 'مفيش بيانات من السيرفر');
 
-      final dataJson = raw['data'] as Map<String, dynamic>? ?? raw;
+      final parsedRaw = tryParseJsonMap(raw);
+      if (parsedRaw == null) return (null, 'الرد مش صحيح');
+
+      final dataJson = parsedRaw['data'] as Map<String, dynamic>? ?? parsedRaw;
       final parsed = PaginatedOrdersResponse.fromJson(dataJson);
       return (parsed, null);
     } on DioException catch (e) {
@@ -63,18 +78,52 @@ class OrdersRepository {
 
   Future<(PaymentSummaryData?, String?)> getPaymentSummary() async {
     try {
-      final res = await _dio.get(ApiConstants.orderPaymentSummary);
+      Response res;
+      try {
+        res = await _dio.get(ApiConstants.orderPaymentSummary);
+      } on DioException catch (e) {
+        if (e.response?.statusCode != 404) rethrow;
+        res = await _dio.get(ApiConstants.orderPaymentSummaryLegacy);
+      }
 
       final raw = res.data;
       if (raw == null) return (null, 'مفيش بيانات من السيرفر');
 
-      final dataJson = raw['data'] as Map<String, dynamic>? ?? raw;
+      final parsedRaw = tryParseJsonMap(raw);
+      if (parsedRaw == null) return (null, 'الرد مش صحيح');
+
+      // New response is direct object; legacy might wrap in {data}.
+      final dataJson = parsedRaw['data'] as Map<String, dynamic>? ?? parsedRaw;
       final parsed = PaymentSummaryData.fromJson(dataJson);
       return (parsed, null);
     } on DioException catch (e) {
       return (null, _mapDioError(e));
     } catch (_) {
       return (null, 'حصل خطأ في معالجة البيانات');
+    }
+  }
+
+  Future<(Map<String, dynamic>?, String?)> submitPaymentProof({
+    required List<int> orderIds,
+    required String paymentScreenshot,
+    String? notes,
+  }) async {
+    try {
+      final res = await _dio.post(
+        ApiConstants.submitPaymentProof,
+        data: {
+          'OrderIds': orderIds,
+          'PaymentScreenshot': paymentScreenshot,
+          'Notes': notes,
+        },
+      );
+      final raw = tryParseJsonMap(res.data);
+      if (raw == null) return (null, 'السيرفر ماردش بيانات');
+      return (raw, null);
+    } on DioException catch (e) {
+      return (null, _mapDioError(e));
+    } catch (_) {
+      return (null, 'حصل خطأ غير متوقع');
     }
   }
 
