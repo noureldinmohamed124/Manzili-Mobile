@@ -10,45 +10,115 @@ class OrderPlacedView extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.check_circle_rounded,
-                size: 88,
-                color: AppColors.statusActive,
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'تمام! طلبك اتسجل',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isShort = constraints.maxHeight < 620;
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight - 48),
+                child: IntrinsicHeight(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SizedBox(height: isShort ? 18 : 40),
+                    Center(
+                      child: Container(
+                        width: 120,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          color: AppColors.statusActive.withValues(alpha: 0.12),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.check_rounded,
+                          size: 64,
+                          color: AppColors.statusActive,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 22),
+                    const Text(
+                      'تمام! طلبك اتسجل',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w900,
+                        height: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'هنبعتلك تحديث على الإشعارات لما الطلب يتحرك.\nمتقلقش.. كل حاجة هتمشي خطوة بخطوة.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        height: 1.55,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.notifications_active_outlined,
+                              color: AppColors.primary.withValues(alpha: 0.9)),
+                          const SizedBox(width: 10),
+                          const Expanded(
+                            child: Text(
+                              'تابع حالة الطلب من صفحة "طلباتي".',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                height: 1.3,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    const Spacer(),
+                    FilledButton(
+                      onPressed: () => context.go('/my-orders'),
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: const Text(
+                        'شوف طلباتي',
+                        style: TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    OutlinedButton(
+                      onPressed: () => context.go('/home'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        side: BorderSide(color: AppColors.border),
+                      ),
+                      child: const Text(
+                        'ارجع للرئيسية',
+                        style: TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                    SizedBox(height: isShort ? 10 : 18),
+                  ],
                 ),
               ),
-              const SizedBox(height: 12),
-              Text(
-                'هنبعتلك تحديث على الإشعارات لما الطلب يتحرك.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 32),
-              FilledButton(
-                onPressed: () => context.go('/my-orders'),
-                child: const Text('شوف طلباتي'),
-              ),
-              TextButton(
-                onPressed: () => context.go('/home'),
-                child: const Text('ارجع للرئيسية'),
-              ),
-            ],
-          ),
+            ),
+          );
+        },
         ),
       ),
     );

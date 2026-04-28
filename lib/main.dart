@@ -7,6 +7,7 @@ import 'package:manzili_mobile/presentation/providers/services_provider.dart';
 import 'package:manzili_mobile/presentation/providers/cart_provider.dart';
 import 'package:manzili_mobile/presentation/providers/orders_provider.dart';
 import 'package:manzili_mobile/presentation/providers/seller_provider.dart';
+import 'package:manzili_mobile/presentation/providers/favourites_provider.dart';
 import 'package:provider/provider.dart';
 
 void main() {
@@ -36,6 +37,9 @@ class MyApp extends StatelessWidget {
         ),
         ChangeNotifierProvider<SellerProvider>(
           create: (_) => SellerProvider(),
+        ),
+        ChangeNotifierProvider<FavouritesProvider>(
+          create: (_) => FavouritesProvider(),
         ),
       ],
       child: MaterialApp.router(

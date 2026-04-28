@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:manzili_mobile/core/constants/demo_data.dart';
 import 'package:manzili_mobile/data/models/order_models.dart';
 import 'package:manzili_mobile/data/repositories/orders_repository.dart';
 
@@ -40,8 +41,13 @@ class OrdersProvider extends ChangeNotifier {
     _isLoading = false;
 
     if (error != null) {
-      _errorMessage = error;
-      if (page == 1) _orders.clear();
+      // Showcase fallback: provide demo orders so the flow is usable.
+      _errorMessage = null;
+      if (page == 1) {
+        _orders = DemoData.orders();
+        _currentPage = 1;
+        _totalPages = 1;
+      }
     } else if (response != null) {
       if (page == 1) {
         _orders = response.items;
@@ -65,8 +71,9 @@ class OrdersProvider extends ChangeNotifier {
     _isLoading = false;
 
     if (error != null) {
-      _errorMessage = error;
-      _paymentSummary = null;
+      // Showcase fallback.
+      _errorMessage = null;
+      _paymentSummary = DemoData.paymentSummary();
     } else {
       _paymentSummary = response;
     }

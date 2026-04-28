@@ -63,9 +63,9 @@ class _RequestsListViewState extends State<RequestsListView>
             return Center(child: Text(provider.errorMessage!));
           }
 
-          final pending = provider.orders.where((o) => o.status == '0' || o.status.toLowerCase() == 'pending').toList();
-          final approved = provider.orders.where((o) => o.status == '1' || o.status.toLowerCase() == 'approved' || o.status.toLowerCase() == 'repriced').toList();
-          final rejected = provider.orders.where((o) => o.status == '2' || o.status.toLowerCase() == 'rejected').toList();
+          final pending = provider.orders.where((o) => ['0', 'pending', 'request'].contains(o.status.toLowerCase())).toList();
+          final approved = provider.orders.where((o) => ['1', 'approved', 'repriced'].contains(o.status.toLowerCase())).toList();
+          final rejected = provider.orders.where((o) => ['2', 'rejected'].contains(o.status.toLowerCase())).toList();
 
           return TabBarView(
             controller: _tabController,

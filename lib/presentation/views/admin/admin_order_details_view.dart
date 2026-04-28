@@ -43,9 +43,9 @@ class AdminOrderDetailsView extends StatelessWidget {
                 children: [
                   const Text('تفاصيل الخدمة', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
                   const SizedBox(height: 16),
-                  _buildRow('الخدمة', 'تنظيف مكيفات سبليت'),
+                  _buildRow('الخدمة', 'بوكسات سينابون — طازة من البيت'),
                   const Divider(),
-                  _buildRow('المبلغ الإجمالي', '185 جنيه', isHighlight: true),
+                  _buildRow('المبلغ الإجمالي', '330 جنيه', isHighlight: true),
                   const Divider(),
                   _buildRow('طريقة الدفع', 'محفظة'),
                   const Divider(),

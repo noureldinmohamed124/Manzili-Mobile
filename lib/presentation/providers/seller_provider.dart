@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:manzili_mobile/core/constants/demo_data.dart';
 import 'package:manzili_mobile/data/models/seller_models.dart';
 import 'package:manzili_mobile/data/repositories/seller_repository.dart';
 
@@ -46,8 +47,9 @@ class SellerProvider extends ChangeNotifier {
 
     _isLoadingServices = false;
     if (err != null) {
-      _servicesError = err;
-      _services = const [];
+      // Showcase fallback: keep UI usable even if API is down.
+      _servicesError = null;
+      _services = DemoData.sellerServices();
     } else {
       _services = items;
     }
@@ -80,8 +82,9 @@ class SellerProvider extends ChangeNotifier {
     _isLoadingDashboard = false;
 
     if (err != null) {
-      _dashboardError = err;
-      _stats = null;
+      // Showcase fallback.
+      _dashboardError = null;
+      _stats = DemoData.sellerDashboard();
     } else {
       _stats = stats;
     }

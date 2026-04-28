@@ -9,8 +9,18 @@ class AdminServicesView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final mockServices = [
-      {'id': '201', 'title': 'تأسيس كهرباء', 'provider': 'أحمد (كهربائي)', 'status': 'مراجعة'},
-      {'id': '202', 'title': 'تنظيف مكيفات', 'provider': 'محمود (فني)', 'status': 'معتمد'},
+      {
+        'id': '201',
+        'title': 'كحك وبسكوت العيد (سمن بلدي)',
+        'provider': 'Abdo Sherif',
+        'status': 'مراجعة',
+      },
+      {
+        'id': '202',
+        'title': 'خدمة كروشيه حسب المقاس (شيلان وملابس شتوي)',
+        'provider': 'Mona Crochet',
+        'status': 'معتمد',
+      },
     ];
 
     return Scaffold(

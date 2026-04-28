@@ -183,6 +183,10 @@ GoRouter createAppRouter() {
         builder: (context, state) => const ExploreSellersView(),
       ),
       GoRoute(
+        path: '/seller-services',
+        builder: (context, state) => const ServicesView(),
+      ),
+      GoRoute(
         path: '/seller',
         builder: (context, state) => const SellerHubView(),
       ),

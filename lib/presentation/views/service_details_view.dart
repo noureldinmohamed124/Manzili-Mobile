@@ -5,6 +5,7 @@ import 'package:manzili_mobile/data/models/order_models.dart';
 import 'package:manzili_mobile/data/models/service_models.dart';
 import 'package:manzili_mobile/presentation/providers/auth_provider.dart';
 import 'package:manzili_mobile/presentation/providers/cart_provider.dart';
+import 'package:manzili_mobile/presentation/providers/favourites_provider.dart';
 import 'package:manzili_mobile/presentation/providers/services_provider.dart';
 import '../../core/strings/app_strings.dart';
 import '../../core/theme/app_colors.dart';
@@ -36,6 +37,8 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ServicesProvider>().getServiceById(widget.serviceId);
+      // Restore favourite state (local showcase store).
+      _isFavorite = context.read<FavouritesProvider>().isFavourite(widget.serviceId);
     });
   }
 
@@ -1012,7 +1015,16 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
                 SizedBox(width: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12)),
                 IconButton(
                   onPressed: () {
-                    setState(() => _isFavorite = !_isFavorite);
+                    final fav = context.read<FavouritesProvider>();
+                    final servicesProvider = context.read<ServicesProvider>();
+                    final s = servicesProvider.currentServiceDetails;
+                    if (s != null && s.id == widget.serviceId) {
+                      fav.toggle(s);
+                      setState(() => _isFavorite = fav.isFavourite(widget.serviceId));
+                    } else {
+                      // If details not loaded yet, just flip UI state.
+                      setState(() => _isFavorite = !_isFavorite);
+                    }
                   },
                   icon: Icon(
                     _isFavorite ? Icons.favorite : Icons.favorite_border,

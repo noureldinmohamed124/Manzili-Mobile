@@ -23,15 +23,33 @@ Map<String, dynamic>? decodeJwtPayload(String token) {
   }
 }
 
+/// Creates a simple unsigned JWT (for demo-only flows).
+/// WARNING: This is NOT secure and must not be used for real auth.
+String createDemoJwt(Map<String, dynamic> payload) {
+  final header = {'alg': 'none', 'typ': 'JWT'};
+  String b64(Object obj) {
+    final bytes = utf8.encode(jsonEncode(obj));
+    return base64Url.encode(bytes).replaceAll('=', '');
+  }
+
+  return '${b64(header)}.${b64(payload)}.';
+}
+
 /// Returns user role: 1 = buyer, 2 = seller, 3 = admin. Unknown → null.
 int? parseRoleClaim(Map<String, dynamic> payload) {
   const claimKeys = [
     'role',
     'Role',
+    'roles',
+    'Roles',
     'roleId',
     'RoleId',
     'userRole',
     'UserRole',
+    'user_type',
+    'userType',
+    'accountType',
+    'type',
     'http://schemas.microsoft.com/ws/2008/06/identity/claims/role',
   ];
   for (final key in claimKeys) {

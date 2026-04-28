@@ -10,7 +10,7 @@ class FoodListSection extends StatelessWidget {
   final String? viewAllText;
   final VoidCallback? onViewAllTap;
   final VoidCallback? onTitleTap;
-  final List<FoodCard> foodItems;
+  final List<Widget> foodItems;
 
   const FoodListSection({
     super.key,

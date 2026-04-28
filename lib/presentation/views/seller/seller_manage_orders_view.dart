@@ -29,11 +29,21 @@ class _SellerManageOrdersViewState extends State<SellerManageOrdersView> with Si
   Widget build(BuildContext context) {
     // TODO: Connect to backend API for seller's incoming requests
     final pendingRequests = [
-      {'id': '1046', 'service': 'تنظيف مكيفات', 'price': '150 جنيه', 'time': 'منذ 10 دقائق'},
+      {
+        'id': '1046',
+        'service': 'بوكسات سينابون (طلب جديد)',
+        'price': '300 جنيه',
+        'time': 'منذ 10 دقائق',
+      },
     ];
 
     final activeOrders = [
-      {'id': '1042', 'service': 'صيانة سباكة', 'price': '80 جنيه', 'status': 'جاري العمل'},
+      {
+        'id': '1042',
+        'service': 'كحك وبسكوت العيد',
+        'price': '250 جنيه',
+        'status': 'جاري التحضير',
+      },
     ];
 
     return Scaffold(

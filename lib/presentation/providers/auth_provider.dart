@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:manzili_mobile/core/network/api_constants.dart';
 import 'package:manzili_mobile/core/network/dio_client.dart';
 import 'package:manzili_mobile/core/network/json_parse.dart';
+import 'package:manzili_mobile/core/constants/demo_role_store.dart';
 import 'package:manzili_mobile/core/utils/jwt_payload.dart';
 import 'package:manzili_mobile/data/models/auth_models.dart';
 
@@ -94,6 +95,10 @@ class AuthProvider extends ChangeNotifier {
       if (!success) {
         _errorMessage = data['message']?.toString() ?? 'التسجيل متمش';
       }
+      if (success) {
+        // Showcase fallback: remember chosen role for this email.
+        DemoRoleStore.setRoleForEmail(email, role);
+      }
       return success;
     } on DioException catch (e) {
       if (e.response?.statusCode == 409) {
@@ -119,6 +124,32 @@ class AuthProvider extends ChangeNotifier {
     _status = AuthStatus.authenticating;
     _errorMessage = null;
     notifyListeners();
+
+    // Showcase shortcut: static admin account (REMOVE AFTER SHOWCASE).
+    if (email.trim().toLowerCase() == 'wasfyadmin@gmail.com' &&
+        password == 'wasfy1234') {
+      _userRole = 3;
+      _accessToken = createDemoJwt({'role': 3, 'email': email});
+      _refreshToken = 'demo-refresh';
+      DioClient.instance.setAccessToken(_accessToken);
+      _status = AuthStatus.authenticated;
+      _errorMessage = null;
+      notifyListeners();
+      return true;
+    }
+
+    // Showcase shortcut: static seller account (REMOVE AFTER SHOWCASE).
+    if (email.trim().toLowerCase() == 'sellertest@gmail.com' &&
+        password == 'sellertest1234') {
+      _userRole = 2;
+      _accessToken = createDemoJwt({'role': 2, 'email': email});
+      _refreshToken = 'demo-refresh';
+      DioClient.instance.setAccessToken(_accessToken);
+      _status = AuthStatus.authenticated;
+      _errorMessage = null;
+      notifyListeners();
+      return true;
+    }
 
     // Critical: login must be anonymous. A leftover Bearer token often makes the server
     // return { success: true, message: "..." } without new tokens in the body.
@@ -153,9 +184,16 @@ class AuthProvider extends ChangeNotifier {
         _refreshToken = tokens.refreshToken;
         DioClient.instance.setAccessToken(_accessToken);
         _applyClaimsFromAccessToken(_accessToken);
-        if (_userRole == null && uiRoleFallback != null) {
-          _userRole = uiRoleFallback;
+        
+        // If the token decoding gave a role (e.g. from response body), prefer that if JWT doesn't have it
+        if (_userRole == null && tokens.role != null) {
+          _userRole = tokens.role;
         }
+
+        // If backend token has no role claim, fall back to locally-known role.
+        _userRole ??= DemoRoleStore.getRoleForEmail(email);
+        // Keep old optional fallback for debugging/testing.
+        if (_userRole == null && uiRoleFallback != null) _userRole = uiRoleFallback;
         _status = AuthStatus.authenticated;
         _errorMessage = null;
         return true;

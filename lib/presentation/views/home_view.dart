@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:manzili_mobile/data/models/service_models.dart';
+import 'package:manzili_mobile/presentation/providers/favourites_provider.dart';
 import 'package:manzili_mobile/presentation/providers/services_provider.dart';
 import 'package:manzili_mobile/presentation/widgets/home/food_card.dart';
 import 'package:manzili_mobile/presentation/widgets/home/food_list_section.dart';
@@ -384,21 +385,27 @@ class _HomeViewState extends State<HomeView> {
     );
   }
 
-  List<FoodCard> _buildFoodCardsFromServices(
+  List<Widget> _buildFoodCardsFromServices(
     BuildContext context,
     BoxConstraints constraints,
     List<ServiceItem> services, {
     String? badge,
   }) {
     return services.map((service) {
-      return FoodCard(
-        networkImageUrl: service.imageUrl,
-        name: service.title,
-        sellerName: service.providerName,
-        price: service.basePrice.toDouble(),
-        rating: service.rating.toDouble(),
-        badge: badge,
-        onTap: () => context.push('/service/${service.id}'),
+      return Consumer<FavouritesProvider>(
+        builder: (context, fav, _) {
+          return FoodCard(
+            networkImageUrl: service.imageUrl,
+            name: service.title,
+            sellerName: service.providerName,
+            price: service.basePrice.toDouble(),
+            rating: service.rating.toDouble(),
+            badge: badge,
+            isFavorite: fav.isFavourite(service.id),
+            onFavoriteTap: () => fav.toggle(service),
+            onTap: () => context.push('/service/${service.id}'),
+          );
+        },
       );
     }).toList();
   }

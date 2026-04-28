@@ -769,6 +769,22 @@ Before saying “done”:
 
 ---
 
+## 12.2) Showcase Demo Mode (temporary)
+
+For demos/showcases when the backend is incomplete, the app may enable **temporary demo fallbacks**:
+
+- **Static admin login** (demo-only):
+  - `wasfyAdmin@gmail.com` / `wasfy1234`
+  - Routes to `/admin`
+- **Demo data fallback** when API calls fail:
+  - Orders list and payment summary
+  - Seller dashboard and seller services list
+  - Services list
+
+Tracking file (must be removed later): `SHOWCASE_DEMO_TODOS.md`
+
+---
+
 ## 13) Appendix — “single source of truth” file pointers
 
 If you need to quickly reconstruct behavior:

@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:manzili_mobile/core/constants/demo_data.dart';
 import 'package:manzili_mobile/core/network/api_constants.dart';
 import 'package:manzili_mobile/core/network/dio_client.dart';
 import 'package:manzili_mobile/data/models/service_models.dart';
@@ -158,10 +159,19 @@ class ServicesProvider extends ChangeNotifier {
       _currentPage = data.page;
       _pageSize = data.pageSize;
       _totalPages = data.totalPages;
-    } on DioException catch (e) {
-      _errorMessage = _mapDioError(e);
-    } catch (e) {
-      _errorMessage = 'حصل خطأ غير متوقع';
+    } on DioException {
+      // Showcase fallback.
+      _errorMessage = null;
+      _services = DemoData.services();
+      _currentPage = 1;
+      _pageSize = _services.length;
+      _totalPages = 1;
+    } catch (_) {
+      _errorMessage = null;
+      _services = DemoData.services();
+      _currentPage = 1;
+      _pageSize = _services.length;
+      _totalPages = 1;
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -201,9 +211,11 @@ class ServicesProvider extends ChangeNotifier {
       final data = PaginatedServicesResponse.fromJson(raw);
       _featuredServices = data.items;
     } on DioException catch (e) {
-      _errorMessage = _mapDioError(e);
+      _errorMessage = null;
+      _featuredServices = DemoData.services().take(2).toList();
     } catch (e) {
-      _errorMessage = 'حصل خطأ غير متوقع';
+      _errorMessage = null;
+      _featuredServices = DemoData.services().take(2).toList();
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -243,9 +255,11 @@ class ServicesProvider extends ChangeNotifier {
       final data = PaginatedServicesResponse.fromJson(raw);
       _recommendedServices = data.items;
     } on DioException catch (e) {
-      _errorMessage = _mapDioError(e);
+      _errorMessage = null;
+      _recommendedServices = DemoData.services().skip(1).take(2).toList();
     } catch (e) {
-      _errorMessage = 'حصل خطأ غير متوقع';
+      _errorMessage = null;
+      _recommendedServices = DemoData.services().skip(1).take(2).toList();
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -284,9 +298,11 @@ class ServicesProvider extends ChangeNotifier {
       final data = PaginatedServicesResponse.fromJson(raw);
       _mostPurchasedServices = data.items;
     } on DioException catch (e) {
-      _errorMessage = _mapDioError(e);
+      _errorMessage = null;
+      _mostPurchasedServices = DemoData.services().take(3).toList();
     } catch (e) {
-      _errorMessage = 'حصل خطأ غير متوقع';
+      _errorMessage = null;
+      _mostPurchasedServices = DemoData.services().take(3).toList();
     } finally {
       _isLoading = false;
       notifyListeners();

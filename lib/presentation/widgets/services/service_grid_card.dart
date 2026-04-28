@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:manzili_mobile/data/models/service_models.dart';
+import 'package:manzili_mobile/presentation/providers/favourites_provider.dart';
 import 'package:manzili_mobile/presentation/widgets/common/service_cover_image.dart';
 import '../../../../core/theme/app_colors.dart';
 
@@ -45,17 +47,25 @@ class ServiceGridCard extends StatelessWidget {
                 Positioned(
                   top: 8,
                   right: 8,
-                  child: Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.favorite_border,
-                      size: 18,
-                      color: AppColors.textSecondary,
-                    ),
+                  child: Consumer<FavouritesProvider>(
+                    builder: (context, fav, _) {
+                      final isFav = fav.isFavourite(service.id);
+                      return GestureDetector(
+                        onTap: () => fav.toggle(service),
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            isFav ? Icons.favorite : Icons.favorite_border,
+                            size: 18,
+                            color: isFav ? Colors.red : AppColors.textSecondary,
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
                 Positioned(
