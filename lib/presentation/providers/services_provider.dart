@@ -1,8 +1,10 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:manzili_mobile/core/constants/demo_data.dart';
 import 'package:manzili_mobile/core/network/api_constants.dart';
 import 'package:manzili_mobile/core/network/dio_client.dart';
 import 'package:manzili_mobile/data/models/service_models.dart';
+import 'package:manzili_mobile/data/models/category_models.dart';
 
 class ServicesProvider extends ChangeNotifier {
   final Dio _dio = DioClient.instance.dio;
@@ -11,6 +13,7 @@ class ServicesProvider extends ChangeNotifier {
   List<ServiceItem> _featuredServices = [];
   List<ServiceItem> _recommendedServices = [];
   List<ServiceItem> _mostPurchasedServices = [];
+  List<CategoryModel> _categories = [];
   HomeServicesBuckets? _homeBuckets;
   ServiceItem? _currentServiceDetails;
   bool _isLoading = false;
@@ -24,6 +27,7 @@ class ServicesProvider extends ChangeNotifier {
   List<ServiceItem> get featuredServices => _featuredServices;
   List<ServiceItem> get recommendedServices => _recommendedServices;
   List<ServiceItem> get mostPurchasedServices => _mostPurchasedServices;
+  List<CategoryModel> get categories => _categories;
   HomeServicesBuckets? get homeBuckets => _homeBuckets;
   ServiceItem? get currentServiceDetails => _currentServiceDetails;
   bool get isLoading => _isLoading;
@@ -40,9 +44,17 @@ class ServicesProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await _dio.get<Map<String, dynamic>>(
-        ApiConstants.homeServices(no),
-      );
+      Response<Map<String, dynamic>> response;
+      try {
+        response = await _dio.get<Map<String, dynamic>>(
+          ApiConstants.homeServices(no),
+        );
+      } on DioException catch (e) {
+        if (e.response?.statusCode != 404) rethrow;
+        response = await _dio.get<Map<String, dynamic>>(
+          ApiConstants.homeServicesLegacy(no),
+        );
+      }
 
       final raw = response.data;
       if (raw == null) {
@@ -71,6 +83,39 @@ class ServicesProvider extends ChangeNotifier {
     }
   }
 
+  /// Fetches all categories.
+  Future<void> fetchCategories() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final response = await _dio.get(ApiConstants.categories);
+      if (response.data == null) {
+        _errorMessage = 'السيرفر ماردش بيانات';
+        return;
+      }
+      
+      final raw = response.data as Map<String, dynamic>?;
+      if (raw == null || raw['data'] == null || raw['data']['items'] == null) {
+        _errorMessage = 'الرد مش صحيح';
+        return;
+      }
+      
+      final itemsList = raw['data']['items'] as List<dynamic>;
+      _categories = itemsList.map((e) => CategoryModel.fromJson(e)).toList();
+    } on DioException catch (e) {
+      _errorMessage = _mapDioError(e);
+      _categories = [];
+    } catch (_) {
+      _errorMessage = 'حصل خطأ غير متوقع';
+      _categories = [];
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   /// Fetches paginated list of services (camelCase query names per API spec).
   Future<void> fetchServices({
     int page = 1,
@@ -79,6 +124,7 @@ class ServicesProvider extends ChangeNotifier {
     bool? isRecommended,
     bool? topDiscounts,
     bool? mostPurchased,
+    String? searchQuery,
   }) async {
     _isLoading = true;
     _errorMessage = null;
@@ -103,10 +149,34 @@ class ServicesProvider extends ChangeNotifier {
         queryParameters['mostPurchased'] = mostPurchased;
       }
 
-      final response = await _dio.get(
-        ApiConstants.services,
-        queryParameters: queryParameters,
-      );
+      Response response;
+      if (searchQuery != null && searchQuery.isNotEmpty) {
+        try {
+          response = await _dio.get(
+            ApiConstants.serviceByName(searchQuery),
+            queryParameters: queryParameters,
+          );
+        } on DioException catch (e) {
+          if (e.response?.statusCode != 404) rethrow;
+          response = await _dio.get(
+            ApiConstants.serviceByNameLegacy(searchQuery),
+            queryParameters: queryParameters,
+          );
+        }
+      } else {
+        try {
+          response = await _dio.get(
+            ApiConstants.services,
+            queryParameters: queryParameters,
+          );
+        } on DioException catch (e) {
+          if (e.response?.statusCode != 404) rethrow;
+          response = await _dio.get(
+            ApiConstants.servicesLegacy,
+            queryParameters: queryParameters,
+          );
+        }
+      }
 
       if (response.data == null || response.data.toString().isEmpty) {
         _errorMessage = 'السيرفر ماردش بيانات';
@@ -127,8 +197,16 @@ class ServicesProvider extends ChangeNotifier {
       _totalPages = data.totalPages;
     } on DioException catch (e) {
       _errorMessage = _mapDioError(e);
-    } catch (e) {
+      _services = [];
+      _currentPage = 1;
+      _pageSize = pageSize;
+      _totalPages = 1;
+    } catch (_) {
       _errorMessage = 'حصل خطأ غير متوقع';
+      _services = [];
+      _currentPage = 1;
+      _pageSize = pageSize;
+      _totalPages = 1;
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -169,8 +247,10 @@ class ServicesProvider extends ChangeNotifier {
       _featuredServices = data.items;
     } on DioException catch (e) {
       _errorMessage = _mapDioError(e);
-    } catch (e) {
+      _featuredServices = [];
+    } catch (_) {
       _errorMessage = 'حصل خطأ غير متوقع';
+      _featuredServices = [];
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -211,8 +291,10 @@ class ServicesProvider extends ChangeNotifier {
       _recommendedServices = data.items;
     } on DioException catch (e) {
       _errorMessage = _mapDioError(e);
-    } catch (e) {
+      _recommendedServices = [];
+    } catch (_) {
       _errorMessage = 'حصل خطأ غير متوقع';
+      _recommendedServices = [];
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -252,8 +334,10 @@ class ServicesProvider extends ChangeNotifier {
       _mostPurchasedServices = data.items;
     } on DioException catch (e) {
       _errorMessage = _mapDioError(e);
-    } catch (e) {
+      _mostPurchasedServices = [];
+    } catch (_) {
       _errorMessage = 'حصل خطأ غير متوقع';
+      _mostPurchasedServices = [];
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -267,9 +351,13 @@ class ServicesProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await _dio.get(
-        ApiConstants.serviceById(id),
-      );
+      Response response;
+      try {
+        response = await _dio.get(ApiConstants.serviceById(id));
+      } on DioException catch (e) {
+        if (e.response?.statusCode != 404) rethrow;
+        response = await _dio.get(ApiConstants.serviceByIdLegacy(id));
+      }
 
       if (response.data == null || response.data.toString().isEmpty) {
         _errorMessage = 'السيرفر ماردش بيانات';
@@ -322,14 +410,27 @@ class ServicesProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await _dio.get(
-        ApiConstants.serviceByName(name),
-        queryParameters: <String, dynamic>{
-          if (keyword != null && keyword.isNotEmpty) 'keyword': keyword,
-          'pageNumber': pageNumber,
-          'pageSize': pageSize,
-        },
-      );
+      Response response;
+      try {
+        response = await _dio.get(
+          ApiConstants.serviceByName(name),
+          queryParameters: <String, dynamic>{
+            if (keyword != null && keyword.isNotEmpty) 'keyword': keyword,
+            'pageNumber': pageNumber,
+            'pageSize': pageSize,
+          },
+        );
+      } on DioException catch (e) {
+        if (e.response?.statusCode != 404) rethrow;
+        response = await _dio.get(
+          ApiConstants.serviceByNameLegacy(name),
+          queryParameters: <String, dynamic>{
+            if (keyword != null && keyword.isNotEmpty) 'keyword': keyword,
+            'pageNumber': pageNumber,
+            'pageSize': pageSize,
+          },
+        );
+      }
 
       if (response.data == null || response.data.toString().isEmpty) {
         _errorMessage = 'السيرفر ماردش بيانات';

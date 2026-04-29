@@ -1,10 +1,17 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 import 'package:manzili_mobile/core/strings/app_strings.dart';
 import 'package:manzili_mobile/core/theme/app_colors.dart';
 import 'package:manzili_mobile/presentation/widgets/common/section_header.dart';
+import 'package:manzili_mobile/presentation/providers/services_provider.dart';
+import 'package:manzili_mobile/presentation/providers/seller_provider.dart';
+import 'package:manzili_mobile/data/models/seller_models.dart';
 
-/// Screen 3 — Create Service (validation + UX per spec; POST when API is ready).
+/// Screen 3 — Create Service (validation + API integration).
 class SellerCreateServiceView extends StatefulWidget {
   const SellerCreateServiceView({super.key});
 
@@ -13,35 +20,58 @@ class SellerCreateServiceView extends StatefulWidget {
       _SellerCreateServiceViewState();
 }
 
+class _OptionInput {
+  final TextEditingController name = TextEditingController();
+  final TextEditingController price = TextEditingController();
+
+  void dispose() {
+    name.dispose();
+    price.dispose();
+  }
+}
+
 class _SellerCreateServiceViewState extends State<SellerCreateServiceView> {
   final _title = TextEditingController();
   final _description = TextEditingController();
   final _price = TextEditingController();
-  final _variants = TextEditingController();
-  final _extras = TextEditingController();
+  
+  final List<_OptionInput> _variantInputs = [_OptionInput()];
+  final List<_OptionInput> _extraInputs = [_OptionInput()];
 
-  String? _category;
+  int? _categoryId;
   bool _draft = false;
-  int _imageCount = 1;
 
-  final _categories = const [
-    'أكل بيتي',
-    'حلويات',
-    'شغل يدوي',
-    'خدمات منزلية',
-    'أخرى',
-  ];
+  final ImagePicker _picker = ImagePicker();
+  final List<XFile> _images = [];
 
+  bool _isUploading = false;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (context.read<ServicesProvider>().categories.isEmpty) {
+        context.read<ServicesProvider>().fetchCategories();
+      }
+    });
+  }
 
   @override
   void dispose() {
     _title.dispose();
     _description.dispose();
     _price.dispose();
-    _variants.dispose();
-    _extras.dispose();
+    for (var v in _variantInputs) { v.dispose(); }
+    for (var e in _extraInputs) { e.dispose(); }
     super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    final file = await _picker.pickImage(source: ImageSource.gallery);
+    if (file != null) {
+      setState(() => _images.add(file));
+    }
   }
 
   bool _validate() {
@@ -50,7 +80,7 @@ class _SellerCreateServiceViewState extends State<SellerCreateServiceView> {
       setState(() => _error = AppStrings.errTitleLength);
       return false;
     }
-    if (_category == null) {
+    if (_categoryId == null) {
       setState(() => _error = AppStrings.errCategory);
       return false;
     }
@@ -63,7 +93,7 @@ class _SellerCreateServiceViewState extends State<SellerCreateServiceView> {
       setState(() => _error = AppStrings.errPrice);
       return false;
     }
-    if (_imageCount < 1) {
+    if (_images.isEmpty) {
       setState(() => _error = AppStrings.errImages);
       return false;
     }
@@ -71,12 +101,80 @@ class _SellerCreateServiceViewState extends State<SellerCreateServiceView> {
     return true;
   }
 
+  Future<void> _submit() async {
+    if (!_validate()) return;
+    setState(() => _isUploading = true);
+
+    try {
+      final imagePaths = <String>[];
+      for (final img in _images) {
+        imagePaths.add(img.path);
+      }
+
+      final optionGroups = <CreateOptionGroup>[];
+      
+      final validVariants = _variantInputs.where((v) => v.name.text.trim().isNotEmpty).toList();
+      if (validVariants.isNotEmpty) {
+        optionGroups.add(CreateOptionGroup(
+          name: 'خيارات / مقاسات',
+          isRequired: true,
+          options: validVariants.map((v) => CreateOption(
+            name: v.name.text.trim(),
+            price: double.tryParse(v.price.text.replaceAll(',', '.')) ?? 0.0,
+          )).toList(),
+        ));
+      }
+      
+      final validExtras = _extraInputs.where((e) => e.name.text.trim().isNotEmpty).toList();
+      if (validExtras.isNotEmpty) {
+        optionGroups.add(CreateOptionGroup(
+          name: 'مميزات إضافية',
+          isRequired: false,
+          options: validExtras.map((e) => CreateOption(
+            name: e.name.text.trim(),
+            price: double.tryParse(e.price.text.replaceAll(',', '.')) ?? 0.0,
+          )).toList(),
+        ));
+      }
+
+      final req = CreateServiceRequest(
+        title: _title.text.trim(),
+        description: _description.text.trim(),
+        categoryId: _categoryId!,
+        basePrice: double.parse(_price.text.replaceAll(',', '.')),
+        images: [], // Images are now sent directly via multipart form data files
+        optionGroups: optionGroups,
+      );
+
+      if (!mounted) return;
+      final (success, err) =
+          await context.read<SellerProvider>().createService(req, imagePaths);
+
+      if (!mounted) return;
+      setState(() => _isUploading = false);
+
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('تم إنشاء الخدمة بنجاح!')),
+        );
+        context.pop();
+      } else {
+        setState(() => _error = err ?? 'فشل الإنشاء');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isUploading = false;
+        _error = 'حصل خطأ في رفع الصور أو حفظ الخدمة';
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: AppColors.background,
         appBar: AppBar(
           title: const Text(AppStrings.createServiceTitle),
         ),
@@ -117,15 +215,23 @@ class _SellerCreateServiceViewState extends State<SellerCreateServiceView> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    DropdownButtonFormField<String>(
-                      initialValue: _category,
-                      hint: const Text(AppStrings.fieldCategory),
-                      items: _categories
-                          .map(
-                            (c) => DropdownMenuItem(value: c, child: Text(c)),
-                          )
-                          .toList(),
-                      onChanged: (v) => setState(() => _category = v),
+                    Consumer<ServicesProvider>(
+                      builder: (context, services, child) {
+                        if (services.isLoading && services.categories.isEmpty) {
+                          return const Center(child: CircularProgressIndicator());
+                        }
+                        return DropdownButtonFormField<int>(
+                          value: _categoryId,
+                          hint: const Text(AppStrings.fieldCategory),
+                          items: services.categories.map((c) {
+                            return DropdownMenuItem<int>(
+                              value: c.id,
+                              child: Text(c.nameAr),
+                            );
+                          }).toList(),
+                          onChanged: (v) => setState(() => _categoryId = v),
+                        );
+                      },
                     ),
                     const SizedBox(height: 12),
                     TextField(
@@ -156,7 +262,7 @@ class _SellerCreateServiceViewState extends State<SellerCreateServiceView> {
                       spacing: 8,
                       runSpacing: 8,
                       children: [
-                        ...List.generate(_imageCount, (i) {
+                        ...List.generate(_images.length, (i) {
                           return Stack(
                             clipBehavior: Clip.none,
                             children: [
@@ -164,71 +270,62 @@ class _SellerCreateServiceViewState extends State<SellerCreateServiceView> {
                                 width: 88,
                                 height: 88,
                                 decoration: BoxDecoration(
-                                  color: AppColors.primary.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(color: AppColors.border),
-                                ),
-                                child: const Icon(
-                                  Icons.image_outlined,
-                                  size: 40,
-                                  color: AppColors.primary,
+                                  image: DecorationImage(
+                                    image: FileImage(File(_images[i].path)),
+                                    fit: BoxFit.cover,
+                                  ),
                                 ),
                               ),
-                              if (_imageCount > 1)
-                                Positioned(
-                                  top: -4,
-                                  left: -4,
-                                  child: InkWell(
-                                    onTap: () => setState(() {
-                                      if (_imageCount > 1) _imageCount--;
-                                    }),
-                                    child: const CircleAvatar(
-                                      radius: 12,
-                                      backgroundColor: AppColors.error,
-                                      child: Icon(
-                                        Icons.close,
-                                        size: 14,
-                                        color: Colors.white,
-                                      ),
+                              Positioned(
+                                top: -4,
+                                left: -4,
+                                child: InkWell(
+                                  onTap: () => setState(() => _images.removeAt(i)),
+                                  child: const CircleAvatar(
+                                    radius: 12,
+                                    backgroundColor: AppColors.error,
+                                    child: Icon(
+                                      Icons.close,
+                                      size: 14,
+                                      color: Colors.white,
                                     ),
                                   ),
                                 ),
+                              ),
                             ],
                           );
                         }),
-                        InkWell(
-                          onTap: () =>
-                              setState(() => _imageCount++),
-                          child: Container(
-                            width: 88,
-                            height: 88,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: AppColors.primary,
-                                width: 1.5,
+                        if (_images.length < 5)
+                          InkWell(
+                            onTap: _pickImage,
+                            child: Container(
+                              width: 88,
+                              height: 88,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: AppColors.primary,
+                                  width: 1.5,
+                                ),
                               ),
+                              child: const Icon(Icons.add, color: AppColors.primary),
                             ),
-                            child: const Icon(Icons.add, color: AppColors.primary),
                           ),
-                        ),
                       ],
                     ),
                     const SizedBox(height: 20),
-                    const SectionHeader(title: AppStrings.fieldVariants),
-                    TextField(
-                      controller: _variants,
-                      decoration: const InputDecoration(
-                        hintText: 'مثال: حجم صغير / كبير — سعر كل خيار',
-                      ),
+                    _buildDynamicList(
+                      AppStrings.fieldVariants,
+                      _variantInputs,
+                      () => setState(() => _variantInputs.add(_OptionInput())),
                     ),
                     const SizedBox(height: 12),
-                    const SectionHeader(title: AppStrings.fieldExtras),
-                    TextField(
-                      controller: _extras,
-                      decoration: const InputDecoration(
-                        hintText: 'مثال: تغليف هدية، توصيل سريع…',
-                      ),
+                    _buildDynamicList(
+                      AppStrings.fieldExtras,
+                      _extraInputs,
+                      () => setState(() => _extraInputs.add(_OptionInput())),
                     ),
                     const SizedBox(height: 12),
                     SwitchListTile(
@@ -242,19 +339,8 @@ class _SellerCreateServiceViewState extends State<SellerCreateServiceView> {
               ),
             ),
             _StickyActions(
-              onPrimary: () {
-                if (!_validate()) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      _draft
-                          ? 'تم حفظ المسودة (محليًا) — هيتربط بالسيرفر لاحقًا'
-                          : 'تمام! جاهزين نربطوا بالـ API لما يكون جاهز',
-                    ),
-                  ),
-                );
-                context.pop();
-              },
+              isUploading: _isUploading,
+              onPrimary: _submit,
               onSecondary: () {
                 showDialog<void>(
                   context: context,
@@ -285,22 +371,85 @@ class _SellerCreateServiceViewState extends State<SellerCreateServiceView> {
       ),
     );
   }
+
+  Widget _buildDynamicList(
+    String title,
+    List<_OptionInput> list,
+    VoidCallback onAdd,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SectionHeader(title: title),
+        ...list.asMap().entries.map((entry) {
+          final index = entry.key;
+          final item = entry.value;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: TextField(
+                    controller: item.name,
+                    decoration: const InputDecoration(
+                      hintText: 'الاسم',
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  flex: 1,
+                  child: TextField(
+                    controller: item.price,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    decoration: const InputDecoration(
+                      hintText: 'السعر',
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ),
+                  ),
+                ),
+                if (list.length > 1)
+                  IconButton(
+                    icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
+                    onPressed: () {
+                      setState(() {
+                        item.dispose();
+                        list.removeAt(index);
+                      });
+                    },
+                  ),
+              ],
+            ),
+          );
+        }),
+        TextButton.icon(
+          onPressed: onAdd,
+          icon: const Icon(Icons.add),
+          label: const Text('إضافة خيار آخر'),
+        ),
+      ],
+    );
+  }
 }
 
 class _StickyActions extends StatelessWidget {
   const _StickyActions({
     required this.onPrimary,
     required this.onSecondary,
+    required this.isUploading,
   });
 
   final VoidCallback onPrimary;
   final VoidCallback onSecondary;
+  final bool isUploading;
 
   @override
   Widget build(BuildContext context) {
     return Material(
       elevation: 12,
-      color: AppColors.surface,
+      color: Theme.of(context).colorScheme.surface,
       child: SafeArea(
         top: false,
         child: Padding(
@@ -311,15 +460,21 @@ class _StickyActions extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: FilledButton(
-                  onPressed: onPrimary,
-                  child: const Text(AppStrings.ctaPublishService),
+                  onPressed: isUploading ? null : onPrimary,
+                  child: isUploading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Text(AppStrings.ctaPublishService),
                 ),
               ),
               const SizedBox(height: 8),
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton(
-                  onPressed: onSecondary,
+                  onPressed: isUploading ? null : onSecondary,
                   child: const Text(AppStrings.ctaLeaveWithoutSave),
                 ),
               ),

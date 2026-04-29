@@ -45,7 +45,10 @@ class ServiceItem {
               ? (json['provider'] as Map<String, dynamic>)['rating'] as num?
               : null) ??
           0,
-      imageUrl: json['imageUrl'] as String? ?? '',
+      // Backend may return `imageUrl` (old) or `thumbnailImageUrl` (new list response).
+      imageUrl: (json['imageUrl'] as String?) ??
+          (json['thumbnailImageUrl'] as String?) ??
+          '',
       serviceDescription: json['serviceDescription'] as String?,
       address: json['address'] as String?,
       provider: json['provider'] is Map

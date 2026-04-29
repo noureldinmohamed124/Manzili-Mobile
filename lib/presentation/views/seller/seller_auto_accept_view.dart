@@ -21,7 +21,7 @@ class _SellerAutoAcceptViewState extends State<SellerAutoAcceptView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+
       appBar: AppBar(
         title: const Text(AppStrings.autoAcceptTitle),
       ),

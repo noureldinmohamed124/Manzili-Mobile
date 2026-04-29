@@ -36,15 +36,16 @@ class CustomTextField extends StatelessWidget {
           style: TextStyle(
             fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 14),
             fontWeight: FontWeight.w700,
-            color: AppColors.textSecondary,
+            color: Theme.of(context).textTheme.bodyMedium?.color ?? AppColors.textSecondary,
           ),
         ),
         SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 10)),
         Container(
           height: ResponsiveHelper.clampScaledValue(context, 6.5, min: 48.0, max: 56.0),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(ResponsiveHelper.responsiveValueCompat(context, mobile: 30.0)),
+            border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.2)),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.12),
@@ -63,11 +64,11 @@ class CustomTextField extends StatelessWidget {
             textDirection: TextDirection.rtl,
             textAlignVertical: TextAlignVertical.center,
             enableInteractiveSelection: true,
-            keyboardAppearance: Brightness.light, 
+            keyboardAppearance: Theme.of(context).brightness, 
             style: TextStyle(
               fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 16),
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+              color: Theme.of(context).textTheme.bodyLarge?.color ?? AppColors.textPrimary,
             ),
             decoration: InputDecoration(
               hintText: hint,

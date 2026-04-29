@@ -20,16 +20,16 @@ class SoftCard extends StatelessWidget {
     final card = Container(
       margin: margin,
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AppColors.softShadow,
+            color: Theme.of(context).shadowColor.withValues(alpha: 0.05),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],
-        border: Border.all(color: AppColors.border.withValues(alpha: 0.6)),
+        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.6)),
       ),
       child: Material(
         color: Colors.transparent,

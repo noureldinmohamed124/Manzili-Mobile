@@ -11,7 +11,7 @@ class BuyerWalletView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+
       appBar: AppBar(
         title: const Text(AppStrings.navWallet),
       ),
@@ -29,7 +29,7 @@ class BuyerWalletView extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 14,
                       height: 1.45,
-                      color: AppColors.textSecondary,
+                      color: Theme.of(context).textTheme.bodyMedium?.color ?? AppColors.textSecondary,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -69,7 +69,7 @@ class BuyerWalletView extends StatelessWidget {
             AppStrings.walletEmptyState,
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: AppColors.textSecondary,
+              color: Theme.of(context).textTheme.bodySmall?.color ?? AppColors.textSecondary,
               fontSize: 13,
             ),
           ),
@@ -95,27 +95,28 @@ class _SummaryChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.surfaceMuted,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary,
+              color: Theme.of(context).textTheme.bodySmall?.color ?? AppColors.textSecondary,
             ),
           ),
           const SizedBox(height: 6),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,
-              color: AppColors.heading,
+              color: Theme.of(context).textTheme.bodyLarge?.color ?? AppColors.heading,
             ),
           ),
         ],

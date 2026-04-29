@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shimmer_animation/shimmer_animation.dart';
 import 'package:manzili_mobile/core/network/api_image_url.dart';
 import 'package:manzili_mobile/core/theme/app_colors.dart';
 
@@ -24,12 +26,23 @@ class ServiceCoverImage extends StatelessWidget {
     if (url == null) {
       return placeholder;
     }
-    return Image.network(
-      url,
+    return CachedNetworkImage(
+      imageUrl: url,
       width: width,
       height: height,
       fit: fit,
-      errorBuilder: (_, __, ___) => placeholder,
+      placeholder: (context, url) => Shimmer(
+        duration: const Duration(seconds: 2),
+        color: Colors.white,
+        enabled: true,
+        direction: const ShimmerDirection.fromLTRB(),
+        child: Container(
+          width: width ?? double.infinity,
+          height: height ?? double.infinity,
+          color: AppColors.surfaceMuted,
+        ),
+      ),
+      errorWidget: (context, url, error) => placeholder,
     );
   }
 }

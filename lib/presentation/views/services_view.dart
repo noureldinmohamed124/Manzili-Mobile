@@ -19,7 +19,8 @@ class ServicesView extends StatefulWidget {
 }
 
 class _ServicesViewState extends State<ServicesView> {
-  String _selectedFilter = 'اكتشف افضل الخدمات';
+  int? _selectedCategoryId;
+  bool _sortAscending = true;
   String _selectedSortOption = 'الافتراضي';
   String _searchQuery = '';
 
@@ -28,9 +29,28 @@ class _ServicesViewState extends State<ServicesView> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final q = GoRouter.of(context).state.uri.queryParameters['q'] ?? '';
-      setState(() => _searchQuery = q);
-      await context.read<ServicesProvider>().fetchServices(page: 1, pageSize: 50);
+      final catId = GoRouter.of(context).state.uri.queryParameters['categoryId'];
+      setState(() {
+        _searchQuery = q;
+        if (catId != null) {
+          _selectedCategoryId = int.tryParse(catId);
+        }
+      });
+      final provider = context.read<ServicesProvider>();
+      if (provider.categories.isEmpty) {
+        provider.fetchCategories();
+      }
+      _fetchData();
     });
+  }
+
+  Future<void> _fetchData() async {
+    await context.read<ServicesProvider>().fetchServices(
+      page: 1, 
+      pageSize: 50,
+      searchQuery: _searchQuery,
+      categoryId: _selectedCategoryId,
+    );
   }
 
   void _openSearchDialog() {
@@ -51,6 +71,7 @@ class _ServicesViewState extends State<ServicesView> {
             onSubmitted: (v) {
               setState(() => _searchQuery = v.trim());
               Navigator.of(ctx).pop();
+              _fetchData();
             },
           ),
           actions: [
@@ -62,6 +83,7 @@ class _ServicesViewState extends State<ServicesView> {
               onPressed: () {
                 setState(() => _searchQuery = controller.text.trim());
                 Navigator.of(ctx).pop();
+                _fetchData();
               },
               child: const Text(AppStrings.servicesSearchAction),
             ),
@@ -80,6 +102,13 @@ class _ServicesViewState extends State<ServicesView> {
         onOptionSelected: (option) {
           setState(() {
             _selectedSortOption = option;
+            if (option == 'من الأقل') {
+              _sortAscending = true;
+            } else if (option == 'من الأعلى') {
+              _sortAscending = false;
+            } else {
+              _sortAscending = true; // Default
+            }
           });
           context.pop();
         },
@@ -92,7 +121,7 @@ class _ServicesViewState extends State<ServicesView> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: SafeArea(
           bottom: false,
           child: LayoutBuilder(
@@ -106,10 +135,10 @@ class _ServicesViewState extends State<ServicesView> {
                         bottom: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 12.0),
                       ),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.surface,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Theme.of(context).shadowColor.withValues(alpha: 0.05),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
@@ -123,13 +152,13 @@ class _ServicesViewState extends State<ServicesView> {
                         width: ResponsiveHelper.scaleValue(40.0, constraints.maxWidth, min: 36.0, max: 48.0),
                         height: ResponsiveHelper.scaleValue(40.0, constraints.maxWidth, min: 36.0, max: 48.0),
                         decoration: BoxDecoration(
-                          color: AppColors.surfaceMuted,
+                          color: Theme.of(context).scaffoldBackgroundColor,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: IconButton(
                           padding: EdgeInsets.zero,
                           icon: const Icon(Icons.search),
-                          color: AppColors.textPrimary,
+                          color: Theme.of(context).iconTheme.color ?? AppColors.textPrimary,
                           onPressed: _openSearchDialog,
                         ),
                       ),
@@ -159,7 +188,7 @@ class _ServicesViewState extends State<ServicesView> {
                             style: TextStyle(
                               fontSize: ResponsiveHelper.responsiveFontSize(context, base: 20.0, min: 18.0, max: 24.0),
                               fontWeight: FontWeight.w800,
-                              color: AppColors.textPrimary,
+                              color: Theme.of(context).textTheme.displayLarge?.color ?? AppColors.textPrimary,
                             ),
                           ),
                           SizedBox(width: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 8.0)),
@@ -168,13 +197,13 @@ class _ServicesViewState extends State<ServicesView> {
                           child: Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: AppColors.surfaceMuted,
+                              color: Theme.of(context).scaffoldBackgroundColor,
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.arrow_forward,
                               size: 20,
-                              color: AppColors.textPrimary,
+                              color: Theme.of(context).iconTheme.color ?? AppColors.textPrimary,
                             ),
                           ),
                         ),
@@ -187,7 +216,7 @@ class _ServicesViewState extends State<ServicesView> {
                   ),
                   Container(
                     height: 1,
-                    color: Colors.grey.shade200,
+                    color: Theme.of(context).dividerColor,
                   ),
                   ResponsiveMaxWidth(
                     child: Padding(
@@ -195,96 +224,71 @@ class _ServicesViewState extends State<ServicesView> {
                         vertical: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 12.0),
                       ),
                       child: Row(
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.grey.shade300),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Text(
-                              'الكل',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            const Icon(
-                              Icons.keyboard_arrow_down,
-                              size: 20,
-                              color: AppColors.textSecondary,
-                            ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(width: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 8.0)),
-                      GestureDetector(
+                        children: [
+                          GestureDetector(
                         onTap: () => _showSortModal(context),
                         child: Container(
                           padding: EdgeInsets.all(ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 8.0)),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: Theme.of(context).colorScheme.surface,
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.grey.shade300),
+                            border: Border.all(color: Theme.of(context).dividerColor),
                           ),
-                          child: const Icon(
-                            Icons.swap_vert,
-                            size: 20,
-                            color: AppColors.textSecondary,
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.swap_vert,
+                                size: 20,
+                                color: Theme.of(context).textTheme.bodySmall?.color ?? AppColors.textSecondary,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'ترتيب',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Theme.of(context).textTheme.bodySmall?.color ?? AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
-                    ],
-                  ),
-                      Container(
-                        width: 1,
-                        height: ResponsiveHelper.scaleValue(32.0, constraints.maxWidth, min: 28.0, max: 40.0),
-                        margin: EdgeInsets.symmetric(horizontal: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 12.0)),
-                        color: Colors.grey.shade300,
-                      ),
+                      SizedBox(width: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 12.0)),
                       Expanded(
                         child: SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: [
-                              FilterButton(
-                                text: 'اكتشف افضل الخدمات',
-                                isSelected: _selectedFilter == 'اكتشف افضل الخدمات',
-                                onTap: () => setState(() => _selectedFilter = 'اكتشف افضل الخدمات'),
-                              ),
-                              SizedBox(width: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 8.0)),
-                              FilterButton(
-                                text: 'مشغولات يدويه',
-                                isSelected: _selectedFilter == 'مشغولات يدويه',
-                                onTap: () => setState(() => _selectedFilter = 'مشغولات يدويه'),
-                              ),
-                              SizedBox(width: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 8.0)),
-                              FilterButton(
-                                text: 'أكل بيتي',
-                                isSelected: _selectedFilter == 'أكل بيتي',
-                                onTap: () => setState(() => _selectedFilter = 'أكل بيتي'),
-                              ),
-                              SizedBox(width: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 8.0)),
-                              FilterButton(
-                                text: 'حلويات',
-                                isSelected: _selectedFilter == 'حلويات',
-                                onTap: () => setState(() => _selectedFilter = 'حلويات'),
-                              ),
-                              SizedBox(width: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 8.0)),
-                              FilterButton(
-                                text: 'مشروبات',
-                                isSelected: _selectedFilter == 'مشروبات',
-                                onTap: () => setState(() => _selectedFilter = 'مشروبات'),
-                              ),
-                            ],
+                          child: Consumer<ServicesProvider>(
+                            builder: (context, provider, _) {
+                              final categories = provider.categories;
+                              if (categories.isEmpty && provider.isLoading) {
+                                return const Center(child: SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2)));
+                              }
+                              return Row(
+                                children: [
+                                  FilterButton(
+                                    text: 'الكل',
+                                    isSelected: _selectedCategoryId == null,
+                                    onTap: () {
+                                      setState(() => _selectedCategoryId = null);
+                                      _fetchData();
+                                    },
+                                  ),
+                                  const SizedBox(width: 8),
+                                  ...categories.map((cat) => Padding(
+                                    padding: const EdgeInsets.only(left: 8.0),
+                                    child: FilterButton(
+                                      text: cat.nameAr,
+                                      isSelected: _selectedCategoryId == cat.id,
+                                      onTap: () {
+                                        setState(() => _selectedCategoryId = cat.id);
+                                        _fetchData();
+                                      },
+                                    ),
+                                  )),
+                                ],
+                              );
+                            },
                           ),
                         ),
                       ),
@@ -332,9 +336,13 @@ class _ServicesViewState extends State<ServicesView> {
                           );
                         }
 
-                        final List<ServiceItem> services = _searchQuery.isEmpty
-                            ? servicesProvider.services
+                        List<ServiceItem> services = _searchQuery.isEmpty
+                            ? List.from(servicesProvider.services)
                             : servicesProvider.filterServicesLocally(_searchQuery);
+
+                        services.sort((a, b) => _sortAscending 
+                            ? a.basePrice.compareTo(b.basePrice) 
+                            : b.basePrice.compareTo(a.basePrice));
 
                         if (services.isEmpty) {
                           return Center(
@@ -342,10 +350,10 @@ class _ServicesViewState extends State<ServicesView> {
                               _searchQuery.isEmpty
                                   ? 'مفيش خدمات دلوقتي، جرّب تاني بعدين'
                                   : 'مفيش نتيجة للبحث "$_searchQuery"',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.textSecondary,
+                                color: Theme.of(context).textTheme.bodySmall?.color ?? AppColors.textSecondary,
                               ),
                               textAlign: TextAlign.center,
                             ),

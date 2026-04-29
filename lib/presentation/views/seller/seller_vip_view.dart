@@ -18,7 +18,7 @@ class _SellerVipViewState extends State<SellerVipView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+
       appBar: AppBar(
         title: const Text(AppStrings.vipTitle),
         actions: [

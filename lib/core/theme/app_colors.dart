@@ -53,4 +53,12 @@ class AppColors {
   /// Gradient for compact auth actions (sign-in / sign-up row control)
   static const Color authGradientStart = Color(0xFFFF8D28);
   static const Color authGradientEnd = Color(0xFFC20AFA);
+
+  // —— Dark Mode ——
+  static const Color darkBackground = Color(0xFF121212);
+  static const Color darkSurface = Color(0xFF1E1E1E);
+  static const Color darkSurfaceMuted = Color(0xFF2A2A2A);
+  static const Color darkTextPrimary = Color(0xFFF5F5F5);
+  static const Color darkTextSecondary = coolSteel;
+  static const Color darkBorder = Color(0xFF333333);
 }

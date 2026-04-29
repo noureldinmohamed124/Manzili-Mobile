@@ -3,8 +3,9 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:manzili_mobile/data/models/order_models.dart';
 import 'package:manzili_mobile/data/models/service_models.dart';
-import 'package:manzili_mobile/data/repositories/orders_repository.dart';
 import 'package:manzili_mobile/presentation/providers/auth_provider.dart';
+import 'package:manzili_mobile/presentation/providers/cart_provider.dart';
+import 'package:manzili_mobile/presentation/providers/favourites_provider.dart';
 import 'package:manzili_mobile/presentation/providers/services_provider.dart';
 import '../../core/strings/app_strings.dart';
 import '../../core/theme/app_colors.dart';
@@ -12,6 +13,7 @@ import '../widgets/common/service_cover_image.dart';
 import '../../core/utils/responsive_helper.dart';
 import '../../core/widgets/responsive_max_width.dart';
 import '../widgets/home/food_card.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 class ServiceDetailsView extends StatefulWidget {
   final int serviceId;
@@ -29,6 +31,7 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
   bool _isFavorite = false;
   final Map<int, bool> _selectedOptions = {};
   final TextEditingController _notesController = TextEditingController();
+  final PageController _pageController = PageController();
   bool _submittingOrder = false;
 
   @override
@@ -36,12 +39,15 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ServicesProvider>().getServiceById(widget.serviceId);
+      // Restore favourite state (local showcase store).
+      _isFavorite = context.read<FavouritesProvider>().isFavourite(widget.serviceId);
     });
   }
 
   @override
   void dispose() {
     _notesController.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
@@ -67,6 +73,27 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
     return [OrderOptionGroup(groupId: 1, items: items)];
   }
 
+  double _calculateTotalPrice(ServiceItem service) {
+    double total = service.basePrice.toDouble();
+    final options = service.options ?? [];
+
+    if (_selectedOptionId != null) {
+      final opt = options.firstWhere(
+        (o) => o.id.toString() == _selectedOptionId,
+        orElse: () => ServiceOption(id: 0, serviceOptionName: '', price: 0),
+      );
+      total += opt.price;
+    }
+
+    for (final o in options) {
+      if (_selectedOptions[o.id] == true) {
+        total += o.price;
+      }
+    }
+
+    return total * _quantity;
+  }
+
   Future<void> _submitOrderRequest() async {
     final auth = context.read<AuthProvider>();
     if (!auth.isAuthenticated) {
@@ -79,8 +106,29 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
     }
 
     final servicesProvider = context.read<ServicesProvider>();
-    final service = servicesProvider.currentServiceDetails;
-    if (service == null || service.id != widget.serviceId) {
+    ServiceItem? service = servicesProvider.currentServiceDetails;
+    if (service == null || service.id.toString() != widget.serviceId.toString()) {
+      for (final s in servicesProvider.services) {
+        if (s.id.toString() == widget.serviceId.toString()) {
+          service = s;
+          break;
+        }
+      }
+    }
+
+    if (service == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('تفاصيل الخدمة لسه بتحمل، حاول تاني بعد شوية')),
+      );
+      return;
+    }
+
+    if (service.options != null && service.options!.isNotEmpty && _selectedOptionId == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('اختار كل التفاصيل المطلوبة')),
+      );
       return;
     }
 
@@ -96,28 +144,24 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
       }
     }
 
-    setState(() => _submittingOrder = true);
-    final body = OrderRequestBody(
-      serviceId: widget.serviceId,
-      customizationText: _notesController.text.trim(),
+    final totalPrice = _calculateTotalPrice(service);
+
+    final cartItem = CartItem(
+      serviceId: service.id,
+      title: service.title,
+      providerName: service.providerName,
+      imageUrl: service.imageUrl,
       quantity: _quantity,
+      pricePerItem: totalPrice / _quantity,
+      customizationText: _notesController.text.trim(),
       optionGroups: _optionGroupsForRequest(service),
     );
 
-    final err = await OrdersRepository().requestService(body);
-    if (!mounted) return;
-    setState(() => _submittingOrder = false);
+    context.read<CartProvider>().addToCart(cartItem);
 
-    if (err == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تمام! طلبك اتسجل بنجاح')),
-      );
-      context.push('/order-placed');
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(err)),
-      );
-    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('اتضافت للسلة 👌')),
+    );
   }
 
   @override
@@ -328,35 +372,46 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
 
     return Stack(
       children: [
-        ServiceCoverImage(
-          imageUrlRaw: rawImagePaths.isEmpty ? null : rawImagePaths[_currentImageIndex],
-          width: double.infinity,
+        SizedBox(
           height: imageHeight,
-          fit: BoxFit.cover,
+          child: PageView.builder(
+            controller: _pageController,
+            onPageChanged: (index) => setState(() => _currentImageIndex = index),
+            itemCount: rawImagePaths.isEmpty ? 1 : rawImagePaths.length,
+            itemBuilder: (context, index) {
+              return ServiceCoverImage(
+                imageUrlRaw: rawImagePaths.isEmpty ? null : rawImagePaths[index],
+                width: double.infinity,
+                height: imageHeight,
+                fit: BoxFit.cover,
+              );
+            },
+          ),
         ),
         if (rawImagePaths.length > 1)
           Positioned(
             bottom: 16,
             left: 0,
             right: 0,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(rawImagePaths.length, (index) {
-                return GestureDetector(
-                  onTap: () => setState(() => _currentImageIndex = index),
-                  child: Container(
-                    width: index == _currentImageIndex ? 8 : 6,
-                    height: index == _currentImageIndex ? 8 : 6,
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: index == _currentImageIndex
-                          ? Colors.white
-                          : Colors.white.withOpacity(0.5),
-                    ),
-                  ),
-                );
-              }),
+            child: Center(
+              child: AnimatedSmoothIndicator(
+                activeIndex: _currentImageIndex,
+                count: rawImagePaths.length,
+                effect: ExpandingDotsEffect(
+                  activeDotColor: Colors.white,
+                  dotColor: Colors.white.withValues(alpha: 0.5),
+                  dotHeight: 8,
+                  dotWidth: 8,
+                  expansionFactor: 3,
+                ),
+                onDotClicked: (index) {
+                  _pageController.animateToPage(
+                    index,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                  );
+                },
+              ),
             ),
           ),
       ],
@@ -421,7 +476,7 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
           ),
           SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16)),
           Text(
-            '${service.basePrice} جنيه',
+            '${_calculateTotalPrice(service)} جنيه',
             style: TextStyle(
               fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 28, tablet: 30, desktop: 32),
               fontWeight: FontWeight.w800,
@@ -962,7 +1017,7 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
                             ),
                           )
                         : Text(
-                            'اطلب الخدمة',
+                            'أضف للسلة',
                             style: TextStyle(
                               fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 16),
                               fontWeight: FontWeight.w700,
@@ -974,7 +1029,16 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
                 SizedBox(width: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12)),
                 IconButton(
                   onPressed: () {
-                    setState(() => _isFavorite = !_isFavorite);
+                    final fav = context.read<FavouritesProvider>();
+                    final servicesProvider = context.read<ServicesProvider>();
+                    final s = servicesProvider.currentServiceDetails;
+                    if (s != null && s.id == widget.serviceId) {
+                      fav.toggle(s);
+                      setState(() => _isFavorite = fav.isFavourite(widget.serviceId));
+                    } else {
+                      // If details not loaded yet, just flip UI state.
+                      setState(() => _isFavorite = !_isFavorite);
+                    }
                   },
                   icon: Icon(
                     _isFavorite ? Icons.favorite : Icons.favorite_border,

@@ -44,10 +44,12 @@ class TokenResponse {
   TokenResponse({
     required this.accessToken,
     required this.refreshToken,
+    this.role,
   });
 
   final String accessToken;
   final String refreshToken;
+  final int? role;
 
   factory TokenResponse.fromJson(Map<String, dynamic> json) {
     final access = _stringField(json, const [
@@ -74,7 +76,28 @@ class TokenResponse {
         'Missing tokens in login response keys=${json.keys.toList()}',
       );
     }
-    return TokenResponse(accessToken: access, refreshToken: refresh);
+    int? roleInt;
+    for (final k in ['role', 'Role', 'roleId', 'RoleId', 'userRole', 'roles', 'Roles', 'user_type', 'userType', 'accountType', 'type']) {
+      final v = json[k];
+      if (v != null) {
+        if (v is int) roleInt = v;
+        if (v is String) {
+          final lower = v.toLowerCase();
+          if (lower.contains('seller') || lower.contains('bazaar') || lower.contains('provider')) roleInt = 2;
+          else if (lower.contains('admin')) roleInt = 3;
+          else if (lower.contains('buyer') || lower.contains('customer')) roleInt = 1;
+          else roleInt = int.tryParse(v);
+        }
+        if (roleInt != null && roleInt >= 1 && roleInt <= 3) break;
+        roleInt = null;
+      }
+    }
+
+    return TokenResponse(
+      accessToken: access, 
+      refreshToken: refresh,
+      role: roleInt,
+    );
   }
 
   static String? _stringField(Map<String, dynamic> json, List<String> keys) {
@@ -135,9 +158,43 @@ class TokenResponse {
 
     collect(normalized);
 
+    int? globalRole;
+    for (final m in candidates) {
+      if (globalRole != null) break;
+      for (final k in ['role', 'Role', 'roleId', 'RoleId', 'userRole', 'UserRole', 'roles', 'Roles', 'user_type', 'userType', 'accountType', 'type']) {
+        final v = m[k];
+        if (v == null) continue;
+        if (v is int) globalRole = v;
+        if (v is List && v.isNotEmpty) {
+           final first = v.first;
+           if (first is int) globalRole = first;
+           if (first is String) {
+               final lower = first.toLowerCase();
+               if (lower.contains('seller') || lower.contains('bazaar')) globalRole = 2;
+               else if (lower.contains('admin')) globalRole = 3;
+               else if (lower.contains('buyer') || lower.contains('customer')) globalRole = 1;
+           }
+        }
+        if (v is String) {
+          final lower = v.toLowerCase();
+          if (lower.contains('seller') || lower.contains('bazaar')) globalRole = 2;
+          else if (lower.contains('admin')) globalRole = 3;
+          else if (lower.contains('buyer') || lower.contains('customer')) globalRole = 1;
+          else globalRole = int.tryParse(v);
+        }
+        if (globalRole != null && globalRole! >= 1 && globalRole! <= 3) break;
+        globalRole = null;
+      }
+    }
+
     for (final m in candidates) {
       try {
-        return TokenResponse.fromJson(m);
+        final t = TokenResponse.fromJson(m);
+        return TokenResponse(
+          accessToken: t.accessToken,
+          refreshToken: t.refreshToken,
+          role: globalRole ?? t.role,
+        );
       } catch (_) {}
     }
     return null;

@@ -3,6 +3,10 @@ import 'package:go_router/go_router.dart';
 import 'package:manzili_mobile/core/strings/app_strings.dart';
 import 'package:manzili_mobile/core/theme/app_colors.dart';
 import 'package:manzili_mobile/presentation/widgets/common/soft_card.dart';
+import 'package:manzili_mobile/presentation/providers/auth_provider.dart';
+import 'package:manzili_mobile/presentation/providers/theme_provider.dart';
+import 'package:manzili_mobile/presentation/providers/locale_provider.dart';
+import 'package:provider/provider.dart';
 
 class AdminHubView extends StatelessWidget {
   const AdminHubView({super.key});
@@ -10,9 +14,38 @@ class AdminHubView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text(AppStrings.adminHub),
+        actions: [
+          Consumer<ThemeProvider>(
+            builder: (context, themeProvider, _) {
+              return IconButton(
+                icon: Icon(themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode),
+                onPressed: () {
+                  themeProvider.toggleTheme();
+                },
+              );
+            },
+          ),
+          Consumer<LocaleProvider>(
+            builder: (context, localeProvider, _) {
+              return IconButton(
+                icon: const Icon(Icons.language),
+                onPressed: () {
+                  localeProvider.toggleLocale();
+                },
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout, color: AppColors.error),
+            onPressed: () {
+              context.read<AuthProvider>().logout();
+              context.go('/signin');
+            },
+          ),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),

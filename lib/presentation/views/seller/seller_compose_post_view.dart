@@ -30,7 +30,7 @@ class _SellerComposePostViewState extends State<SellerComposePostView> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: AppColors.background,
+
         appBar: AppBar(
           title: const Text(AppStrings.composePostTitle),
         ),

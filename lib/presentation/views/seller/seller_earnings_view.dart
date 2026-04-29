@@ -25,7 +25,7 @@ class _SellerEarningsViewState extends State<SellerEarningsView> {
     ];
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+
       appBar: AppBar(
         title: const Text(AppStrings.earningsTitle),
         actions: [
