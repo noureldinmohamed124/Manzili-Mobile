@@ -89,7 +89,7 @@ class SellerRepository {
 
       for (var path in imagePaths) {
         formData.files.add(MapEntry(
-          'images[]',
+          'images',
           await MultipartFile.fromFile(path),
         ));
       }

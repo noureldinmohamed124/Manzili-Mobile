@@ -105,21 +105,11 @@ class ServicesProvider extends ChangeNotifier {
       final itemsList = raw['data']['items'] as List<dynamic>;
       _categories = itemsList.map((e) => CategoryModel.fromJson(e)).toList();
     } on DioException catch (e) {
-      _errorMessage = null; // Suppress error for showcase
-      _categories = [
-        CategoryModel(id: 1, slug: 'home-food', nameAr: 'أكل بيتي', isActive: true, sortOrder: 1),
-        CategoryModel(id: 2, slug: 'sweets', nameAr: 'حلويات', isActive: true, sortOrder: 2),
-        CategoryModel(id: 3, slug: 'bakery', nameAr: 'مخبوزات', isActive: true, sortOrder: 3),
-        CategoryModel(id: 4, slug: 'pickles', nameAr: 'مخللات', isActive: true, sortOrder: 4),
-      ];
+      _errorMessage = _mapDioError(e);
+      _categories = [];
     } catch (_) {
-      _errorMessage = null;
-      _categories = [
-        CategoryModel(id: 1, slug: 'home-food', nameAr: 'أكل بيتي', isActive: true, sortOrder: 1),
-        CategoryModel(id: 2, slug: 'sweets', nameAr: 'حلويات', isActive: true, sortOrder: 2),
-        CategoryModel(id: 3, slug: 'bakery', nameAr: 'مخبوزات', isActive: true, sortOrder: 3),
-        CategoryModel(id: 4, slug: 'pickles', nameAr: 'مخللات', isActive: true, sortOrder: 4),
-      ];
+      _errorMessage = 'حصل خطأ غير متوقع';
+      _categories = [];
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -205,18 +195,17 @@ class ServicesProvider extends ChangeNotifier {
       _currentPage = data.page;
       _pageSize = data.pageSize;
       _totalPages = data.totalPages;
-    } on DioException {
-      // Showcase fallback.
-      _errorMessage = null;
-      _services = DemoData.services();
+    } on DioException catch (e) {
+      _errorMessage = _mapDioError(e);
+      _services = [];
       _currentPage = 1;
-      _pageSize = _services.length;
+      _pageSize = pageSize;
       _totalPages = 1;
     } catch (_) {
-      _errorMessage = null;
-      _services = DemoData.services();
+      _errorMessage = 'حصل خطأ غير متوقع';
+      _services = [];
       _currentPage = 1;
-      _pageSize = _services.length;
+      _pageSize = pageSize;
       _totalPages = 1;
     } finally {
       _isLoading = false;
@@ -257,11 +246,11 @@ class ServicesProvider extends ChangeNotifier {
       final data = PaginatedServicesResponse.fromJson(raw);
       _featuredServices = data.items;
     } on DioException catch (e) {
-      _errorMessage = null;
-      _featuredServices = DemoData.services().take(2).toList();
-    } catch (e) {
-      _errorMessage = null;
-      _featuredServices = DemoData.services().take(2).toList();
+      _errorMessage = _mapDioError(e);
+      _featuredServices = [];
+    } catch (_) {
+      _errorMessage = 'حصل خطأ غير متوقع';
+      _featuredServices = [];
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -301,11 +290,11 @@ class ServicesProvider extends ChangeNotifier {
       final data = PaginatedServicesResponse.fromJson(raw);
       _recommendedServices = data.items;
     } on DioException catch (e) {
-      _errorMessage = null;
-      _recommendedServices = DemoData.services().skip(1).take(2).toList();
-    } catch (e) {
-      _errorMessage = null;
-      _recommendedServices = DemoData.services().skip(1).take(2).toList();
+      _errorMessage = _mapDioError(e);
+      _recommendedServices = [];
+    } catch (_) {
+      _errorMessage = 'حصل خطأ غير متوقع';
+      _recommendedServices = [];
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -344,11 +333,11 @@ class ServicesProvider extends ChangeNotifier {
       final data = PaginatedServicesResponse.fromJson(raw);
       _mostPurchasedServices = data.items;
     } on DioException catch (e) {
-      _errorMessage = null;
-      _mostPurchasedServices = DemoData.services().take(3).toList();
-    } catch (e) {
-      _errorMessage = null;
-      _mostPurchasedServices = DemoData.services().take(3).toList();
+      _errorMessage = _mapDioError(e);
+      _mostPurchasedServices = [];
+    } catch (_) {
+      _errorMessage = 'حصل خطأ غير متوقع';
+      _mostPurchasedServices = [];
     } finally {
       _isLoading = false;
       notifyListeners();

@@ -25,16 +25,16 @@ class ApiConstants {
   static const String loginApiLegacy = '/api/Auth/login';
   static const String refreshApiLegacy = '/api/Auth/refresh';
 
-  // Services (spec uses lowercase paths; ASP.NET routing is usually case-insensitive)
-  static const String services = '/services';
-  static String serviceById(int id) => '/services/$id';
-  static String serviceByName(String name) => '/services/name/$name';
-  static String homeServices(int no) => '/services/home/$no';
+  // Services
+  static const String services = '/api/services';
+  static String serviceById(int id) => '/api/services/$id';
+  static String serviceByName(String name) => '/api/services/name/$name';
+  static String homeServices(int no) => '/api/services/home/$no';
 
-  static const String servicesLegacy = '/api/services';
-  static String serviceByIdLegacy(int id) => '/api/services/$id';
-  static String serviceByNameLegacy(String name) => '/api/services/name/$name';
-  static String homeServicesLegacy(int no) => '/api/services/home/$no';
+  static const String servicesLegacy = '/services';
+  static String serviceByIdLegacy(int id) => '/services/$id';
+  static String serviceByNameLegacy(String name) => '/services/name/$name';
+  static String homeServicesLegacy(int no) => '/services/home/$no';
 
   // Orders — POST body: OrderRequestBody (camelCase).
   static const String orderRequestPath = '/orders/request';
@@ -65,5 +65,5 @@ class ApiConstants {
   static const String sellerDashboard = '/api/seller/dashboard';
 
   // Categories
-  static const String categories = '/categories';
+  static const String categories = '/api/categories';
 }

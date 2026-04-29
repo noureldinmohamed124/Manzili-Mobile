@@ -803,3 +803,24 @@ If you need to quickly reconstruct behavior:
 - Cart submission behavior: `lib/presentation/providers/cart_provider.dart`
 - Figma node ids: `lib/core/constants/figma_screen_nodes.dart`
 
+---
+
+## 14) Latest Debugging Session (April 2026)
+
+**If resuming work on a new PC, please note these recent backend synchronization fixes:**
+
+1. **Role Parsing from Token**:
+   - The backend was returning the role as a string: `"Provider"` (instead of "Seller" or `2`).
+   - The Flutter app now successfully maps `"Provider"` to `Role 2 (Seller)`. This is fixed in `auth_models.dart` and `jwt_payload.dart`.
+
+2. **Image Upload Key (`multipart/form-data`)**:
+   - The Swagger documentation previously suggested `images[]`, which caused ASP.NET to reject the files and return "at least one image is required".
+   - The form-data key in Flutter was reverted to exactly `"images"` (without brackets). ASP.NET's `IFormFileCollection images` binds to multiple parts with the exact name `images` seamlessly. This is fixed in `seller_repository.dart`.
+
+3. **Removal of Showcase Fallbacks**:
+   - The old "Showcase Fallback" mechanism (which injected dummy data like "أكل بيتي" whenever the API returned a 404 or 403 error) has been **completely removed** from `ServicesProvider` to ensure genuine API responses are displayed.
+   
+4. **API Pathing and 403 Forbidden Fixes**:
+   - The backend runs behind an IIS reverse proxy (or similar) that restricts physical directory listings.
+   - Calling `/services` or `/categories` without the `/api/` prefix caused the server to return `403 Forbidden` ("مش مسموح بالخطةه دي"), which broke the Buyer Home Screen.
+   - All endpoints in `api_constants.dart` (including `services` and `categories`) have been updated to strictly prepend the `/api/` prefix (e.g., `/api/services`, `/api/categories`).
