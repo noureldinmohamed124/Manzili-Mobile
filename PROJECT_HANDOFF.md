@@ -472,6 +472,11 @@ Note: your spec says this endpoint supports `keyword, pageNumber, pageSize`. The
 - App behavior on 404:
   - Treats it as “not available” and falls back to calling the other list endpoints.
 
+#### Categories
+- **GET** `/categories`
+  - Fetches all available categories in the system.
+  - Returns: `{ "success": true, "data": { "items": [ { "id": 1, "slug": "food", "nameAr": "مأكولات منزلية", "isActive": true, "sortOrder": 1, "createdAt": "..." } ] } }`
+
 #### Orders
 
 8) `POST /orders/request` (legacy fallback: `/api/orders/request`)

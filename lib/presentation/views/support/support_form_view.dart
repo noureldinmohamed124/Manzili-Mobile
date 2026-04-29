@@ -29,7 +29,7 @@ class _SupportFormViewState extends State<SupportFormView> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: AppColors.background,
+
         appBar: AppBar(
           title: const Text(AppStrings.supportTitle),
         ),

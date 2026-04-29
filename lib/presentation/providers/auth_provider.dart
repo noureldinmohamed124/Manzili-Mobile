@@ -3,15 +3,14 @@ import 'package:flutter/foundation.dart';
 import 'package:manzili_mobile/core/network/api_constants.dart';
 import 'package:manzili_mobile/core/network/dio_client.dart';
 import 'package:manzili_mobile/core/network/json_parse.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:manzili_mobile/core/constants/demo_role_store.dart';
 import 'package:manzili_mobile/core/utils/jwt_payload.dart';
 import 'package:manzili_mobile/data/models/auth_models.dart';
 
-enum AuthStatus {
-  unauthenticated,
-  authenticating,
-  authenticated,
-}
+enum AuthStatus { unauthenticated, authenticating, authenticated }
 
 class AuthProvider extends ChangeNotifier {
   final Dio _dio = DioClient.instance.dio;
@@ -20,6 +19,7 @@ class AuthProvider extends ChangeNotifier {
   String? _accessToken;
   String? _refreshToken;
   String? _errorMessage;
+
   /// From JWT: 1 = buyer, 2 = seller, 3 = admin (null if not in token).
   int? _userRole;
 
@@ -82,7 +82,10 @@ class AuthProvider extends ChangeNotifier {
           response = await _dio.post(ApiConstants.registerLegacy, data: body);
         } on DioException catch (e2) {
           if (e2.response?.statusCode != 404) rethrow;
-          response = await _dio.post(ApiConstants.registerApiLegacy, data: body);
+          response = await _dio.post(
+            ApiConstants.registerApiLegacy,
+            data: body,
+          );
         }
       }
 
@@ -115,6 +118,113 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  /// Social Login: Google
+  Future<bool> loginWithGoogle() async {
+    _status = AuthStatus.authenticating;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null) {
+        _errorMessage = 'تسجيل الدخول اتلغى';
+        _status = AuthStatus.unauthenticated;
+        notifyListeners();
+        return false;
+      }
+
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+      final OAuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      final userCredential = await FirebaseAuth.instance.signInWithCredential(
+        credential,
+      );
+
+      if (userCredential.user != null) {
+        // Since we don't have a backend endpoint yet, we simulate a successful login
+        // as a Buyer (Role: 1) to test the UI flow.
+        _userRole = 1;
+        _accessToken = 'demo-social-access-token';
+        _refreshToken = 'demo-social-refresh-token';
+        DioClient.instance.setAccessToken(_accessToken);
+        _status = AuthStatus.authenticated;
+        _errorMessage = null;
+        if (kDebugMode) {
+          print('Google login success. Token: \${googleAuth.accessToken}');
+        }
+        notifyListeners();
+        return true;
+      }
+
+      _status = AuthStatus.unauthenticated;
+      notifyListeners();
+      return false;
+    } catch (e) {
+      if (kDebugMode) {
+        print('Google login error: \$e');
+      }
+      _errorMessage = 'فشل تسجيل الدخول بجوجل';
+      _status = AuthStatus.unauthenticated;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Social Login: Facebook
+  Future<bool> loginWithFacebook() async {
+    _status = AuthStatus.authenticating;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final LoginResult result = await FacebookAuth.instance.login();
+      if (result.status == LoginStatus.success) {
+        final AccessToken accessToken = result.accessToken!;
+        final OAuthCredential credential = FacebookAuthProvider.credential(
+          accessToken.tokenString,
+        );
+        final userCredential = await FirebaseAuth.instance.signInWithCredential(
+          credential,
+        );
+
+        if (userCredential.user != null) {
+          // Simulate successful login as a Buyer
+          _userRole = 1;
+          _accessToken = 'demo-social-access-token';
+          _refreshToken = 'demo-social-refresh-token';
+          DioClient.instance.setAccessToken(_accessToken);
+          _status = AuthStatus.authenticated;
+          _errorMessage = null;
+          if (kDebugMode) {
+            print('Facebook login success. Token: \${accessToken.tokenString}');
+          }
+          notifyListeners();
+          return true;
+        }
+      } else if (result.status == LoginStatus.cancelled) {
+        _errorMessage = 'تسجيل الدخول اتلغى';
+      } else {
+        _errorMessage = 'فشل تسجيل الدخول بفيسبوك';
+      }
+
+      _status = AuthStatus.unauthenticated;
+      notifyListeners();
+      return false;
+    } catch (e) {
+      if (kDebugMode) {
+        print('Facebook login error: \$e');
+      }
+      _errorMessage = 'فشل تسجيل الدخول بفيسبوك';
+      _status = AuthStatus.unauthenticated;
+      notifyListeners();
+      return false;
+    }
+  }
+
   /// Logs in the user and stores tokens in memory.
   Future<bool> login({
     required String email,
@@ -139,17 +249,17 @@ class AuthProvider extends ChangeNotifier {
     }
 
     // Showcase shortcut: static seller account (REMOVE AFTER SHOWCASE).
-    if (email.trim().toLowerCase() == 'sellertest@gmail.com' &&
-        password == 'sellertest1234') {
-      _userRole = 2;
-      _accessToken = createDemoJwt({'role': 2, 'email': email});
-      _refreshToken = 'demo-refresh';
-      DioClient.instance.setAccessToken(_accessToken);
-      _status = AuthStatus.authenticated;
-      _errorMessage = null;
-      notifyListeners();
-      return true;
-    }
+    // if ((email.trim().toLowerCase() == 'sellertest@gmail.com' && password == 'sellertest1234') ||
+    //     (email.trim().toLowerCase() == 'seller@gmail' && password == 'seller12345')) {
+    //   _userRole = 2;
+    //   _accessToken = createDemoJwt({'role': 2, 'email': email});
+    //   _refreshToken = 'demo-refresh';
+    //   DioClient.instance.setAccessToken(_accessToken);
+    //   _status = AuthStatus.authenticated;
+    //   _errorMessage = null;
+    //   notifyListeners();
+    //   return true;
+    // }
 
     // Critical: login must be anonymous. A leftover Bearer token often makes the server
     // return { success: true, message: "..." } without new tokens in the body.
@@ -184,16 +294,18 @@ class AuthProvider extends ChangeNotifier {
         _refreshToken = tokens.refreshToken;
         DioClient.instance.setAccessToken(_accessToken);
         _applyClaimsFromAccessToken(_accessToken);
-        
-        // If the token decoding gave a role (e.g. from response body), prefer that if JWT doesn't have it
-        if (_userRole == null && tokens.role != null) {
+
+        // The backend now explicitly returns the 'role' in the response body.
+        // We should always prefer it over the JWT claims if it exists.
+        if (tokens.role != null) {
           _userRole = tokens.role;
         }
 
         // If backend token has no role claim, fall back to locally-known role.
         _userRole ??= DemoRoleStore.getRoleForEmail(email);
         // Keep old optional fallback for debugging/testing.
-        if (_userRole == null && uiRoleFallback != null) _userRole = uiRoleFallback;
+        if (_userRole == null && uiRoleFallback != null)
+          _userRole = uiRoleFallback;
         _status = AuthStatus.authenticated;
         _errorMessage = null;
         return true;
@@ -249,8 +361,7 @@ class AuthProvider extends ChangeNotifier {
     }
 
     try {
-      final body =
-          RefreshTokenRequest(refreshToken: _refreshToken!).toJson();
+      final body = RefreshTokenRequest(refreshToken: _refreshToken!).toJson();
 
       Response response;
       try {
@@ -284,6 +395,10 @@ class AuthProvider extends ChangeNotifier {
 
       DioClient.instance.setAccessToken(_accessToken);
       _applyClaimsFromAccessToken(_accessToken);
+
+      if (tokens.role != null) {
+        _userRole = tokens.role;
+      }
 
       _status = AuthStatus.authenticated;
       _errorMessage = null;
@@ -399,4 +514,3 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 }
-

@@ -66,6 +66,53 @@ class SellerRepository {
     }
   }
 
+  Future<(bool, String?)> createService(CreateServiceRequest request, List<String> imagePaths) async {
+    try {
+      final formData = FormData.fromMap({
+        'title': request.title,
+        'description': request.description,
+        'categoryId': request.categoryId,
+        'basePrice': request.basePrice,
+      });
+
+      // Add options as JSON string or array, depending on backend requirement
+      for (var i = 0; i < request.optionGroups.length; i++) {
+        final group = request.optionGroups[i];
+        formData.fields.add(MapEntry('optionGroups[$i].name', group.name));
+        formData.fields.add(MapEntry('optionGroups[$i].isRequired', group.isRequired.toString()));
+        for (var j = 0; j < group.options.length; j++) {
+          final opt = group.options[j];
+          formData.fields.add(MapEntry('optionGroups[$i].options[$j].name', opt.name));
+          formData.fields.add(MapEntry('optionGroups[$i].options[$j].price', opt.price.toString()));
+        }
+      }
+
+      for (var path in imagePaths) {
+        formData.files.add(MapEntry(
+          'images[]',
+          await MultipartFile.fromFile(path),
+        ));
+      }
+
+      final res = await _dio.post(
+        ApiConstants.sellerServices,
+        data: formData,
+        options: Options(
+          headers: {'Content-Type': 'multipart/form-data'},
+        ),
+      );
+      final raw = tryParseJsonMap(res.data);
+      if (raw?['success'] == true) {
+        return (true, null);
+      }
+      return (false, raw?['message']?.toString() ?? 'فشل إنشاء الخدمة');
+    } on DioException catch (e) {
+      return (false, _mapDioError(e));
+    } catch (_) {
+      return (false, 'حصل خطأ غير متوقع');
+    }
+  }
+
   String _mapDioError(DioException e) {
     final code = e.response?.statusCode;
     if (code == 401) return 'محتاج تسجّل دخول كبائع';

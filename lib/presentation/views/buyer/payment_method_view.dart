@@ -41,7 +41,7 @@ class _PaymentMethodViewState extends State<PaymentMethodView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+
       appBar: AppBar(
         title: const Text('طريقة الدفع'),
       ),

@@ -25,7 +25,7 @@ class _SellerDiscountEditorViewState extends State<SellerDiscountEditorView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+
       appBar: AppBar(
         title: const Text('إضافة خصم جديد'),
       ),

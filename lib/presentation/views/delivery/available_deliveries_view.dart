@@ -29,7 +29,7 @@ class AvailableDeliveriesView extends StatelessWidget {
     ];
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+
       appBar: AppBar(
         title: const Text('الطلبات المتاحة'),
       ),

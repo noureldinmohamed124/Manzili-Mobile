@@ -40,7 +40,7 @@ class _SellerServicesListViewState extends State<SellerServicesListView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+
       appBar: AppBar(
         title: const Text('خدماتي'),
         actions: [

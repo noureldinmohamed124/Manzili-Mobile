@@ -48,11 +48,11 @@ class FoodCard extends StatelessWidget {
               start: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12),
             ),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(ResponsiveHelper.responsiveValueCompat(context, mobile: 16.0)),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
+                  color: Theme.of(context).shadowColor.withValues(alpha: 0.08),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -76,8 +76,8 @@ class FoodCard extends StatelessWidget {
                     onTap: onFavoriteTap,
                     child: Container(
                       padding: EdgeInsets.all(ResponsiveHelper.responsiveSpacingCompat(context, mobile: 6)),
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surface,
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -156,7 +156,7 @@ class FoodCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 16),
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
+                      color: Theme.of(context).textTheme.bodyLarge?.color ?? AppColors.textPrimary,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -167,7 +167,7 @@ class FoodCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 12),
                       fontWeight: FontWeight.w500,
-                      color: AppColors.textSecondary,
+                      color: Theme.of(context).textTheme.bodySmall?.color ?? AppColors.textSecondary,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,

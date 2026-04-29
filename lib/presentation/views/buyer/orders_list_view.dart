@@ -38,7 +38,7 @@ class _OrdersListViewState extends State<OrdersListView>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+
       appBar: AppBar(
         title: const Text('طلباتي'),
         bottom: TabBar(

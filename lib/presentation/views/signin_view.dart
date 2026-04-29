@@ -12,6 +12,9 @@ import '../../../core/strings/app_strings.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/responsive_helper.dart';
 import '../../../core/widgets/responsive_max_width.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:gap/gap.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class SigninView extends StatefulWidget {
   const SigninView({super.key});
@@ -95,7 +98,8 @@ class _SigninViewState extends State<SigninView> {
           final keyboardHeight = viewInsets.bottom;
 
           return Scaffold(
-            backgroundColor: Colors.white,
+            resizeToAvoidBottomInset: false,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             body: SafeArea(
               bottom: false,
               child: Stack(
@@ -104,21 +108,28 @@ class _SigninViewState extends State<SigninView> {
                     top: 0,
                     left: 0,
                     right: 0,
-                    child: Image.asset(
-                      AppAssets.gradientTop,
-                      height: gradientHeight,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      alignment: Alignment.topCenter,
+                    child: ClipPath(
+                      clipper: _TopWaveClipper(),
+                      child: Container(
+                        height: gradientHeight,
+                        width: double.infinity,
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [AppColors.authGradientStart, AppColors.authGradientEnd],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                   Column(
                   children: [
-                    SizedBox(height: gradientHeight + ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 16.0)),
+                    Gap(gradientHeight + ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 16.0)),
                     Expanded(
                       child: Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.surface,
                           borderRadius: BorderRadius.vertical(
                             top: Radius.circular(ResponsiveHelper.responsiveValueFromConstraints(constraints, base: 40.0, lg: 44.0)),
                           ),
@@ -137,7 +148,7 @@ class _SigninViewState extends State<SigninView> {
                                     style: TextStyle(
                                       fontSize: ResponsiveHelper.responsiveFontSize(context, base: 38.0, min: 28.0, max: 48.0),
                                       fontWeight: FontWeight.w800,
-                                      color: AppColors.textPrimary,
+                                      color: Theme.of(context).textTheme.displayLarge?.color ?? AppColors.textPrimary,
                                     ),
                                   ),
                                   SizedBox(height: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 6.0)),
@@ -146,7 +157,7 @@ class _SigninViewState extends State<SigninView> {
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
                                       fontSize: ResponsiveHelper.responsiveFontSize(context, base: 15.0, min: 13.0, max: 17.0),
-                                      color: AppColors.textSecondary,
+                                      color: Theme.of(context).textTheme.bodySmall?.color ?? AppColors.textSecondary,
                                     ),
                                   ),
                                   SizedBox(height: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 24.0)),
@@ -189,7 +200,7 @@ class _SigninViewState extends State<SigninView> {
                                                 style: TextStyle(
                                                   fontSize: ResponsiveHelper.responsiveFontSize(context, base: 13.0, min: 11.0, max: 15.0),
                                                   fontWeight: FontWeight.w600,
-                                                  color: AppColors.textSecondary,
+                                                  color: Theme.of(context).textTheme.bodySmall?.color ?? AppColors.textSecondary,
                                                 ),
                                               ),
                                             ),
@@ -211,7 +222,7 @@ class _SigninViewState extends State<SigninView> {
                                                   style: TextStyle(
                                                     fontSize: ResponsiveHelper.responsiveFontSize(context, base: 13.0, min: 11.0, max: 15.0),
                                                     fontWeight: FontWeight.w600,
-                                                    color: AppColors.textSecondary,
+                                                    color: Theme.of(context).textTheme.bodySmall?.color ?? AppColors.textSecondary,
                                                   ),
                                                 ),
                                               ],
@@ -230,7 +241,7 @@ class _SigninViewState extends State<SigninView> {
                                               style: TextStyle(
                                                 fontSize: ResponsiveHelper.responsiveFontSize(context, base: 13.0, min: 11.0, max: 15.0),
                                                 fontWeight: FontWeight.w600,
-                                                color: AppColors.textSecondary,
+                                                color: Theme.of(context).textTheme.bodySmall?.color ?? AppColors.textSecondary,
                                               ),
                                             ),
                                           ),
@@ -253,7 +264,7 @@ class _SigninViewState extends State<SigninView> {
                                                   style: TextStyle(
                                                     fontSize: ResponsiveHelper.responsiveFontSize(context, base: 13.0, min: 11.0, max: 15.0),
                                                     fontWeight: FontWeight.w600,
-                                                    color: AppColors.textSecondary,
+                                                    color: Theme.of(context).textTheme.bodySmall?.color ?? AppColors.textSecondary,
                                                   ),
                                                 ),
                                               ],
@@ -361,7 +372,7 @@ class _SigninViewState extends State<SigninView> {
                                                 style: TextStyle(
                                                   fontSize: ResponsiveHelper.responsiveFontSize(context, base: 12.0, min: 10.0, max: 14.0),
                                                   fontWeight: FontWeight.w600,
-                                                  color: AppColors.textSecondary,
+                                                  color: Theme.of(context).textTheme.bodySmall?.color ?? AppColors.textSecondary,
                                                 ),
                                               ),
                                             ),
@@ -380,7 +391,7 @@ class _SigninViewState extends State<SigninView> {
                                               style: TextStyle(
                                                 fontSize: ResponsiveHelper.responsiveFontSize(context, base: 12.0, min: 10.0, max: 14.0),
                                                 fontWeight: FontWeight.w600,
-                                                color: AppColors.textSecondary,
+                                                color: Theme.of(context).textTheme.bodySmall?.color ?? AppColors.textSecondary,
                                               ),
                                             ),
                                           ),
@@ -394,12 +405,27 @@ class _SigninViewState extends State<SigninView> {
                                     alignment: WrapAlignment.center,
                                     spacing: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 14.0),
                                     children: [
-                                      SocialLoginButton(asset: AppAssets.googleIcon),
-                                      SocialLoginButton(asset: AppAssets.twitterIcon),
-                                      SocialLoginButton(asset: AppAssets.facebookIcon),
+                                      SocialLoginButton(
+                                        child: const FaIcon(FontAwesomeIcons.google, size: 30, color: Color(0xFFDB4437)),
+                                        onTap: () async {
+                                          final success = await context.read<AuthProvider>().loginWithGoogle();
+                                          if (success && context.mounted) {
+                                            context.go(context.read<AuthProvider>().postLoginRoute);
+                                          }
+                                        },
+                                      ),
+                                      SocialLoginButton(
+                                        child: const FaIcon(FontAwesomeIcons.facebookF, size: 30, color: Color(0xFF4267B2)),
+                                        onTap: () async {
+                                          final success = await context.read<AuthProvider>().loginWithFacebook();
+                                          if (success && context.mounted) {
+                                            context.go(context.read<AuthProvider>().postLoginRoute);
+                                          }
+                                        },
+                                      ),
                                     ],
                                   ),
-                                  SizedBox(height: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 26.0)),
+                                  Gap(ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 26.0)),
                                   RichText(
                                     textAlign: TextAlign.center,
                                     text: TextSpan(
@@ -407,14 +433,16 @@ class _SigninViewState extends State<SigninView> {
                                       style: TextStyle(
                                         fontSize: ResponsiveHelper.responsiveFontSize(context, base: 14.0, min: 12.0, max: 16.0),
                                         fontWeight: FontWeight.w600,
-                                        color: AppColors.textSecondary,
+                                        color: Theme.of(context).textTheme.bodySmall?.color ?? AppColors.textSecondary,
                                       ),
                                       children: [
                                         TextSpan(
                                           text: 'إنشاء حساب',
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontWeight: FontWeight.w800,
-                                            color: AppColors.accent,
+                                            color: Theme.of(context).brightness == Brightness.dark 
+                                                ? Colors.white 
+                                                : AppColors.accent,
                                           ),
                                           recognizer: TapGestureRecognizer()
                                             ..onTap = () {
@@ -424,7 +452,7 @@ class _SigninViewState extends State<SigninView> {
                                       ],
                                     ),
                                   ),
-                                ],
+                                ].animate(interval: 50.ms).fade(duration: 500.ms, curve: Curves.easeOut).slideY(begin: 0.05, end: 0),
                               ),
                             ),
                           ),
@@ -432,16 +460,6 @@ class _SigninViewState extends State<SigninView> {
                       ),
                   ],
                 ),
-                  Positioned(
-                    bottom: 0,
-                    left: 0,
-                    child: Image.asset(
-                      AppAssets.gradientBottomLeft,
-                      width: gradientBottomWidth,
-                      height: gradientBottomHeight,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -450,4 +468,49 @@ class _SigninViewState extends State<SigninView> {
       ),
     );
   }
+}
+
+class _TopWaveClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    path.lineTo(0, size.height * 0.8);
+    path.quadraticBezierTo(
+      size.width * 0.25, size.height,
+      size.width * 0.5, size.height * 0.85,
+    );
+    path.quadraticBezierTo(
+      size.width * 0.75, size.height * 0.7,
+      size.width, size.height * 0.9,
+    );
+    path.lineTo(size.width, 0);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+}
+
+class _BottomWaveClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    path.moveTo(0, size.height * 0.2);
+    path.quadraticBezierTo(
+      size.width * 0.25, 0,
+      size.width * 0.5, size.height * 0.15,
+    );
+    path.quadraticBezierTo(
+      size.width * 0.75, size.height * 0.3,
+      size.width, size.height * 0.1,
+    );
+    path.lineTo(size.width, size.height);
+    path.lineTo(0, size.height);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }

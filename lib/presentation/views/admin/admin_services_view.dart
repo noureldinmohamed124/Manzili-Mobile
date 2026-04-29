@@ -24,7 +24,7 @@ class AdminServicesView extends StatelessWidget {
     ];
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+
       appBar: AppBar(
         title: const Text('إدارة الخدمات'),
       ),

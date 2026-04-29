@@ -12,7 +12,7 @@ class SellerOrderDetailsView extends StatelessWidget {
   Widget build(BuildContext context) {
     // TODO: Connect to API to fetch actual order details for seller
     return Scaffold(
-      backgroundColor: AppColors.background,
+
       appBar: AppBar(
         title: Text('تفاصيل طلب #$orderId'),
       ),

@@ -13,7 +13,7 @@ class DeliveryDetailsView extends StatelessWidget {
     // TODO: Connect to backend API to fetch exact delivery details using deliveryId
     
     return Scaffold(
-      backgroundColor: AppColors.background,
+
       appBar: AppBar(
         title: Text('تفاصيل طلب #$deliveryId'),
       ),

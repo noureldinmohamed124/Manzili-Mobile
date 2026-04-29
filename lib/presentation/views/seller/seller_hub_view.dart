@@ -3,6 +3,9 @@ import 'package:go_router/go_router.dart';
 import 'package:manzili_mobile/core/strings/app_strings.dart';
 import 'package:manzili_mobile/core/theme/app_colors.dart';
 import 'package:manzili_mobile/presentation/providers/seller_provider.dart';
+import 'package:manzili_mobile/presentation/providers/auth_provider.dart';
+import 'package:manzili_mobile/presentation/providers/theme_provider.dart';
+import 'package:manzili_mobile/presentation/providers/locale_provider.dart';
 import 'package:manzili_mobile/presentation/widgets/common/soft_card.dart';
 import 'package:provider/provider.dart';
 
@@ -33,9 +36,38 @@ class _SellerHubViewState extends State<SellerHubView> {
     ];
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('لوحة البائع'),
+        actions: [
+          Consumer<ThemeProvider>(
+            builder: (context, themeProvider, _) {
+              return IconButton(
+                icon: Icon(themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode),
+                onPressed: () {
+                  themeProvider.toggleTheme();
+                },
+              );
+            },
+          ),
+          Consumer<LocaleProvider>(
+            builder: (context, localeProvider, _) {
+              return IconButton(
+                icon: const Icon(Icons.language),
+                onPressed: () {
+                  localeProvider.toggleLocale();
+                },
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout, color: AppColors.error),
+            onPressed: () {
+              context.read<AuthProvider>().logout();
+              context.go('/signin');
+            },
+          ),
+        ],
       ),
       body: Consumer<SellerProvider>(
         builder: (context, seller, _) {
@@ -156,17 +188,17 @@ class _StatChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.surfaceMuted,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             label,
-            style: const TextStyle(
-              color: AppColors.textSecondary,
+            style: TextStyle(
+              color: Theme.of(context).textTheme.bodySmall?.color ?? AppColors.textSecondary,
               fontWeight: FontWeight.w700,
               fontSize: 12,
             ),
@@ -174,10 +206,10 @@ class _StatChip extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.w900,
               fontSize: 13,
-              color: AppColors.heading,
+              color: Theme.of(context).textTheme.bodyLarge?.color ?? AppColors.heading,
             ),
           ),
         ],

@@ -60,7 +60,10 @@ class ApiConstants {
   }
 
   // Seller
-  static const String sellerServices = '/seller/services';
-  static String sellerServiceById(int id) => '/seller/services/$id';
-  static const String sellerDashboard = '/seller/dashboard';
+  static const String sellerServices = '/api/seller/services';
+  static String sellerServiceById(int id) => '/api/seller/services/$id';
+  static const String sellerDashboard = '/api/seller/dashboard';
+
+  // Categories
+  static const String categories = '/categories';
 }

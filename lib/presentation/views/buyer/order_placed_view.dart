@@ -1,17 +1,42 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:manzili_mobile/core/theme/app_colors.dart';
+import 'package:confetti/confetti.dart';
 
-class OrderPlacedView extends StatelessWidget {
+class OrderPlacedView extends StatefulWidget {
   const OrderPlacedView({super.key});
+
+  @override
+  State<OrderPlacedView> createState() => _OrderPlacedViewState();
+}
+
+class _OrderPlacedViewState extends State<OrderPlacedView> {
+  late ConfettiController _confettiController;
+
+  @override
+  void initState() {
+    super.initState();
+    _confettiController = ConfettiController(duration: const Duration(seconds: 3));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _confettiController.play();
+    });
+  }
+
+  @override
+  void dispose() {
+    _confettiController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
+        child: Stack(
+          children: [
+            LayoutBuilder(
+              builder: (context, constraints) {
             final isShort = constraints.maxHeight < 620;
             return SingleChildScrollView(
               padding: const EdgeInsets.all(24),
@@ -120,7 +145,48 @@ class OrderPlacedView extends StatelessWidget {
           );
         },
         ),
+        Align(
+          alignment: Alignment.topCenter,
+          child: ConfettiWidget(
+            confettiController: _confettiController,
+            blastDirectionality: BlastDirectionality.explosive,
+            shouldLoop: false,
+            colors: const [
+              Colors.green,
+              Colors.blue,
+              Colors.pink,
+              Colors.orange,
+              Colors.purple
+            ],
+            createParticlePath: drawStar,
+          ),
+        ),
+          ],
+        ),
       ),
     );
+  }
+
+  Path drawStar(Size size) {
+    // A simple star path for confetti
+    double degToRad(double deg) => deg * (3.1415926535897932 / 180.0);
+    const numberOfPoints = 5;
+    final halfWidth = size.width / 2;
+    final externalRadius = halfWidth;
+    final internalRadius = halfWidth / 2.5;
+    final degreesPerStep = degToRad(360 / numberOfPoints);
+    final halfDegreesPerStep = degreesPerStep / 2;
+    final path = Path();
+    final fullAngle = degToRad(360);
+    path.moveTo(size.width, halfWidth);
+
+    for (double step = 0; step < fullAngle; step += degreesPerStep) {
+      path.lineTo(
+        halfWidth + externalRadius * 1.5 * 3.1415926535897932 / 180.0, // simplified star path not needed, standard shape used below
+        halfWidth + externalRadius * 1.5 * 3.1415926535897932 / 180.0,
+      );
+    }
+    path.close();
+    return path;
   }
 }

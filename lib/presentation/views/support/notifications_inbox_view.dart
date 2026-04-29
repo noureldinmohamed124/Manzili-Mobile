@@ -23,7 +23,7 @@ class _NotificationsInboxViewState extends State<NotificationsInboxView> {
     ];
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+
       appBar: AppBar(
         title: const Text(AppStrings.notificationsTitle),
         actions: [

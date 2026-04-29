@@ -90,5 +90,14 @@ class SellerProvider extends ChangeNotifier {
     }
     notifyListeners();
   }
+
+  Future<(bool, String?)> createService(CreateServiceRequest request, List<String> imagePaths) async {
+    _isLoadingServices = true;
+    notifyListeners();
+    final (success, err) = await _repo.createService(request, imagePaths);
+    _isLoadingServices = false;
+    notifyListeners();
+    return (success, err);
+  }
 }
 

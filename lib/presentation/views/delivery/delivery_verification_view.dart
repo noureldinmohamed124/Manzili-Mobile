@@ -44,7 +44,7 @@ class _DeliveryVerificationViewState extends State<DeliveryVerificationView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+
       appBar: AppBar(
         title: Text('تأكيد التسليم (#${widget.deliveryId})'),
       ),

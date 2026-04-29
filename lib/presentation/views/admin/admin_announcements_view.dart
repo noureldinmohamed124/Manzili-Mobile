@@ -14,7 +14,7 @@ class AdminAnnouncementsView extends StatelessWidget {
     ];
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+
       appBar: AppBar(
         title: const Text('الإعلانات والتنبيهات'),
         actions: [

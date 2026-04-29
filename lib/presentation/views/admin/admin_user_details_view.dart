@@ -11,7 +11,7 @@ class AdminUserDetailsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+
       appBar: AppBar(
         title: Text('بيانات المستخدم #$userId'),
       ),

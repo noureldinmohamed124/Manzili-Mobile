@@ -22,7 +22,7 @@ class _SettingsViewState extends State<SettingsView> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: AppColors.background,
+
         appBar: AppBar(
           title: const Text(AppStrings.navSettings),
         ),

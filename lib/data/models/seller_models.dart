@@ -224,3 +224,63 @@ class SellerDashboardStats {
   }
 }
 
+class CreateServiceRequest {
+  CreateServiceRequest({
+    required this.title,
+    required this.description,
+    required this.categoryId,
+    required this.basePrice,
+    required this.images,
+    required this.optionGroups,
+  });
+
+  final String title;
+  final String description;
+  final int categoryId;
+  final double basePrice;
+  final List<String> images;
+  final List<CreateOptionGroup> optionGroups;
+
+  Map<String, dynamic> toJson() => {
+        'title': title,
+        'description': description,
+        'categoryId': categoryId,
+        'basePrice': basePrice,
+        'images': images,
+        'optionGroups': optionGroups.map((e) => e.toJson()).toList(),
+      };
+}
+
+class CreateOptionGroup {
+  CreateOptionGroup({
+    required this.name,
+    required this.isRequired,
+    required this.options,
+  });
+
+  final String name;
+  final bool isRequired;
+  final List<CreateOption> options;
+
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'isRequired': isRequired,
+        'options': options.map((e) => e.toJson()).toList(),
+      };
+}
+
+class CreateOption {
+  CreateOption({
+    required this.name,
+    required this.price,
+  });
+
+  final String name;
+  final double price;
+
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'price': price,
+      };
+}
+

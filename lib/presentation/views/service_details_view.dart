@@ -13,6 +13,7 @@ import '../widgets/common/service_cover_image.dart';
 import '../../core/utils/responsive_helper.dart';
 import '../../core/widgets/responsive_max_width.dart';
 import '../widgets/home/food_card.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 class ServiceDetailsView extends StatefulWidget {
   final int serviceId;
@@ -30,6 +31,7 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
   bool _isFavorite = false;
   final Map<int, bool> _selectedOptions = {};
   final TextEditingController _notesController = TextEditingController();
+  final PageController _pageController = PageController();
   bool _submittingOrder = false;
 
   @override
@@ -45,6 +47,7 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
   @override
   void dispose() {
     _notesController.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
@@ -369,35 +372,46 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
 
     return Stack(
       children: [
-        ServiceCoverImage(
-          imageUrlRaw: rawImagePaths.isEmpty ? null : rawImagePaths[_currentImageIndex],
-          width: double.infinity,
+        SizedBox(
           height: imageHeight,
-          fit: BoxFit.cover,
+          child: PageView.builder(
+            controller: _pageController,
+            onPageChanged: (index) => setState(() => _currentImageIndex = index),
+            itemCount: rawImagePaths.isEmpty ? 1 : rawImagePaths.length,
+            itemBuilder: (context, index) {
+              return ServiceCoverImage(
+                imageUrlRaw: rawImagePaths.isEmpty ? null : rawImagePaths[index],
+                width: double.infinity,
+                height: imageHeight,
+                fit: BoxFit.cover,
+              );
+            },
+          ),
         ),
         if (rawImagePaths.length > 1)
           Positioned(
             bottom: 16,
             left: 0,
             right: 0,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(rawImagePaths.length, (index) {
-                return GestureDetector(
-                  onTap: () => setState(() => _currentImageIndex = index),
-                  child: Container(
-                    width: index == _currentImageIndex ? 8 : 6,
-                    height: index == _currentImageIndex ? 8 : 6,
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: index == _currentImageIndex
-                          ? Colors.white
-                          : Colors.white.withOpacity(0.5),
-                    ),
-                  ),
-                );
-              }),
+            child: Center(
+              child: AnimatedSmoothIndicator(
+                activeIndex: _currentImageIndex,
+                count: rawImagePaths.length,
+                effect: ExpandingDotsEffect(
+                  activeDotColor: Colors.white,
+                  dotColor: Colors.white.withValues(alpha: 0.5),
+                  dotHeight: 8,
+                  dotWidth: 8,
+                  expansionFactor: 3,
+                ),
+                onDotClicked: (index) {
+                  _pageController.animateToPage(
+                    index,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                  );
+                },
+              ),
             ),
           ),
       ],

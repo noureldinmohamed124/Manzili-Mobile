@@ -47,7 +47,7 @@ class _SellerManageOrdersViewState extends State<SellerManageOrdersView> with Si
     ];
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+
       appBar: AppBar(
         title: const Text('إدارة الطلبات'),
         bottom: TabBar(

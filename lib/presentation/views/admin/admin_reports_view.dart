@@ -9,7 +9,7 @@ class AdminReportsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+
       appBar: AppBar(title: const Text(AppStrings.adminReports)),
       body: ListView(
         padding: const EdgeInsets.all(16),

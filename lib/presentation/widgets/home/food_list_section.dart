@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'food_card.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/responsive_helper.dart';
 
@@ -81,15 +82,28 @@ class FoodListSection extends StatelessWidget {
         ),
         SizedBox(
           height: ResponsiveHelper.scaleValueFromContext(context, 280.0, min: 260.0, max: 320.0),
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            primary: false,
-            physics: const BouncingScrollPhysics(),
-            padding: EdgeInsetsDirectional.only(
-              start: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 22),
+          child: AnimationLimiter(
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              primary: false,
+              physics: const BouncingScrollPhysics(),
+              padding: EdgeInsetsDirectional.only(
+                start: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 22),
+              ),
+              itemCount: foodItems.length,
+              itemBuilder: (context, index) {
+                return AnimationConfiguration.staggeredList(
+                  position: index,
+                  duration: const Duration(milliseconds: 375),
+                  child: SlideAnimation(
+                    horizontalOffset: 50.0,
+                    child: FadeInAnimation(
+                      child: foodItems[index],
+                    ),
+                  ),
+                );
+              },
             ),
-            itemCount: foodItems.length,
-            itemBuilder: (context, index) => foodItems[index],
           ),
         ),
       ],

@@ -12,7 +12,7 @@ class ProfileHubView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+
       appBar: AppBar(
         title: const Text(AppStrings.profileTitle),
       ),
