@@ -78,7 +78,7 @@ int? _roleToInt(Object? v) {
     if (n != null && n >= 1 && n <= 3) return n;
     final lower = v.toLowerCase();
     if (lower.contains('admin')) return 3;
-    if (lower.contains('seller') || lower.contains('bazaar')) return 2;
+    if (lower.contains('seller') || lower.contains('bazaar') || lower.contains('provider')) return 2;
     if (lower.contains('buyer') || lower.contains('customer')) return 1;
   }
   return null;

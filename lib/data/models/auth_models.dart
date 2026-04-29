@@ -83,7 +83,7 @@ class TokenResponse {
         if (v is int) roleInt = v;
         if (v is String) {
           final lower = v.toLowerCase();
-          if (lower.contains('seller') || lower.contains('bazaar')) roleInt = 2;
+          if (lower.contains('seller') || lower.contains('bazaar') || lower.contains('provider')) roleInt = 2;
           else if (lower.contains('admin')) roleInt = 3;
           else if (lower.contains('buyer') || lower.contains('customer')) roleInt = 1;
           else roleInt = int.tryParse(v);
