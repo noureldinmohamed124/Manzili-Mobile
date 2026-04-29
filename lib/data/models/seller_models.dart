@@ -1,7 +1,5 @@
 class SellerServicesListResponse {
-  SellerServicesListResponse({
-    required this.items,
-  });
+  SellerServicesListResponse({required this.items});
 
   final List<SellerServiceListItem> items;
 
@@ -65,7 +63,11 @@ class SellerServiceListItem {
 }
 
 class SellerServiceDetailsResponse {
-  SellerServiceDetailsResponse({required this.success, this.message, this.data});
+  SellerServiceDetailsResponse({
+    required this.success,
+    this.message,
+    this.data,
+  });
 
   final bool success;
   final String? message;
@@ -179,11 +181,7 @@ class SellerOptionGroup {
 }
 
 class SellerOption {
-  SellerOption({
-    required this.id,
-    required this.name,
-    required this.price,
-  });
+  SellerOption({required this.id, required this.name, required this.price});
 
   final int id;
   final String name;
@@ -263,13 +261,13 @@ class CreateServiceRequest {
   final List<CreateOptionGroup> optionGroups;
 
   Map<String, dynamic> toJson() => {
-        'title': title,
-        'description': description,
-        'categoryId': categoryId,
-        'basePrice': basePrice,
-        'images': images,
-        'optionGroups': optionGroups.map((e) => e.toJson()).toList(),
-      };
+    'title': title,
+    'description': description,
+    'categoryId': categoryId,
+    'basePrice': basePrice,
+    'images': images,
+    'optionGroups': optionGroups.map((e) => e.toJson()).toList(),
+  };
 }
 
 class CreateOptionGroup {
@@ -284,24 +282,17 @@ class CreateOptionGroup {
   final List<CreateOption> options;
 
   Map<String, dynamic> toJson() => {
-        'name': name,
-        'isRequired': isRequired,
-        'options': options.map((e) => e.toJson()).toList(),
-      };
+    'name': name,
+    'isRequired': isRequired,
+    'options': options.map((e) => e.toJson()).toList(),
+  };
 }
 
 class CreateOption {
-  CreateOption({
-    required this.name,
-    required this.price,
-  });
+  CreateOption({required this.name, required this.price});
 
   final String name;
   final double price;
 
-  Map<String, dynamic> toJson() => {
-        'name': name,
-        'price': price,
-      };
+  Map<String, dynamic> toJson() => {'name': name, 'price': price};
 }
-
