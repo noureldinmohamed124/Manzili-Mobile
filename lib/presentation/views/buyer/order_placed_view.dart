@@ -110,7 +110,7 @@ class _OrderPlacedViewState extends State<OrderPlacedView> {
                     const SizedBox(height: 18),
                     const Spacer(),
                     FilledButton(
-                      onPressed: () => context.go('/my-orders'),
+                      onPressed: () => context.go('/requests'),
                       style: FilledButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(

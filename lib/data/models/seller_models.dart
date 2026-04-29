@@ -213,13 +213,34 @@ class SellerDashboardStats {
   final double totalRevenue;
   final double averageRating;
 
+  static int _parseInt(dynamic value) {
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? 0;
+    return 0;
+  }
+
+  static double _parseDouble(dynamic value) {
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value) ?? 0.0;
+    return 0.0;
+  }
+
   factory SellerDashboardStats.fromJson(Map<String, dynamic> json) {
+    dynamic getVal(String key) {
+      final lowerKey = key.toLowerCase();
+      for (final k in json.keys) {
+        // Strip out underscores to match snake_case as well (e.g. total_services -> totalservices)
+        if (k.replaceAll('_', '').toLowerCase() == lowerKey) return json[k];
+      }
+      return null;
+    }
+
     return SellerDashboardStats(
-      totalServices: (json['totalServices'] as num?)?.toInt() ?? 0,
-      activeOrders: (json['activeOrders'] as num?)?.toInt() ?? 0,
-      completedOrders: (json['completedOrders'] as num?)?.toInt() ?? 0,
-      totalRevenue: (json['totalRevenue'] as num?)?.toDouble() ?? 0.0,
-      averageRating: (json['averageRating'] as num?)?.toDouble() ?? 0.0,
+      totalServices: _parseInt(getVal('totalservices')),
+      activeOrders: _parseInt(getVal('activeorders')),
+      completedOrders: _parseInt(getVal('completedorders')),
+      totalRevenue: _parseDouble(getVal('totalrevenue')),
+      averageRating: _parseDouble(getVal('averagerating')),
     );
   }
 }

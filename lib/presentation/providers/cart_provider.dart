@@ -103,16 +103,6 @@ class CartProvider extends ChangeNotifier {
       clearCart();
       return true;
     } else {
-      // Showcase fallback: if the server is down, still allow the demo flow to proceed.
-      final msg = (lastError ?? '').trim();
-      final isServerDown = msg.contains('مشكلة في الاتصال') ||
-          msg.contains('السيرفر مش جاهز') ||
-          msg.contains('حصل حاجة غلط') ||
-          msg.contains('حصل خطأ غير متوقع');
-      if (isServerDown) {
-        clearCart();
-        return true;
-      }
 
       _errorMessage = lastError ?? 'حصلت مشكلة في إرسال بعض الطلبات';
       // Remove successfully submitted ones from the list so user can retry the failed ones?

@@ -82,9 +82,7 @@ class SellerProvider extends ChangeNotifier {
     _isLoadingDashboard = false;
 
     if (err != null) {
-      // Showcase fallback.
-      _dashboardError = null;
-      _stats = DemoData.sellerDashboard();
+      _dashboardError = err;
     } else {
       _stats = stats;
     }

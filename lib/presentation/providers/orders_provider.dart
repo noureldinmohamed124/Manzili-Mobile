@@ -41,13 +41,7 @@ class OrdersProvider extends ChangeNotifier {
     _isLoading = false;
 
     if (error != null) {
-      // Showcase fallback: provide demo orders so the flow is usable.
-      _errorMessage = null;
-      if (page == 1) {
-        _orders = DemoData.orders();
-        _currentPage = 1;
-        _totalPages = 1;
-      }
+      _errorMessage = error;
     } else if (response != null) {
       if (page == 1) {
         _orders = response.items;
@@ -71,9 +65,7 @@ class OrdersProvider extends ChangeNotifier {
     _isLoading = false;
 
     if (error != null) {
-      // Showcase fallback.
-      _errorMessage = null;
-      _paymentSummary = DemoData.paymentSummary();
+      _errorMessage = error;
     } else {
       _paymentSummary = response;
     }
@@ -82,22 +74,26 @@ class OrdersProvider extends ChangeNotifier {
   }
 
   Future<bool> submitPaymentProof({
-    required String paymentScreenshot,
+    List<int>? targetOrderIds,
+    required String paymentScreenshotPath,
     String? notes,
   }) async {
-    if (_paymentSummary == null) {
-      _errorMessage = 'مفيش ملخص دفع عشان نعرف الطلبات';
-      notifyListeners();
-      return false;
+    List<int> orderIds = targetOrderIds ?? [];
+    if (orderIds.isEmpty) {
+      if (_paymentSummary == null) {
+        _errorMessage = 'مفيش ملخص دفع عشان نعرف الطلبات';
+        notifyListeners();
+        return false;
+      }
+      orderIds = _paymentSummary!.services.map((e) => e.orderId).where((id) => id > 0).toList();
     }
-    final orderIds =
-        _paymentSummary!.services.map((e) => e.orderId).where((id) => id > 0).toList();
+    
     if (orderIds.isEmpty) {
       _errorMessage = 'مفيش طلبات صالحة لإرسال الإثبات';
       notifyListeners();
       return false;
     }
-    if (paymentScreenshot.trim().isEmpty) {
+    if (paymentScreenshotPath.trim().isEmpty) {
       _errorMessage = 'ارفع/ابعت صورة الإيصال الأول';
       notifyListeners();
       return false;
@@ -109,7 +105,7 @@ class OrdersProvider extends ChangeNotifier {
 
     final (_, err) = await _repository.submitPaymentProof(
       orderIds: orderIds,
-      paymentScreenshot: paymentScreenshot.trim(),
+      paymentScreenshotPath: paymentScreenshotPath.trim(),
       notes: notes,
     );
 

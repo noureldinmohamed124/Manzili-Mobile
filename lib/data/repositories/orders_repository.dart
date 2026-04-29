@@ -105,17 +105,30 @@ class OrdersRepository {
 
   Future<(Map<String, dynamic>?, String?)> submitPaymentProof({
     required List<int> orderIds,
-    required String paymentScreenshot,
+    required String paymentScreenshotPath,
     String? notes,
   }) async {
     try {
+      final formData = FormData();
+      for (var i = 0; i < orderIds.length; i++) {
+        formData.fields.add(MapEntry('OrderIds[$i]', orderIds[i].toString()));
+      }
+      
+      formData.files.add(MapEntry(
+        'PaymentScreenshot',
+        await MultipartFile.fromFile(paymentScreenshotPath),
+      ));
+
+      if (notes != null && notes.isNotEmpty) {
+        formData.fields.add(MapEntry('Notes', notes));
+      }
+
       final res = await _dio.post(
         ApiConstants.submitPaymentProof,
-        data: {
-          'OrderIds': orderIds,
-          'PaymentScreenshot': paymentScreenshot,
-          'Notes': notes,
-        },
+        data: formData,
+        options: Options(
+          headers: {'Content-Type': 'multipart/form-data'},
+        ),
       );
       final raw = tryParseJsonMap(res.data);
       if (raw == null) return (null, 'السيرفر ماردش بيانات');

@@ -57,7 +57,8 @@ class SellerRepository {
       final res = await _dio.get(ApiConstants.sellerDashboard);
       final raw = tryParseJsonMap(res.data);
       if (raw == null) return (null, 'السيرفر ماردش بيانات');
-      final parsed = SellerDashboardStats.fromJson(raw);
+      final dataJson = raw['data'] as Map<String, dynamic>? ?? raw;
+      final parsed = SellerDashboardStats.fromJson(dataJson);
       return (parsed, null);
     } on DioException catch (e) {
       return (null, _mapDioError(e));

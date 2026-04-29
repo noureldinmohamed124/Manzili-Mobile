@@ -7,6 +7,7 @@ import 'package:manzili_mobile/presentation/providers/orders_provider.dart';
 import 'package:manzili_mobile/presentation/widgets/common/soft_card.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:image_picker/image_picker.dart';
 
 /// طلباتي — seller decision stage (request → approve / reprice / reject). Wire to API when ready.
 class RequestsListView extends StatefulWidget {
@@ -131,6 +132,16 @@ class _RequestsListViewState extends State<RequestsListView>
                       '${item.totalPrice} جنيه',
                       style: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.primary, fontSize: 15),
                     ),
+                    if (!isApproved)
+                      FilledButton.icon(
+                        onPressed: () => _showPaymentProofDialog(context, item.id),
+                        icon: const Icon(Icons.upload_file, size: 16),
+                        label: const Text('Send payment proof', style: TextStyle(fontSize: 12)),
+                        style: FilledButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                          minimumSize: const Size(0, 36),
+                        ),
+                      ),
                     if (isApproved)
                       FilledButton(
                         onPressed: () {
@@ -148,6 +159,101 @@ class _RequestsListViewState extends State<RequestsListView>
               ],
             ),
           ),
+        );
+      },
+    );
+  }
+
+  Future<void> _showPaymentProofDialog(BuildContext context, int orderId) async {
+    final ImagePicker picker = ImagePicker();
+    XFile? pickedFile;
+    final notesController = TextEditingController();
+
+    await showDialog(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('إرسال إثبات الدفع', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (pickedFile != null)
+                    Text('تم اختيار الصورة: ${pickedFile!.name}', style: const TextStyle(fontSize: 13, color: Colors.green))
+                  else
+                    const Text('لم يتم اختيار صورة بعد', style: TextStyle(fontSize: 13, color: Colors.grey)),
+                  const SizedBox(height: 12),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.image),
+                    label: const Text('اختر صورة الإيصال'),
+                    onPressed: () async {
+                      final file = await picker.pickImage(source: ImageSource.gallery);
+                      if (file != null) {
+                        setState(() {
+                          pickedFile = file;
+                        });
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: notesController,
+                    decoration: const InputDecoration(
+                      labelText: 'ملاحظات (اختياري)',
+                      border: OutlineInputBorder(),
+                    ),
+                    maxLines: 2,
+                  ),
+                  const SizedBox(height: 10),
+                  Consumer<OrdersProvider>(
+                    builder: (context, provider, child) {
+                      if (provider.errorMessage != null && provider.errorMessage!.isNotEmpty) {
+                        return Text(
+                          provider.errorMessage!,
+                          style: const TextStyle(color: Colors.red, fontSize: 12),
+                          textAlign: TextAlign.center,
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    },
+                  )
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('إلغاء'),
+                ),
+                Consumer<OrdersProvider>(
+                  builder: (context, provider, child) {
+                    final busy = provider.isSubmittingPaymentProof;
+                    return FilledButton(
+                      onPressed: (pickedFile == null || busy)
+                          ? null
+                          : () async {
+                              final success = await provider.submitPaymentProof(
+                                targetOrderIds: [orderId],
+                                paymentScreenshotPath: pickedFile!.path,
+                                notes: notesController.text,
+                              );
+                              if (success && context.mounted) {
+                                Navigator.pop(ctx);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('تم إرسال إثبات الدفع بنجاح')),
+                                );
+                                provider.fetchOrders();
+                              }
+                            },
+                      child: busy 
+                          ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                          : const Text('إرسال'),
+                    );
+                  },
+                ),
+              ],
+            );
+          },
         );
       },
     );

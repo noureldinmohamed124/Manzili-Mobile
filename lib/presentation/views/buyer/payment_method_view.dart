@@ -4,6 +4,7 @@ import 'package:manzili_mobile/core/theme/app_colors.dart';
 import 'package:manzili_mobile/presentation/widgets/common/soft_card.dart';
 import 'package:manzili_mobile/presentation/providers/orders_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
 
 class PaymentMethodView extends StatefulWidget {
   const PaymentMethodView({super.key});
@@ -14,13 +15,17 @@ class PaymentMethodView extends StatefulWidget {
 
 class _PaymentMethodViewState extends State<PaymentMethodView> {
   String _selectedMethod = 'cash';
-  final _receipt = TextEditingController();
+  XFile? _receiptImage;
   final _notes = TextEditingController();
 
   void _submitPayment() async {
     if (_selectedMethod == 'bank_transfer') {
+      if (_receiptImage == null) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('برجاء اختيار صورة الإيصال')));
+        return;
+      }
       final ok = await context.read<OrdersProvider>().submitPaymentProof(
-            paymentScreenshot: _receipt.text,
+            paymentScreenshotPath: _receiptImage!.path,
             notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
           );
       if (!mounted) return;
@@ -33,7 +38,6 @@ class _PaymentMethodViewState extends State<PaymentMethodView> {
 
   @override
   void dispose() {
-    _receipt.dispose();
     _notes.dispose();
     super.dispose();
   }
@@ -97,14 +101,21 @@ class _PaymentMethodViewState extends State<PaymentMethodView> {
                     const Divider(height: 24),
                     const Text('بعد التحويل، ابعت صورة الإيصال/سكرين التحويل.'),
                     const SizedBox(height: 12),
-                    TextField(
-                      controller: _receipt,
-                      minLines: 1,
-                      maxLines: 4,
-                      decoration: const InputDecoration(
-                        labelText: 'PaymentScreenshot',
-                        hintText: 'حط هنا Base64 أو لينك للصورة (حسب السيرفر)',
-                      ),
+                    if (_receiptImage != null)
+                      Text('تم اختيار الصورة: ${_receiptImage!.name}', style: const TextStyle(color: Colors.green))
+                    else
+                      const Text('لم يتم اختيار صورة بعد'),
+                    const SizedBox(height: 8),
+                    ElevatedButton.icon(
+                      onPressed: () async {
+                        final picker = ImagePicker();
+                        final file = await picker.pickImage(source: ImageSource.gallery);
+                        if (file != null) {
+                          setState(() => _receiptImage = file);
+                        }
+                      },
+                      icon: const Icon(Icons.image),
+                      label: const Text('اختر صورة الإيصال'),
                     ),
                     const SizedBox(height: 10),
                     TextField(
