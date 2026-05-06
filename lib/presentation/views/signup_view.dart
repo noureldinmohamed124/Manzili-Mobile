@@ -7,11 +7,11 @@ import 'package:manzili_mobile/presentation/widgets/auth/custom_text_field.dart'
 import 'package:manzili_mobile/presentation/widgets/auth/login_row_cta.dart';
 import 'package:manzili_mobile/presentation/widgets/auth/role_button.dart';
 import 'package:manzili_mobile/presentation/widgets/auth/social_login_button.dart';
-import '../../../core/constants/app_assets.dart';
-import '../../../core/strings/app_strings.dart';
+import 'package:manzili_mobile/l10n/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/responsive_helper.dart';
 import '../../../core/widgets/responsive_max_width.dart';
+import '../../../core/strings/app_strings.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -25,8 +25,9 @@ class SignupView extends StatefulWidget {
 
 class _SignupViewState extends State<SignupView> {
   bool _obscurePassword = true;
-  String _selectedRole = 'seller';
+  String _selectedRole = 'buyer';
   String? _validationHint;
+  bool _agreeToTerms = false;
 
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
@@ -45,9 +46,19 @@ class _SignupViewState extends State<SignupView> {
       case 'buyer':
         return 1;
       case 'seller':
-      default:
         return 2;
+      default:
+        return 1;
     }
+  }
+
+  bool _isPasswordValid(String password) {
+    if (password.length < 8) return false;
+    if (!RegExp(r'[A-Z]').hasMatch(password)) return false;
+    if (!RegExp(r'[a-z]').hasMatch(password)) return false;
+    if (!RegExp(r'[0-9]').hasMatch(password)) return false;
+    if (!RegExp(r'[!@#\$&*~%]').hasMatch(password)) return false;
+    return true;
   }
 
   Future<void> _handleRegister(BuildContext context) async {
@@ -59,10 +70,25 @@ class _SignupViewState extends State<SignupView> {
 
     if (fullName.isEmpty || email.isEmpty || password.isEmpty) {
       setState(() {
-        _validationHint = 'كمّل كل الحقول الأول';
+        _validationHint = AppLocalizations.of(context)!.fillAllFields;
       });
       return;
     }
+    
+    if (!_isPasswordValid(password)) {
+      setState(() {
+        _validationHint = AppLocalizations.of(context)!.errPasswordRequirement;
+      });
+      return;
+    }
+
+    if (!_agreeToTerms) {
+      setState(() {
+        _validationHint = AppLocalizations.of(context)!.errTermsRequired;
+      });
+      return;
+    }
+    
     setState(() => _validationHint = null);
 
     final success = await auth.register(
@@ -82,7 +108,7 @@ class _SignupViewState extends State<SignupView> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: Directionality.of(context),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final size = MediaQuery.of(context).size;
@@ -167,7 +193,7 @@ class _SignupViewState extends State<SignupView> {
                                   children: [
                                     Expanded(
                                       child: RoleButton(
-                                        label: 'مشتري',
+                                        label: AppLocalizations.of(context)!.roleBuyer,
                                         icon: Icons.shopping_cart_outlined,
                                         isSelected: _selectedRole == 'buyer',
                                         onTap: () =>
@@ -177,7 +203,7 @@ class _SignupViewState extends State<SignupView> {
                                     SizedBox(width: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12)),
                                     Expanded(
                                       child: RoleButton(
-                                        label: 'بائع',
+                                        label: AppLocalizations.of(context)!.roleSeller,
                                         icon: Icons.shopping_bag_outlined,
                                         isSelected: _selectedRole == 'seller',
                                         onTap: () =>
@@ -188,18 +214,19 @@ class _SignupViewState extends State<SignupView> {
                                 ),
                                   SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 26)),
                                   CustomTextField(
-                                    label: 'الاسم بالكامل',
+                                    label: AppLocalizations.of(context)!.fieldFullName,
                                     controller: _fullNameController,
                                   ),
                                   SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 18)),
                                   CustomTextField(
-                                    label: 'البريد الاكتروني',
+                                    label: AppLocalizations.of(context)!.fieldEmail,
+                                    hint: AppLocalizations.of(context)!.fieldEmailHint,
                                     keyboardType: TextInputType.emailAddress,
                                     controller: _emailController,
                                   ),
                                   SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 18)),
                                   CustomTextField(
-                                    label: 'كلمه المرور',
+                                    label: AppLocalizations.of(context)!.fieldPassword,
                                     controller: _passwordController,
                                     obscureText: _obscurePassword,
                                     suffixIcon: IconButton(
@@ -214,6 +241,38 @@ class _SignupViewState extends State<SignupView> {
                                         _obscurePassword = !_obscurePassword;
                                       }),
                                     ),
+                                  ),
+                                  SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 8)),
+                                  Text(
+                                    AppLocalizations.of(context)!.passwordRequirements,
+                                    style: TextStyle(
+                                      fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 12),
+                                      color: AppColors.textHint,
+                                    ),
+                                  ),
+                                  SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16)),
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    children: [
+                                      Checkbox(
+                                        value: _agreeToTerms,
+                                        activeColor: AppColors.primary,
+                                        onChanged: (val) {
+                                          setState(() {
+                                            _agreeToTerms = val ?? false;
+                                          });
+                                        },
+                                      ),
+                                      Expanded(
+                                        child: Text(
+                                          AppLocalizations.of(context)!.agreeToTerms,
+                                          style: TextStyle(
+                                            fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 13),
+                                            color: AppColors.textPrimary,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                   SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 24)),
                                   Consumer<AuthProvider>(
@@ -343,7 +402,7 @@ class _SignupViewState extends State<SignupView> {
                                           style: TextStyle(
                                             fontWeight: FontWeight.w800,
                                             color: Theme.of(context).brightness == Brightness.dark 
-                                                ? Colors.white 
+                                                ? AppColors.darkTextPrimary 
                                                 : AppColors.accent,
                                           ),
                                           recognizer: TapGestureRecognizer()

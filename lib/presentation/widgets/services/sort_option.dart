@@ -22,7 +22,7 @@ class SortOption extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         child: Row(
-          textDirection: TextDirection.rtl,
+          textDirection: Directionality.of(context),
           children: [
             Expanded(
               child: Text(
@@ -58,9 +58,9 @@ class SortOption extends StatelessWidget {
                       child: Container(
                         width: 8,
                         height: 8,
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.surface,
                         ),
                       ),
                     )

@@ -5,6 +5,7 @@ import 'package:manzili_mobile/core/theme/app_colors.dart';
 import 'package:manzili_mobile/presentation/widgets/common/soft_card.dart';
 import 'package:manzili_mobile/presentation/widgets/common/service_cover_image.dart';
 import 'package:manzili_mobile/presentation/providers/cart_provider.dart';
+import 'package:manzili_mobile/presentation/providers/orders_provider.dart' as manzili_orders;
 import 'package:provider/provider.dart';
 
 /// سلة الخدمات — طلب للبائع، مش دفع (spec: Request → Decision → Payment).
@@ -180,6 +181,36 @@ class CartView extends StatelessWidget {
                               textAlign: TextAlign.center,
                             ),
                           ),
+                        // Coupon Field
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                decoration: InputDecoration(
+                                  hintText: 'كود الخصم (اختياري)',
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide(color: AppColors.textSecondary.withOpacity(0.5)),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            FilledButton(
+                              onPressed: () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('الكود غير صحيح أو منتهي')),
+                                );
+                              },
+                              style: FilledButton.styleFrom(
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              ),
+                              child: const Text('تطبيق'),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -211,14 +242,15 @@ class CartView extends StatelessWidget {
                                   final success = await cart.submitCart();
                                   if (success) {
                                     if (!context.mounted) return;
+                                    context.read<manzili_orders.OrdersProvider>().fetchOrders();
                                     context.push('/order-placed');
                                   }
                                 },
                           child: cart.isSubmitting
-                              ? const SizedBox(
+                              ? SizedBox(
                                   height: 20,
                                   width: 20,
-                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                  child: CircularProgressIndicator(color: Theme.of(context).colorScheme.surface, strokeWidth: 2),
                                 )
                               : const Text('إرسال الطلب'),
                         ),

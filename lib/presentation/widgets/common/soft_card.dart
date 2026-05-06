@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:manzili_mobile/core/theme/app_colors.dart';
 
 class SoftCard extends StatelessWidget {
   const SoftCard({

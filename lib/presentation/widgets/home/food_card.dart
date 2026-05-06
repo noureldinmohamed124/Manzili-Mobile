@@ -44,8 +44,8 @@ class FoodCard extends StatelessWidget {
           onTap: onTap,
           child: Container(
             width: cardWidth,
-            margin: EdgeInsetsDirectional.only(
-              start: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12),
+            margin: EdgeInsets.symmetric(
+              horizontal: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 8),
             ),
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface,
@@ -106,7 +106,7 @@ class FoodCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 10),
                           fontWeight: FontWeight.w700,
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.surface,
                         ),
                       ),
                     ),
@@ -137,7 +137,7 @@ class FoodCard extends StatelessWidget {
                           style: TextStyle(
                             fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 11),
                             fontWeight: FontWeight.w600,
-                            color: Colors.white,
+                            color: Theme.of(context).colorScheme.surface,
                           ),
                         ),
                       ],
@@ -220,14 +220,15 @@ class FoodCard extends StatelessWidget {
       imageUrlRaw: networkImageUrl,
       width: double.infinity,
       height: height,
-      fit: BoxFit.cover,
+      fit: BoxFit.contain,
     );
   }
 
   Color _getBadgeColor(String badge) {
-    if (badge.contains('خصم') || badge == 'أفضل') {
+    final lower = badge.toLowerCase();
+    if (lower.contains('خصم') || lower.contains('أفضل') || lower.contains('discount') || lower.contains('top')) {
       return Colors.red;
-    } else if (badge == 'مرشحه') {
+    } else if (lower.contains('مرش') || lower.contains('recommended') || lower.contains('vip')) {
       return Colors.amber.shade700;
     }
     return AppColors.primary;

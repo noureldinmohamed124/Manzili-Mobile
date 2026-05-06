@@ -13,7 +13,7 @@ class ServiceGridCard extends StatelessWidget {
   Widget _buildCoverImage(ServiceItem service) {
     return ServiceCoverImage(
       imageUrlRaw: service.imageUrl,
-      fit: BoxFit.cover,
+      fit: BoxFit.contain,
     );
   }
 
@@ -91,10 +91,10 @@ class ServiceGridCard extends StatelessWidget {
                         const SizedBox(width: 4),
                         Text(
                           service.rating.toStringAsFixed(1),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: Colors.white,
+                            color: Theme.of(context).colorScheme.surface,
                           ),
                         ),
                       ],
@@ -115,7 +115,7 @@ class ServiceGridCard extends StatelessWidget {
                     child: Text(
                       service.title,
                       textAlign: TextAlign.right,
-                      textDirection: TextDirection.rtl,
+                      textDirection: Directionality.of(context),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -132,7 +132,7 @@ class ServiceGridCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.right,
-                    textDirection: TextDirection.rtl,
+                    textDirection: Directionality.of(context),
                     style: const TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w500,

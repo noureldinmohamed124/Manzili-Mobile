@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'food_card.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/responsive_helper.dart';
@@ -31,8 +30,14 @@ class FoodListSection extends StatelessWidget {
       children: [
         Padding(
           padding: EdgeInsets.symmetric(
-            horizontal: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 22),
-            vertical: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16),
+            horizontal: ResponsiveHelper.responsiveSpacingCompat(
+              context,
+              mobile: 22,
+            ),
+            vertical: ResponsiveHelper.responsiveSpacingCompat(
+              context,
+              mobile: 16,
+            ),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -44,16 +49,28 @@ class FoodListSection extends StatelessWidget {
                     Text(
                       title,
                       style: TextStyle(
-                        fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 20, tablet: 22),
+                        fontSize: ResponsiveHelper.responsiveFontSizeCompat(
+                          context,
+                          mobile: 20,
+                          tablet: 22,
+                        ),
                         fontWeight: FontWeight.w800,
                         color: AppColors.textPrimary,
                       ),
                     ),
                     if (titleIcon != null) ...[
-                      SizedBox(width: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 8)),
+                      SizedBox(
+                        width: ResponsiveHelper.responsiveSpacingCompat(
+                          context,
+                          mobile: 8,
+                        ),
+                      ),
                       Icon(
                         titleIcon,
-                        size: ResponsiveHelper.responsiveValueCompat(context, mobile: 20.0),
+                        size: ResponsiveHelper.responsiveValueCompat(
+                          context,
+                          mobile: 20.0,
+                        ),
                         color: titleIconColor ?? AppColors.primary,
                       ),
                     ],
@@ -71,7 +88,10 @@ class FoodListSection extends StatelessWidget {
                   child: Text(
                     viewAllText!,
                     style: TextStyle(
-                      fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 14),
+                      fontSize: ResponsiveHelper.responsiveFontSizeCompat(
+                        context,
+                        mobile: 14,
+                      ),
                       fontWeight: FontWeight.w600,
                       color: Colors.red,
                     ),
@@ -81,23 +101,31 @@ class FoodListSection extends StatelessWidget {
           ),
         ),
         SizedBox(
-          height: ResponsiveHelper.scaleValueFromContext(context, 280.0, min: 260.0, max: 320.0),
+          height: ResponsiveHelper.scaleValueFromContext(
+            context,
+            280.0,
+            min: 260.0,
+            max: 320.0,
+          ),
           child: AnimationLimiter(
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               primary: false,
               physics: const BouncingScrollPhysics(),
-              padding: EdgeInsetsDirectional.only(
-                start: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 22),
+              padding: EdgeInsets.symmetric(
+                horizontal: ResponsiveHelper.responsiveSpacingCompat(
+                  context,
+                  mobile: 16,
+                ),
               ),
               itemCount: foodItems.length,
               itemBuilder: (context, index) {
                 return AnimationConfiguration.staggeredList(
                   position: index,
                   duration: const Duration(milliseconds: 375),
-                  child: SlideAnimation(
-                    horizontalOffset: 50.0,
-                    child: FadeInAnimation(
+                  child: FadeInAnimation(
+                    child: ScaleAnimation(
+                      scale: 0.95,
                       child: foodItems[index],
                     ),
                   ),

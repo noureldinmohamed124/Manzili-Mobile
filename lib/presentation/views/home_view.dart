@@ -8,7 +8,6 @@ import 'package:manzili_mobile/presentation/widgets/home/food_list_section.dart'
 import 'package:manzili_mobile/presentation/widgets/home/food_card.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:pull_to_refresh_flutter3/pull_to_refresh_flutter3.dart';
-import '../../../core/strings/app_strings.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/responsive_helper.dart';
 import '../../../core/widgets/responsive_max_width.dart';
@@ -50,7 +49,7 @@ class _HomeViewState extends State<HomeView> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: Directionality.of(context),
       child: LayoutBuilder(
         builder: (context, constraints) {
           // Use effective width for scaling to prevent over-scaling on ultra-wide screens
@@ -89,41 +88,65 @@ class _HomeViewState extends State<HomeView> {
                             max: 48.0,
                           );
 
-                          return Row(
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              // Left Icons - Use Wrap for very small screens
-                              LayoutBuilder(
-                                builder: (context, iconConstraints) {
-                                  if (iconConstraints.maxWidth < 200) {
-                                    // Very narrow: stack icons vertically or use Wrap
-                                    return Wrap(
-                                      spacing: spacing,
-                                      children: [
-                                        _buildIconButton(
-                                          Icons.notifications_outlined,
-                                          Theme.of(context).iconTheme.color ??
-                                              AppColors.textSecondary,
-                                          Theme.of(context).colorScheme.surface,
-                                          iconSize,
-                                          () => context.push('/notifications'),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Material(
+                                        color: Colors.transparent,
+                                        child: InkWell(
+                                          onTap: () => context.push('/profile'),
+                                          customBorder: const CircleBorder(),
+                                          child: Container(
+                                            width: iconSize,
+                                            height: iconSize,
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              border: Border.all(
+                                                color: AppColors.coolSteel.withValues(alpha: 0.45),
+                                                width: 2,
+                                              ),
+                                            ),
+                                            child: ClipOval(
+                                              child: Container(
+                                                color: AppColors.surfaceMuted,
+                                                child: Icon(
+                                                  Icons.person_rounded,
+                                                  color: AppColors.heading,
+                                                  size: iconSize * 0.55,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
                                         ),
-                                        _buildIconButton(
-                                          Icons.shopping_cart_outlined,
-                                          Colors.white,
-                                          AppColors.primary,
-                                          iconSize,
-                                          () => context.push('/cart'),
-                                        ),
-                                      ],
-                                    );
-                                  }
-
-                                  return Row(
+                                      ),
+                                      SizedBox(width: spacing),
+                                      Consumer2<ThemeProvider, LocaleProvider>(
+                                        builder: (context, themeProvider, localeProvider, _) {
+                                          return Row(
+                                            children: [
+                                              _buildIconButton(
+                                                themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode,
+                                                Theme.of(context).iconTheme.color ?? AppColors.textSecondary,
+                                                Theme.of(context).colorScheme.surface,
+                                                iconSize,
+                                                () => themeProvider.toggleTheme(),
+                                              ),
+                                              ],
+                                          );
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                  Row(
                                     children: [
                                       _buildIconButton(
                                         Icons.notifications_outlined,
-                                        Theme.of(context).iconTheme.color ??
-                                            AppColors.textSecondary,
+                                        Theme.of(context).iconTheme.color ?? AppColors.textSecondary,
                                         Theme.of(context).colorScheme.surface,
                                         iconSize,
                                         () => context.push('/notifications'),
@@ -137,157 +160,45 @@ class _HomeViewState extends State<HomeView> {
                                         () => context.push('/cart'),
                                       ),
                                     ],
-                                  );
-                                },
+                                  ),
+                                ],
                               ),
-                              // Search Bar
-                              Expanded(
-                                child: Container(
-                                  margin: EdgeInsets.symmetric(
-                                    horizontal: spacing,
-                                  ),
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal:
-                                        ResponsiveHelper.responsiveSpacingFromConstraints(
-                                          constraints,
-                                          base: 16.0,
-                                        ),
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.surface,
-                                    borderRadius: BorderRadius.circular(12),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(
-                                          alpha: 0.05,
-                                        ),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
-                                  child: TextField(
-                                    textInputAction: TextInputAction.search,
-                                    onSubmitted: (value) {
-                                      final q = value.trim();
-                                      if (q.isEmpty) return;
-                                      context.go(
-                                        Uri(
-                                          path: '/services',
-                                          queryParameters: {'q': q},
-                                        ).toString(),
-                                      );
-                                    },
-                                    style: TextStyle(
-                                      fontSize:
-                                          ResponsiveHelper.responsiveFontSize(
-                                            context,
-                                            base: 14.0,
-                                            min: 12.0,
-                                            max: 16.0,
-                                          ),
+                              SizedBox(height: spacing * 1.5),
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).colorScheme.surface,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.05),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
                                     ),
-                                    decoration: InputDecoration(
-                                      hintText: 'دور على إيه؟ اكتب هنا',
-                                      hintStyle: TextStyle(
-                                        color: AppColors.textHint,
-                                        fontSize:
-                                            ResponsiveHelper.responsiveFontSize(
-                                              context,
-                                              base: 14.0,
-                                              min: 12.0,
-                                              max: 16.0,
-                                            ),
-                                      ),
-                                      border: InputBorder.none,
-                                      suffixIcon: Icon(
-                                        Icons.search,
-                                        color: AppColors.textHint,
-                                      ),
+                                  ],
+                                ),
+                                child: TextField(
+                                  textInputAction: TextInputAction.search,
+                                  onSubmitted: (value) {
+                                    final q = value.trim();
+                                    if (q.isEmpty) return;
+                                    context.go(Uri(path: '/services', queryParameters: {'q': q}).toString());
+                                  },
+                                  style: TextStyle(
+                                    fontSize: ResponsiveHelper.responsiveFontSize(context, base: 14.0, min: 12.0, max: 16.0),
+                                  ),
+                                  decoration: InputDecoration(
+                                    hintText: AppLocalizations.of(context)!.homeSearchHint,
+                                    hintStyle: TextStyle(
+                                      color: AppColors.textHint,
+                                      fontSize: ResponsiveHelper.responsiveFontSize(context, base: 14.0, min: 12.0, max: 16.0),
                                     ),
+                                    border: InputBorder.none,
+                                    prefixIcon: Icon(Icons.search, color: AppColors.textHint, size: 24),
+                                    prefixIconConstraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+                                    contentPadding: const EdgeInsets.symmetric(vertical: 14),
                                   ),
                                 ),
-                              ),
-                              SizedBox(width: spacing),
-                              Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  onTap: () => context.push('/profile'),
-                                  customBorder: const CircleBorder(),
-                                  child: Container(
-                                    width: iconSize,
-                                    height: iconSize,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: AppColors.coolSteel.withValues(
-                                          alpha: 0.45,
-                                        ),
-                                        width: 2,
-                                      ),
-                                    ),
-                                    child: ClipOval(
-                                      child: Container(
-                                        color: AppColors.surfaceMuted,
-                                        child: Icon(
-                                          Icons.person_rounded,
-                                          color: AppColors.heading,
-                                          size: iconSize * 0.55,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              SizedBox(width: spacing),
-                              Consumer2<ThemeProvider, LocaleProvider>(
-                                builder:
-                                    (
-                                      context,
-                                      themeProvider,
-                                      localeProvider,
-                                      _,
-                                    ) {
-                                      return Row(
-                                        children: [
-                                          _buildIconButton(
-                                            themeProvider.isDarkMode
-                                                ? Icons.light_mode
-                                                : Icons.dark_mode,
-                                            Theme.of(context).iconTheme.color ??
-                                                AppColors.textSecondary,
-                                            Theme.of(
-                                              context,
-                                            ).colorScheme.surface,
-                                            iconSize,
-                                            () => themeProvider.toggleTheme(),
-                                          ),
-                                          SizedBox(width: spacing),
-                                          _buildIconButton(
-                                            Icons.language,
-                                            Theme.of(context).iconTheme.color ??
-                                                AppColors.textSecondary,
-                                            Theme.of(
-                                              context,
-                                            ).colorScheme.surface,
-                                            iconSize,
-                                            () {
-                                              ScaffoldMessenger.of(
-                                                context,
-                                              ).showSnackBar(
-                                                const SnackBar(
-                                                  content: Text(
-                                                    'تغيير اللغة غير مفعل حالياً',
-                                                  ),
-                                                ),
-                                              );
-                                            },
-                                          ),
-                                        ],
-                                      );
-                                    },
                               ),
                             ],
                           );
@@ -494,7 +405,7 @@ class _HomeViewState extends State<HomeView> {
                                                 pageSize: 10,
                                               );
                                         },
-                                        child: const Text('جرّب تاني'),
+                                        child: Text(AppLocalizations.of(context)!.retry),
                                       ),
                                     ],
                                   ),
@@ -539,14 +450,14 @@ class _HomeViewState extends State<HomeView> {
                                     ),
                                     if (featured.isNotEmpty)
                                       FoodListSection(
-                                        title: 'أقوى العروض',
+                                        title: AppLocalizations.of(context)!.homeOffersTitle,
                                         titleIcon: Icons.percent,
                                         titleIconColor: Colors.red,
                                         foodItems: _buildFoodCardsFromServices(
                                           context,
                                           constraints,
                                           featured,
-                                          badge: AppStrings.badgeDiscount,
+                                          badge: AppLocalizations.of(context)!.badgeDiscount,
                                         ),
                                       ),
 
@@ -561,12 +472,12 @@ class _HomeViewState extends State<HomeView> {
 
                                     if (recommended.isNotEmpty)
                                       FoodListSection(
-                                        title: 'خدمات مرشّحة ليك',
+                                        title: AppLocalizations.of(context)!.homeRecommendedTitle,
                                         foodItems: _buildFoodCardsFromServices(
                                           context,
                                           constraints,
                                           recommended,
-                                          badge: 'مرشّح',
+                                          badge: AppLocalizations.of(context)!.badgeVip,
                                         ),
                                       ),
 
@@ -581,14 +492,14 @@ class _HomeViewState extends State<HomeView> {
 
                                     if (mostSold.isNotEmpty)
                                       FoodListSection(
-                                        title: 'الأكتر مبيعًا',
+                                        title: AppLocalizations.of(context)!.homeMostPurchasedTitle,
                                         titleIcon: Icons.star,
                                         titleIconColor: Colors.amber,
                                         foodItems: _buildFoodCardsFromServices(
                                           context,
                                           constraints,
                                           mostSold,
-                                          badge: AppStrings.badgeTopSold,
+                                          badge: AppLocalizations.of(context)!.badgeTopSold,
                                         ),
                                       ),
 
@@ -603,7 +514,7 @@ class _HomeViewState extends State<HomeView> {
 
                                     if (allServices.isNotEmpty)
                                       FoodListSection(
-                                        title: 'كل الخدمات',
+                                        title: AppLocalizations.of(context)!.homeAllServicesTitle,
                                         viewAllText: 'عرض الكل',
                                         onViewAllTap: () =>
                                             context.go('/services'),
@@ -700,9 +611,9 @@ class _HomeQuickCategories extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.fromLTRB(
-        ResponsiveHelper.responsiveSpacingCompat(context, mobile: 22),
+        ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16),
         ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12),
-        ResponsiveHelper.responsiveSpacingCompat(context, mobile: 22),
+        ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16),
         ResponsiveHelper.responsiveSpacingCompat(context, mobile: 8),
       ),
       child: SizedBox(

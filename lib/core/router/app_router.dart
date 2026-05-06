@@ -22,6 +22,7 @@ import 'package:manzili_mobile/presentation/views/buyer/requests_list_view.dart'
 import 'package:manzili_mobile/presentation/views/buyer/track_order_view.dart';
 import 'package:manzili_mobile/presentation/views/buyer/payment_summary_view.dart';
 import 'package:manzili_mobile/presentation/views/buyer/payment_method_view.dart';
+import 'package:manzili_mobile/presentation/views/buyer/buyer_order_details_view.dart';
 import 'package:manzili_mobile/presentation/views/home_view.dart';
 import 'package:manzili_mobile/presentation/views/main_shell_view.dart';
 import 'package:manzili_mobile/presentation/views/reviews_view.dart';
@@ -45,6 +46,8 @@ import 'package:manzili_mobile/presentation/views/service_details_view.dart';
 import 'package:manzili_mobile/presentation/views/services_view.dart';
 import 'package:manzili_mobile/presentation/views/signin_view.dart';
 import 'package:manzili_mobile/presentation/views/signup_view.dart';
+import 'package:manzili_mobile/presentation/views/auth/forgot_password_view.dart';
+import 'package:manzili_mobile/presentation/views/auth/reset_password_view.dart';
 import 'package:manzili_mobile/presentation/views/support/notifications_inbox_view.dart';
 import 'package:manzili_mobile/presentation/views/support/profile_hub_view.dart';
 import 'package:manzili_mobile/presentation/views/support/settings_view.dart';
@@ -71,6 +74,14 @@ GoRouter createAppRouter() {
       GoRoute(
         path: '/signup',
         builder: (context, state) => const SignupView(),
+      ),
+      GoRoute(
+        path: '/forgot-password',
+        builder: (context, state) => const ForgotPasswordView(),
+      ),
+      GoRoute(
+        path: '/reset-password',
+        builder: (context, state) => const ResetPasswordView(),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
@@ -127,6 +138,13 @@ GoRouter createAppRouter() {
       GoRoute(
         path: '/orders',
         redirect: (context, state) => '/my-orders',
+      ),
+      GoRoute(
+        path: '/my-orders/details/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id'] ?? '';
+          return BuyerOrderDetailsView(orderId: id);
+        },
       ),
       GoRoute(
         path: '/profile',

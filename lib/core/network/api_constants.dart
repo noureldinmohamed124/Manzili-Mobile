@@ -60,10 +60,30 @@ class ApiConstants {
   }
 
   // Seller
-  static const String sellerServices = '/api/seller/services';
-  static String sellerServiceById(int id) => '/api/seller/services/$id';
-  static const String sellerDashboard = '/api/seller/dashboard';
+  static const String sellerServices = '/seller/services';
+  static String sellerServiceById(int id) => '/seller/services/$id';
+  static const String sellerDashboard = '/seller/dashboard';
+
+  // Seller Orders
+  static const String sellerOrders = '/seller/orders';
+  static String sellerOrderById(int id) => '/seller/orders/$id';
+  static String sellerOrderReprice(int id) => '/seller/orders/$id/reprice';
+  static String sellerOrderReject(int id) => '/seller/orders/$id/reject';
+  static String sellerOrderApprove(int id) => '/seller/orders/$id/approve';
+  static String sellerOrderStatus(int id) => '/seller/orders/$id/status';
+
+  // Admin Users
+  static const String adminUsers = '/admin/users';
+  static String adminBlockUser(int id) => '/admin/users/$id/block';
+  static String adminUnblockUser(int id) => '/admin/users/$id/unblock';
+  static String adminUserDetails(int id) => '/admin/users/$id';
+
+  // Admin Stats and Data
+  static const String adminDashboard = '/admin/dashboard';
+  static const String adminFinancials = '/admin/financials';
+  static const String adminOrders = '/admin/orders';
+  static const String adminServices = '/admin/services';
 
   // Categories
-  static const String categories = '/api/categories';
+  static const String categories = '/categories';
 }

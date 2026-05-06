@@ -28,6 +28,7 @@ class AdminHubView extends StatelessWidget {
               );
             },
           ),
+          /*
           Consumer<LocaleProvider>(
             builder: (context, localeProvider, _) {
               return IconButton(
@@ -38,6 +39,7 @@ class AdminHubView extends StatelessWidget {
               );
             },
           ),
+          */
           IconButton(
             icon: const Icon(Icons.logout, color: AppColors.error),
             onPressed: () {

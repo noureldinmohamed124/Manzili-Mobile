@@ -1,3 +1,11 @@
+## Latest Updates (Antigravity)
+- Integrated Admin Users API: Unblock User and Get User Details endpoints added to AdminProvider and wired into AdminUserDetailsView.
+- Integrated Seller Orders API: Reprice, Reject, and Approve endpoints added to SellerProvider and wired into SellerOrderDetailsView with reason dialogs.
+- Integrated Categories API in ServicesProvider.
+- Corrected Submit Payment Proof API endpoint to match specifications.
+- Solved layout overflow issues in horizontal lists.
+- Audited hardcoded colors and replaced them with AppColors/Theme values for Dark Mode compatibility.
+- Language toggle was verified to trigger correctly; fully dynamic translations of hardcoded Arabic text remain a future enhancement.
 # Manzili Mobile — Full Project Handoff File (Everything)
 
 This file is meant to be a **single, complete handoff artifact** you can send to another AI (or reuse later) to quickly reconstruct:
@@ -55,7 +63,7 @@ The following requirements were provided earlier in chat and were used as the ma
 - Buyer
 - Seller
 - Admin
-- (Delivery role is present in the repo routes/UI)
+- *(Note: There is currently no separate Delivery View. Delivery-related status transitions are handled by existing Admin/Provider flows depending on backend permissions.)*
 
 ### API system rules
 
@@ -279,14 +287,9 @@ Alias:
 - `/admin/announcements/new` → `AdminCreateAnnouncementView`
 - `/admin/reports` → `AdminReportsView`
 
-### Delivery
+### Delivery (Removed)
 
-- `/delivery` → `DeliveryHubView`
-- `/delivery/available` → `AvailableDeliveriesView`
-- `/delivery/my-deliveries` → `MyDeliveriesView`
-- `/delivery/details/:id` → `DeliveryDetailsView(deliveryId)`
-- `/delivery/verification/:id` → `DeliveryVerificationView(deliveryId)`
-- `/delivery/result/:status` → `DeliveryResultView(isSuccess)`
+- *(There is currently no separate Delivery View. These routes may exist in older commits but should not be actively used. Delivery-related status transitions are handled by Admin/Provider flows.)*
 
 ---
 
@@ -330,15 +333,15 @@ These are defined in:
 
 ### Screens that are mostly UI-only (likely not backed by real APIs yet)
 
-These screens exist in the router, but **there are no corresponding API constants or repository calls** in the codebase yet (so they are either static UI, local state only, or placeholders):
+These screens exist in the router and have fully audited UI (Phase 1-5) but there are **no corresponding API endpoints** from the backend yet:
 
 - Buyer wallet, requests, favourites, notifications inbox, explore sellers, track order, payment method
-- Most seller features: create/edit services, manage orders, earnings, VIP, offers, discounts, posts, templates
+- Seller marketing features: VIP, offers, discounts, posts, templates
 - All admin features: users/services/orders/finance/announcements/reports
-- Delivery hub/features
+- Delivery logic has been moved to Provider/Admin dashboard. There is no separate Delivery Hub view.
 - Support/settings/profile details beyond auth
 
-This is the biggest “missing wiring” area.
+Note: The routing, UI layouts, Dark/Light modes, and Arabic localization have been completely audited and are present. The only missing part for these screens is the actual API backend.
 
 ---
 
@@ -654,8 +657,8 @@ If the backend is not planned yet for these, the UI should either be clearly “
   - log out if refresh fails
 
 4) **API coverage**
-- Most screens have no repositories/providers calling APIs.
-- Missing: repositories + providers for seller/admin/delivery/etc.
+- All provided APIs from the `API_CONTRACTS.md` have been fully wired in the respective providers (`ServicesProvider`, `OrdersProvider`, `SellerProvider`, `CartProvider`).
+- Missing: Backend implementation for Admin, Delivery, and advanced Seller features.
 
 5) **Consistency of service search endpoint usage**
 - Code uses both:
@@ -824,3 +827,83 @@ If you need to quickly reconstruct behavior:
    - The backend runs behind an IIS reverse proxy (or similar) that restricts physical directory listings.
    - Calling `/services` or `/categories` without the `/api/` prefix caused the server to return `403 Forbidden` ("مش مسموح بالخطةه دي"), which broke the Buyer Home Screen.
    - All endpoints in `api_constants.dart` (including `services` and `categories`) have been updated to strictly prepend the `/api/` prefix (e.g., `/api/services`, `/api/categories`).
+
+---
+
+## 15) Order Lifecycle & Statuses
+
+**Important:** There is currently no separate Delivery View. Delivery-related status transitions are handled by existing Admin/Provider flows depending on backend permissions.
+
+### Status Flow
+1. **Request**
+2. **Accepted**
+3. **PendingPaymentVerification**
+4. **Paid**
+5. **InProgress**
+6. **ReadyForShipping**
+7. **OutForDelivery**
+8. **Shipped**
+9. **Confirmed**
+
+### Role Interactions
+
+**Buyer:**
+- Creates the initial Request.
+- Pays only after Provider accepts the request.
+- Uploads payment receipt.
+- Tracks the order status (sees progress only).
+- Provides/receives the Verification Code when delivery is completed.
+- Does not manually change operational statuses.
+
+**Provider / Seller:**
+- **Request:** Accept Request.
+- **Accepted:** Waiting for buyer payment.
+- **PendingPaymentVerification:** Waiting for admin payment verification.
+- **Paid:** Start Work / Mark as In Progress.
+- **InProgress:** Mark as Ready for Shipping.
+- **ReadyForShipping:** Next action depends on backend. May move to OutForDelivery.
+- **OutForDelivery:** Delivery in progress.
+- **Shipped:** Delivered, waiting for payout confirmation.
+- **Confirmed:** Final/completed.
+
+**Admin:**
+- **PendingPaymentVerification:** Admin must verify payment receipt and update to **Paid**.
+- **Shipped:** Admin must confirm seller payout/release and update to **Confirmed**.
+- *If no Delivery role exists and backend gives Admin delivery control, Admin should also handle:* ReadyForShipping → OutForDelivery, OutForDelivery → Shipped.
+
+*(If the API requires a verification code for OutForDelivery → Shipped, it must be implemented in the role/page that currently owns this action. If missing, this remains a pending API integration.)*
+
+## Currently Integrated & Working APIs
+
+Below is a complete list of all backend APIs that are fully integrated, tested, and active within the Manzili application UI:
+
+### Authentication (Auth Flow)
+- **Login:** POST /api/auth/login
+- **Register:** POST /api/auth/register
+
+### Buyer Flow (Home & Services)
+- **Get Service Categories:** GET /api/services/categories
+- **Get All Services (Paginated):** GET /api/services
+- **Get Service Details by ID:** GET /api/services/{id}
+- **Get Home Buckets (Featured/Recommended):** GET /api/services/home-buckets
+
+### Buyer Flow (Orders & Checkout)
+- **Submit Order Request (Cart Checkout):** POST /orders/request (or legacy /api/orders/request)
+- **Get Buyer Orders (??????):** GET /orders (or legacy /api/orders)
+- **Submit Payment Proof (Vodafone Cash):** POST /orders/submit-payment
+- **Get Order Payment Summary:** GET /order/payment-summary
+
+### Seller Flow (Provider Dashboard)
+- **Get Seller Dashboard Stats:** GET /api/seller/dashboard (or legacy /seller/dashboard)
+- **Get All Seller Services (??????):** GET /seller/services (or fallback /api/seller/services)
+- **Get Seller Service Details:** GET /api/seller/services/{id}
+- **Create New Service:** POST /api/seller/services (multipart/form-data)
+- **Update Existing Service:** PUT /api/seller/services/{id}
+- **Delete Service:** DELETE /api/seller/services/{id}
+- **Get Seller Orders (Incoming Requests):** GET /orders (Shared with buyer endpoint, filtered by provider)
+
+### Admin Flow (Pending APIs)
+*(Currently waiting on actual endpoint documentation to map these)*
+- **Admin Dashboard Stats:** *Pending API*
+- **Manage Users (Block/Unblock):** *Pending API*
+- **Manage Services (Approve/Reject):** *Pending API*

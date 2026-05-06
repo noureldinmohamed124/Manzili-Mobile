@@ -20,7 +20,7 @@ class _SettingsViewState extends State<SettingsView> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: Directionality.of(context),
       child: Scaffold(
 
         appBar: AppBar(
@@ -38,14 +38,14 @@ class _SettingsViewState extends State<SettingsView> {
                       contentPadding: EdgeInsets.zero,
                       title: const Text('إشعارات الطلبات'),
                       value: _notificationsEnabled,
-                      activeColor: AppColors.primary,
+                      activeThumbColor: AppColors.primary,
                       onChanged: (val) => setState(() => _notificationsEnabled = val),
                     ),
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
                       title: const Text('عروض وخصومات'),
                       value: _offersEnabled,
-                      activeColor: AppColors.primary,
+                      activeThumbColor: AppColors.primary,
                       onChanged: (val) => setState(() => _offersEnabled = val),
                     ),
                   ],

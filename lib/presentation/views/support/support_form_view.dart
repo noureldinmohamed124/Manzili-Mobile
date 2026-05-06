@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:manzili_mobile/core/strings/app_strings.dart';
-import 'package:manzili_mobile/core/theme/app_colors.dart';
 
 class SupportFormView extends StatefulWidget {
   const SupportFormView({super.key});
@@ -27,7 +26,7 @@ class _SupportFormViewState extends State<SupportFormView> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: Directionality.of(context),
       child: Scaffold(
 
         appBar: AppBar(

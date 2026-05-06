@@ -61,7 +61,7 @@ class CustomTextField extends StatelessWidget {
             keyboardType: keyboardType,
             enabled: enabled,
             onChanged: onChanged,
-            textDirection: TextDirection.rtl,
+            textDirection: Directionality.of(context),
             textAlignVertical: TextAlignVertical.center,
             enableInteractiveSelection: true,
             keyboardAppearance: Theme.of(context).brightness, 
@@ -72,7 +72,7 @@ class CustomTextField extends StatelessWidget {
             ),
             decoration: InputDecoration(
               hintText: hint,
-              hintTextDirection: TextDirection.rtl,
+              hintTextDirection: Directionality.of(context),
               hintStyle: TextStyle(
                 fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 14),
                 color: AppColors.textHint,

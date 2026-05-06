@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:flutter/gestures.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:manzili_mobile/presentation/providers/auth_provider.dart';
 import 'package:manzili_mobile/presentation/widgets/auth/custom_text_field.dart';
 import 'package:manzili_mobile/presentation/widgets/auth/login_row_cta.dart';
 import 'package:manzili_mobile/presentation/widgets/auth/social_login_button.dart';
-import '../../../core/constants/app_assets.dart';
-import '../../../core/strings/app_strings.dart';
+import 'package:manzili_mobile/l10n/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/responsive_helper.dart';
 import '../../../core/widgets/responsive_max_width.dart';
@@ -45,9 +43,15 @@ class _SigninViewState extends State<SigninView> {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
 
-    if (email.isEmpty || password.isEmpty) {
+    if (email.isEmpty) {
       setState(() {
-        _validationHint = 'اكتب الإيميل والباسورد الأول';
+        _validationHint = AppLocalizations.of(context)!.errEmailOrPhoneEmpty;
+      });
+      return;
+    }
+    if (password.isEmpty) {
+      setState(() {
+        _validationHint = AppLocalizations.of(context)!.errInvalidCredentials;
       });
       return;
     }
@@ -72,7 +76,7 @@ class _SigninViewState extends State<SigninView> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: Directionality.of(context),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final size = MediaQuery.of(context).size;
@@ -143,7 +147,7 @@ class _SigninViewState extends State<SigninView> {
                             child: Column(
                               children: [
                                 Text(
-                                    'مرحباً',
+                                    AppLocalizations.of(context)!.welcomeLabel,
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
                                       fontSize: ResponsiveHelper.responsiveFontSize(context, base: 38.0, min: 28.0, max: 48.0),
@@ -153,7 +157,7 @@ class _SigninViewState extends State<SigninView> {
                                   ),
                                   SizedBox(height: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 6.0)),
                                   Text(
-                                    'سجل الدخول إلى حسابك',
+                                    AppLocalizations.of(context)!.signInSubtitle,
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
                                       fontSize: ResponsiveHelper.responsiveFontSize(context, base: 15.0, min: 13.0, max: 17.0),
@@ -163,13 +167,14 @@ class _SigninViewState extends State<SigninView> {
                                   SizedBox(height: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 24.0)),
                                   // No role picker: role is determined by backend token (buyer/seller/admin).
                                   CustomTextField(
-                                    label: 'البريد الالكتروني',
+                                    label: AppLocalizations.of(context)!.fieldEmailOrPhone,
+                                    hint: AppLocalizations.of(context)!.fieldEmailOrPhoneHint,
                                     keyboardType: TextInputType.emailAddress,
                                     controller: _emailController,
                                   ),
                                   SizedBox(height: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 18.0)),
                                   CustomTextField(
-                                    label: 'كلمة المرور',
+                                    label: AppLocalizations.of(context)!.fieldPassword,
                                     controller: _passwordController,
                                     obscureText: _obscurePassword,
                                     suffixIcon: IconButton(
@@ -194,9 +199,11 @@ class _SigninViewState extends State<SigninView> {
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             TextButton(
-                                              onPressed: () {},
+                                              onPressed: () {
+                                                context.push('/forgot-password');
+                                              },
                                               child: Text(
-                                                AppStrings.forgotPassword,
+                                                AppLocalizations.of(context)!.forgotPassword,
                                                 style: TextStyle(
                                                   fontSize: ResponsiveHelper.responsiveFontSize(context, base: 13.0, min: 11.0, max: 15.0),
                                                   fontWeight: FontWeight.w600,
@@ -218,7 +225,7 @@ class _SigninViewState extends State<SigninView> {
                                                   ),
                                                 ),
                                                 Text(
-                                                  AppStrings.rememberMe,
+                                                  AppLocalizations.of(context)!.rememberMe,
                                                   style: TextStyle(
                                                     fontSize: ResponsiveHelper.responsiveFontSize(context, base: 13.0, min: 11.0, max: 15.0),
                                                     fontWeight: FontWeight.w600,
@@ -237,7 +244,7 @@ class _SigninViewState extends State<SigninView> {
                                           TextButton(
                                             onPressed: () {},
                                             child: Text(
-                                              AppStrings.forgotPassword,
+                                              AppLocalizations.of(context)!.forgotPassword,
                                               style: TextStyle(
                                                 fontSize: ResponsiveHelper.responsiveFontSize(context, base: 13.0, min: 11.0, max: 15.0),
                                                 fontWeight: FontWeight.w600,
@@ -260,7 +267,7 @@ class _SigninViewState extends State<SigninView> {
                                                   ),
                                                 ),
                                                 Text(
-                                                  AppStrings.rememberMe,
+                                                  AppLocalizations.of(context)!.rememberMe,
                                                   style: TextStyle(
                                                     fontSize: ResponsiveHelper.responsiveFontSize(context, base: 13.0, min: 11.0, max: 15.0),
                                                     fontWeight: FontWeight.w600,
@@ -289,8 +296,8 @@ class _SigninViewState extends State<SigninView> {
                                               alignment: Alignment.centerLeft,
                                               child: LoginRowCTA(
                                                 text: isLoading
-                                                    ? AppStrings.signInLoading
-                                                    : AppStrings.signInCta,
+                                                    ? AppLocalizations.of(context)!.signInLoading
+                                                    : AppLocalizations.of(context)!.signInCta,
                                                 onTap: isLoading
                                                     ? null
                                                     : () => _handleLogin(context),
@@ -343,8 +350,8 @@ class _SigninViewState extends State<SigninView> {
                                                   : () {
                                                       context.push('/signup');
                                                     },
-                                              child: const Text(
-                                                AppStrings.noAccountSignUp,
+                                              child: Text(
+                                                AppLocalizations.of(context)!.noAccountSignUp,
                                                 style: TextStyle(
                                                   fontWeight: FontWeight.w800,
                                                   color: AppColors.accent,
@@ -367,7 +374,7 @@ class _SigninViewState extends State<SigninView> {
                                             Padding(
                                               padding: EdgeInsets.symmetric(vertical: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 8.0)),
                                               child: Text(
-                                                'أو سجل باستخدام وسائل التواصل الاجتماعي',
+                                                AppLocalizations.of(context)!.socialLoginOr,
                                                 textAlign: TextAlign.center,
                                                 style: TextStyle(
                                                   fontSize: ResponsiveHelper.responsiveFontSize(context, base: 12.0, min: 10.0, max: 14.0),
@@ -387,7 +394,7 @@ class _SigninViewState extends State<SigninView> {
                                           Padding(
                                             padding: EdgeInsets.symmetric(horizontal: ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 12.0)),
                                             child: Text(
-                                              'أو سجل باستخدام وسائل التواصل الاجتماعي',
+                                              AppLocalizations.of(context)!.socialLoginOr,
                                               style: TextStyle(
                                                 fontSize: ResponsiveHelper.responsiveFontSize(context, base: 12.0, min: 10.0, max: 14.0),
                                                 fontWeight: FontWeight.w600,
@@ -426,32 +433,6 @@ class _SigninViewState extends State<SigninView> {
                                     ],
                                   ),
                                   Gap(ResponsiveHelper.responsiveSpacingFromConstraints(constraints, base: 26.0)),
-                                  RichText(
-                                    textAlign: TextAlign.center,
-                                    text: TextSpan(
-                                      text: 'ليس لديك حساب؟ ',
-                                      style: TextStyle(
-                                        fontSize: ResponsiveHelper.responsiveFontSize(context, base: 14.0, min: 12.0, max: 16.0),
-                                        fontWeight: FontWeight.w600,
-                                        color: Theme.of(context).textTheme.bodySmall?.color ?? AppColors.textSecondary,
-                                      ),
-                                      children: [
-                                        TextSpan(
-                                          text: 'إنشاء حساب',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.w800,
-                                            color: Theme.of(context).brightness == Brightness.dark 
-                                                ? Colors.white 
-                                                : AppColors.accent,
-                                          ),
-                                          recognizer: TapGestureRecognizer()
-                                            ..onTap = () {
-                                              context.push('/signup');
-                                            },
-                                        ),
-                                      ],
-                                    ),
-                                  ),
                                 ].animate(interval: 50.ms).fade(duration: 500.ms, curve: Curves.easeOut).slideY(begin: 0.05, end: 0),
                               ),
                             ),

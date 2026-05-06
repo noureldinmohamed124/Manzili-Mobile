@@ -992,6 +992,18 @@ abstract class AppLocalizations {
   /// **'فلترة'**
   String get servicesFilterLabel;
 
+  /// No description provided for @searchEmptyState.
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يتم العثور على نتائج، جرب كلمة بحث أخرى.'**
+  String get searchEmptyState;
+
+  /// No description provided for @errSearchNetwork.
+  ///
+  /// In ar, this message translates to:
+  /// **'خطأ في الشبكة، يرجى المحاولة مرة أخرى.'**
+  String get errSearchNetwork;
+
   /// No description provided for @badgeDiscount.
   ///
   /// In ar, this message translates to:
@@ -1087,6 +1099,276 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'شغل يدوي وأكل بيتي على أصوله 👋'**
   String get homeHeaderSubtitle;
+
+  /// No description provided for @welcomeLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'مرحباً'**
+  String get welcomeLabel;
+
+  /// No description provided for @signInSubtitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'سجل الدخول إلى حسابك'**
+  String get signInSubtitle;
+
+  /// No description provided for @fieldEmail.
+  ///
+  /// In ar, this message translates to:
+  /// **'البريد الالكتروني'**
+  String get fieldEmail;
+
+  /// No description provided for @fieldPassword.
+  ///
+  /// In ar, this message translates to:
+  /// **'كلمة المرور'**
+  String get fieldPassword;
+
+  /// No description provided for @socialLoginOr.
+  ///
+  /// In ar, this message translates to:
+  /// **'أو سجل باستخدام وسائل التواصل الاجتماعي'**
+  String get socialLoginOr;
+
+  /// No description provided for @fillAllFields.
+  ///
+  /// In ar, this message translates to:
+  /// **'كمّل كل الحقول الأول'**
+  String get fillAllFields;
+
+  /// No description provided for @roleBuyer.
+  ///
+  /// In ar, this message translates to:
+  /// **'مشتري'**
+  String get roleBuyer;
+
+  /// No description provided for @roleSeller.
+  ///
+  /// In ar, this message translates to:
+  /// **'بائع'**
+  String get roleSeller;
+
+  /// No description provided for @fieldFullName.
+  ///
+  /// In ar, this message translates to:
+  /// **'الاسم بالكامل'**
+  String get fieldFullName;
+
+  /// No description provided for @fieldFirstName.
+  ///
+  /// In ar, this message translates to:
+  /// **'الاسم الأول'**
+  String get fieldFirstName;
+
+  /// No description provided for @fieldFirstNameHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'مثال: محمد'**
+  String get fieldFirstNameHint;
+
+  /// No description provided for @fieldLastName.
+  ///
+  /// In ar, this message translates to:
+  /// **'الاسم الأخير'**
+  String get fieldLastName;
+
+  /// No description provided for @fieldLastNameHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'مثال: أحمد سيد'**
+  String get fieldLastNameHint;
+
+  /// No description provided for @fieldEmailHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'مثال: mohamed@gmail.com'**
+  String get fieldEmailHint;
+
+  /// No description provided for @passwordRequirements.
+  ///
+  /// In ar, this message translates to:
+  /// **'٨ حروف على الأقل، ويجب أن تحتوي على رقم ورمز خاص'**
+  String get passwordRequirements;
+
+  /// No description provided for @agreeToTerms.
+  ///
+  /// In ar, this message translates to:
+  /// **'أوافق على شروط الخدمة وسياسة الخصوصية'**
+  String get agreeToTerms;
+
+  /// No description provided for @errFirstName.
+  ///
+  /// In ar, this message translates to:
+  /// **'يرجى إدخال اسم صحيح.'**
+  String get errFirstName;
+
+  /// No description provided for @errLastName.
+  ///
+  /// In ar, this message translates to:
+  /// **'يرجى إدخال اسم أخير صحيح.'**
+  String get errLastName;
+
+  /// No description provided for @errEmail.
+  ///
+  /// In ar, this message translates to:
+  /// **'يرجى إدخال بريد إلكتروني صحيح.'**
+  String get errEmail;
+
+  /// No description provided for @errPasswordRequirement.
+  ///
+  /// In ar, this message translates to:
+  /// **'كلمة المرور يجب أن تكون ٨ حروف على الأقل وتحتوي على حرف كبير وصغير ورقم ورمز خاص.'**
+  String get errPasswordRequirement;
+
+  /// No description provided for @errTermsRequired.
+  ///
+  /// In ar, this message translates to:
+  /// **'يجب الموافقة على شروط الخدمة للمتابعة.'**
+  String get errTermsRequired;
+
+  /// No description provided for @errServerSignup.
+  ///
+  /// In ar, this message translates to:
+  /// **'حدثت مشكلة أثناء إنشاء الحساب. يرجى المحاولة لاحقاً.'**
+  String get errServerSignup;
+
+  /// No description provided for @fieldEmailOrPhone.
+  ///
+  /// In ar, this message translates to:
+  /// **'البريد الإلكتروني أو رقم الهاتف'**
+  String get fieldEmailOrPhone;
+
+  /// No description provided for @fieldEmailOrPhoneHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'مثال: mohamed@gmail.com'**
+  String get fieldEmailOrPhoneHint;
+
+  /// No description provided for @errEmailOrPhoneEmpty.
+  ///
+  /// In ar, this message translates to:
+  /// **'يرجى إدخال البريد الإلكتروني أو رقم الهاتف.'**
+  String get errEmailOrPhoneEmpty;
+
+  /// No description provided for @errInvalidCredentials.
+  ///
+  /// In ar, this message translates to:
+  /// **'البريد/رقم الهاتف أو كلمة المرور غير صحيحة. يرجى المحاولة مرة أخرى.'**
+  String get errInvalidCredentials;
+
+  /// No description provided for @errServerSignin.
+  ///
+  /// In ar, this message translates to:
+  /// **'نواجه مشكلة في تسجيل الدخول الآن. يرجى المحاولة لاحقاً.'**
+  String get errServerSignin;
+
+  /// No description provided for @successSignIn.
+  ///
+  /// In ar, this message translates to:
+  /// **'أهلاً بك مجدداً!'**
+  String get successSignIn;
+
+  /// No description provided for @forgotPasswordInstruction.
+  ///
+  /// In ar, this message translates to:
+  /// **'إذا كان الحساب موجوداً، فقد أرسلنا تعليمات استعادة كلمة المرور.'**
+  String get forgotPasswordInstruction;
+
+  /// No description provided for @btnSendReset.
+  ///
+  /// In ar, this message translates to:
+  /// **'إرسال تعليمات الاستعادة'**
+  String get btnSendReset;
+
+  /// No description provided for @backToSignIn.
+  ///
+  /// In ar, this message translates to:
+  /// **'العودة لتسجيل الدخول'**
+  String get backToSignIn;
+
+  /// No description provided for @errInvalidRequest.
+  ///
+  /// In ar, this message translates to:
+  /// **'يرجى إدخال بريد إلكتروني أو رقم هاتف صحيح.'**
+  String get errInvalidRequest;
+
+  /// No description provided for @errServerForgot.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يمكننا معالجة طلبك الآن. يرجى المحاولة لاحقاً.'**
+  String get errServerForgot;
+
+  /// No description provided for @fieldNewPassword.
+  ///
+  /// In ar, this message translates to:
+  /// **'كلمة المرور الجديدة'**
+  String get fieldNewPassword;
+
+  /// No description provided for @fieldConfirmPassword.
+  ///
+  /// In ar, this message translates to:
+  /// **'تأكيد كلمة المرور'**
+  String get fieldConfirmPassword;
+
+  /// No description provided for @btnResetPassword.
+  ///
+  /// In ar, this message translates to:
+  /// **'إعادة تعيين كلمة المرور'**
+  String get btnResetPassword;
+
+  /// No description provided for @errPasswordMismatch.
+  ///
+  /// In ar, this message translates to:
+  /// **'كلمات المرور غير متطابقة.'**
+  String get errPasswordMismatch;
+
+  /// No description provided for @successPasswordReset.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم إعادة تعيين كلمة المرور. يرجى تسجيل الدخول بكلمة المرور الجديدة.'**
+  String get successPasswordReset;
+
+  /// No description provided for @homeCategoriesTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'التصنيفات'**
+  String get homeCategoriesTitle;
+
+  /// No description provided for @homeOffersTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'عروض وخصومات'**
+  String get homeOffersTitle;
+
+  /// No description provided for @homeTopPicksTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'أهم الاختيارات'**
+  String get homeTopPicksTitle;
+
+  /// No description provided for @homeBestSellersTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'الأكثر مبيعاً'**
+  String get homeBestSellersTitle;
+
+  /// No description provided for @homeAllServicesTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'كل الخدمات'**
+  String get homeAllServicesTitle;
+
+  /// No description provided for @homeRecommendedTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'خدمات مرشحة لك'**
+  String get homeRecommendedTitle;
+
+  /// No description provided for @homeMostPurchasedTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'الأكثر مبيعاً'**
+  String get homeMostPurchasedTitle;
 }
 
 class _AppLocalizationsDelegate

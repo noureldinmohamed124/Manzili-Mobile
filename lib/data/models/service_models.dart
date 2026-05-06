@@ -12,6 +12,9 @@ class ServiceItem {
     this.options,
     this.images,
     this.reviews,
+    this.status,
+    this.category,
+    this.ordersCount,
   });
 
   final int id;
@@ -26,6 +29,9 @@ class ServiceItem {
   final List<ServiceOption>? options;
   final List<ServiceImage>? images;
   final List<ServiceReview>? reviews;
+  final String? status;
+  final String? category;
+  final int? ordersCount;
 
   factory ServiceItem.fromJson(Map<String, dynamic> json) {
     // Handle both list item shape and detailed shape
@@ -54,18 +60,51 @@ class ServiceItem {
       provider: json['provider'] is Map
           ? ServiceProvider.fromJson(json['provider'] as Map<String, dynamic>)
           : null,
-      options: json['options'] is List
-          ? (json['options'] as List<dynamic>)
-              .map((e) => ServiceOption.fromJson(e as Map<String, dynamic>))
-              .toList()
-          : null,
+      options: _parseOptions(json),
       images: json['images'] is List
           ? (json['images'] as List<dynamic>)
               .map((e) => ServiceImage.fromJson(e as Map<String, dynamic>))
               .toList()
           : null,
       reviews: _parseReviews(json),
+      status: json['status'] as String?,
+      category: json['category'] is Map 
+          ? (json['category'] as Map<String, dynamic>)['nameAr'] as String?
+          : json['category'] as String?,
+      ordersCount: json['ordersCount'] as int? ?? 0,
     );
+  }
+  static List<ServiceOption>? _parseOptions(Map<String, dynamic> json) {
+    final directOptions = json['options'] ?? json['Options'];
+    if (directOptions is List) {
+      return directOptions
+          .map((e) => ServiceOption.fromJson(e as Map<String, dynamic>))
+          .toList();
+    }
+
+    final optionGroups = json['optionGroups'] ?? json['OptionGroups'];
+    if (optionGroups is List) {
+      final opts = <ServiceOption>[];
+      for (final g in optionGroups) {
+        if (g is Map<String, dynamic>) {
+          final gOptions = g['options'] ?? g['Options'];
+          if (gOptions is List) {
+            opts.addAll(
+              gOptions.map((e) {
+                final eMap = e as Map<String, dynamic>;
+                return ServiceOption(
+                  id: (eMap['id'] ?? eMap['Id']) as int? ?? 0,
+                  serviceOptionName: (eMap['name'] ?? eMap['Name'] ?? eMap['serviceOptionName'])?.toString() ?? '',
+                  price: (eMap['price'] ?? eMap['Price']) as num? ?? 0,
+                );
+              }),
+            );
+          }
+        }
+      }
+      return opts.isNotEmpty ? opts : null;
+    }
+    return null;
   }
 
   static List<ServiceReview>? _parseReviews(Map<String, dynamic> json) {
@@ -117,9 +156,9 @@ class ServiceOption {
 
   factory ServiceOption.fromJson(Map<String, dynamic> json) {
     return ServiceOption(
-      id: json['id'] as int,
-      serviceOptionName: json['serviceOptionName'] as String,
-      price: json['price'] as num,
+      id: (json['id'] ?? json['Id']) as int? ?? 0,
+      serviceOptionName: (json['serviceOptionName'] ?? json['ServiceOptionName'] ?? json['name'] ?? json['Name'])?.toString() ?? '',
+      price: (json['price'] ?? json['Price']) as num? ?? 0,
     );
   }
 }

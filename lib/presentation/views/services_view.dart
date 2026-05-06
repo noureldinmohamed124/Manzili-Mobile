@@ -10,6 +10,7 @@ import '../../../core/strings/app_strings.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/responsive_helper.dart';
 import '../../../core/widgets/responsive_max_width.dart';
+import 'package:manzili_mobile/l10n/app_localizations.dart';
 
 class ServicesView extends StatefulWidget {
   const ServicesView({super.key});
@@ -58,7 +59,7 @@ class _ServicesViewState extends State<ServicesView> {
     showDialog<void>(
       context: context,
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: Directionality.of(context),
         child: AlertDialog(
           title: const Text(AppStrings.servicesSearchDialogTitle),
           content: TextField(
@@ -119,7 +120,7 @@ class _ServicesViewState extends State<ServicesView> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: Directionality.of(context),
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: SafeArea(
@@ -173,7 +174,7 @@ class _ServicesViewState extends State<ServicesView> {
                         child: IconButton(
                           padding: EdgeInsets.zero,
                           icon: const Icon(Icons.shopping_cart_outlined),
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.surface,
                           onPressed: () => context.push('/cart'),
                         ),
                       ),
@@ -315,7 +316,7 @@ class _ServicesViewState extends State<ServicesView> {
                                 Padding(
                                   padding: const EdgeInsets.symmetric(horizontal: 24),
                                   child: Text(
-                                    servicesProvider.errorMessage!,
+                                    AppLocalizations.of(context)!.errSearchNetwork,
                                     textAlign: TextAlign.center,
                                     style: const TextStyle(
                                       fontSize: 14,
@@ -347,9 +348,7 @@ class _ServicesViewState extends State<ServicesView> {
                         if (services.isEmpty) {
                           return Center(
                             child: Text(
-                              _searchQuery.isEmpty
-                                  ? 'مفيش خدمات دلوقتي، جرّب تاني بعدين'
-                                  : 'مفيش نتيجة للبحث "$_searchQuery"',
+                              AppLocalizations.of(context)!.searchEmptyState,
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,

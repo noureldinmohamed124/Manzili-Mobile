@@ -83,8 +83,9 @@ class TokenResponse {
         if (v is int) roleInt = v;
         if (v is String) {
           final lower = v.toLowerCase();
-          if (lower.contains('seller') || lower.contains('bazaar') || lower.contains('provider')) roleInt = 2;
-          else if (lower.contains('admin')) roleInt = 3;
+          if (lower.contains('seller') || lower.contains('bazaar') || lower.contains('provider')) {
+            roleInt = 2;
+          } else if (lower.contains('admin')) roleInt = 3;
           else if (lower.contains('buyer') || lower.contains('customer')) roleInt = 1;
           else roleInt = int.tryParse(v);
         }
@@ -170,19 +171,21 @@ class TokenResponse {
            if (first is int) globalRole = first;
            if (first is String) {
                final lower = first.toLowerCase();
-               if (lower.contains('seller') || lower.contains('bazaar')) globalRole = 2;
-               else if (lower.contains('admin')) globalRole = 3;
+               if (lower.contains('seller') || lower.contains('bazaar')) {
+                 globalRole = 2;
+               } else if (lower.contains('admin')) globalRole = 3;
                else if (lower.contains('buyer') || lower.contains('customer')) globalRole = 1;
            }
         }
         if (v is String) {
           final lower = v.toLowerCase();
-          if (lower.contains('seller') || lower.contains('bazaar')) globalRole = 2;
-          else if (lower.contains('admin')) globalRole = 3;
+          if (lower.contains('seller') || lower.contains('bazaar')) {
+            globalRole = 2;
+          } else if (lower.contains('admin')) globalRole = 3;
           else if (lower.contains('buyer') || lower.contains('customer')) globalRole = 1;
           else globalRole = int.tryParse(v);
         }
-        if (globalRole != null && globalRole! >= 1 && globalRole! <= 3) break;
+        if (globalRole != null && globalRole >= 1 && globalRole <= 3) break;
         globalRole = null;
       }
     }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:manzili_mobile/core/strings/app_strings.dart';
-import 'package:manzili_mobile/core/theme/app_colors.dart';
 
 enum ManziliServiceStatus { active, paused, draft }
 
@@ -11,7 +10,7 @@ Future<ManziliServiceStatus?> showServiceStatusSheet(
   return showModalBottomSheet<ManziliServiceStatus>(
     context: context,
     showDragHandle: true,
-    backgroundColor: AppColors.surface,
+    backgroundColor: Theme.of(context).colorScheme.surface,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),

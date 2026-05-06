@@ -55,7 +55,7 @@ class FavouritesView extends StatelessWidget {
             itemBuilder: (context, i) {
               final s = items[i];
               return Material(
-                color: AppColors.surface,
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(16),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(16),

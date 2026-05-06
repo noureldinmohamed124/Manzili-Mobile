@@ -64,7 +64,7 @@ class _SellerEditServiceViewState extends State<SellerEditServiceView> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: Directionality.of(context),
       child: Scaffold(
 
         appBar: AppBar(
@@ -148,14 +148,14 @@ class _SellerEditServiceViewState extends State<SellerEditServiceView> {
             final svc = seller.currentService;
             if (svc != null) {
               // Keep controllers in sync (first load only / when switching id).
-              final nextStatus = _mapStatus(svc.status);
+              final nextStatus = _mapStatus(svc.status ?? 'active');
               if (_title.text != svc.title) _title.text = svc.title;
               if (_desc.text != svc.description) _desc.text = svc.description;
               final priceStr = svc.basePrice.toStringAsFixed(
                 svc.basePrice.truncateToDouble() == svc.basePrice ? 0 : 2,
               );
               if (_price.text != priceStr) _price.text = priceStr;
-              if (_images != svc.images) _images = List<String>.from(svc.images);
+              if (_images != svc.images) _images = List.from(svc.images);
               if (_status != nextStatus) _status = nextStatus;
             }
 
@@ -238,8 +238,9 @@ class _SellerEditServiceViewState extends State<SellerEditServiceView> {
                     ),
                   ),
                 const SizedBox(height: 18),
+                const SizedBox(height: 18),
                 const Text(
-                  'مجموعات الخيارات',
+                  'الخيارات الإضافية',
                   style: TextStyle(fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 8),
@@ -249,62 +250,18 @@ class _SellerEditServiceViewState extends State<SellerEditServiceView> {
                     style: TextStyle(color: AppColors.textSecondary),
                   )
                 else
-                  ...svc.optionGroups.map((g) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: Material(
-                        color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(14),
-                        child: Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      g.name,
-                                      style: const TextStyle(fontWeight: FontWeight.w800),
-                                    ),
-                                  ),
-                                  if (g.isRequired)
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.statusPending.withValues(alpha: 0.14),
-                                        borderRadius: BorderRadius.circular(999),
-                                      ),
-                                      child: const Text(
-                                        'إجباري',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w800,
-                                          color: AppColors.statusPending,
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: g.options.map((o) {
-                                  final extra = o.price > 0 ? ' +${o.price}ج' : '';
-                                  return Chip(
-                                    label: Text('${o.name}$extra'),
-                                    backgroundColor: AppColors.surfaceMuted,
-                                    side: BorderSide(color: AppColors.border),
-                                  );
-                                }).toList(),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  }),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: svc.optionGroups.expand((g) => g.options).map((o) {
+                      final extra = o.price > 0 ? ' +${o.price}ج' : '';
+                      return Chip(
+                        label: Text('${o.name}$extra'),
+                        backgroundColor: AppColors.surfaceMuted,
+                        side: BorderSide(color: AppColors.border),
+                      );
+                    }).toList(),
+                  ),
                 const SizedBox(height: 10),
               ],
             );

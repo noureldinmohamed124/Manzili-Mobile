@@ -56,9 +56,9 @@ class _ReviewsViewState extends State<ReviewsView> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: Directionality.of(context),
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         body: Column(
           children: [
             _buildHeader(context),
@@ -267,7 +267,7 @@ class _ReviewsViewState extends State<ReviewsView> {
                 style: TextStyle(
                   fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 16),
                   fontWeight: FontWeight.w700,
-                  color: Colors.white.withValues(alpha: 0.9),
+                  color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
                 ),
               ),
             ),

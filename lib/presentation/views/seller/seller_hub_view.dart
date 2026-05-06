@@ -50,6 +50,7 @@ class _SellerHubViewState extends State<SellerHubView> {
               );
             },
           ),
+          /*
           Consumer<LocaleProvider>(
             builder: (context, localeProvider, _) {
               return IconButton(
@@ -60,6 +61,7 @@ class _SellerHubViewState extends State<SellerHubView> {
               );
             },
           ),
+          */
           IconButton(
             icon: const Icon(Icons.logout, color: AppColors.error),
             onPressed: () {
@@ -163,10 +165,50 @@ class _SellerHubViewState extends State<SellerHubView> {
                   );
                 },
               ),
+              const SizedBox(height: 24),
+              _buildPlaceholderSection(context, 'أفضل الخدمات مبيعاً', Icons.star_border_outlined),
+              const SizedBox(height: 16),
+              _buildPlaceholderSection(context, 'أحدث الطلبات', Icons.shopping_bag_outlined),
+              const SizedBox(height: 16),
+              _buildPlaceholderSection(context, 'أحدث التقييمات', Icons.rate_review_outlined),
             ],
           );
         },
       ),
+    );
+  }
+
+  Widget _buildPlaceholderSection(BuildContext context, String title, IconData icon) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 20, color: AppColors.primary),
+            const SizedBox(width: 8),
+            Text(
+              title,
+              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        SoftCard(
+          padding: const EdgeInsets.all(24),
+          child: Center(
+            child: Column(
+              children: [
+                Icon(Icons.hourglass_empty, color: AppColors.textHint, size: 32),
+                const SizedBox(height: 8),
+                Text(
+                  'لم يتم الإضافة بعد',
+                  style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

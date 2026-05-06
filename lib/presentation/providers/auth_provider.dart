@@ -304,8 +304,9 @@ class AuthProvider extends ChangeNotifier {
         // If backend token has no role claim, fall back to locally-known role.
         _userRole ??= DemoRoleStore.getRoleForEmail(email);
         // Keep old optional fallback for debugging/testing.
-        if (_userRole == null && uiRoleFallback != null)
+        if (_userRole == null && uiRoleFallback != null) {
           _userRole = uiRoleFallback;
+        }
         _status = AuthStatus.authenticated;
         _errorMessage = null;
         return true;

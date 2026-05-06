@@ -52,11 +52,11 @@ class _SellerServicesListViewState extends State<SellerServicesListView> {
       ),
       body: Consumer<SellerProvider>(
         builder: (context, seller, _) {
-          if (seller.isLoadingServices && seller.services.isEmpty) {
+          if (seller.isLoadingServices && seller.sellerServices.isEmpty) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (seller.servicesError != null && seller.services.isEmpty) {
+          if (seller.servicesError != null && seller.sellerServices.isEmpty) {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
@@ -82,7 +82,7 @@ class _SellerServicesListViewState extends State<SellerServicesListView> {
             );
           }
 
-          if (seller.services.isEmpty) {
+          if (seller.sellerServices.isEmpty) {
             return const Center(
               child: Text(
                 'ليس لديك أي خدمات حتى الآن.',
@@ -95,11 +95,11 @@ class _SellerServicesListViewState extends State<SellerServicesListView> {
             onRefresh: () => seller.fetchSellerServices(page: 1, pageSize: 20),
             child: ListView.separated(
               padding: const EdgeInsets.all(16),
-              itemCount: seller.services.length,
+              itemCount: seller.sellerServices.length,
               separatorBuilder: (_, __) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
-                final s = seller.services[index];
-                final c = _statusColor(s.status);
+                final s = seller.sellerServices[index];
+                final c = _statusColor(s.status ?? 'active');
                 return SoftCard(
                   onTap: () => context.push('/seller/edit-service/${s.id}'),
                   child: Row(
@@ -145,7 +145,7 @@ class _SellerServicesListViewState extends State<SellerServicesListView> {
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Text(
-                                    _statusLabel(s.status),
+                                    _statusLabel(s.status ?? 'active'),
                                     style: TextStyle(
                                       color: c,
                                       fontSize: 12,
@@ -162,12 +162,48 @@ class _SellerServicesListViewState extends State<SellerServicesListView> {
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
+                                const SizedBox(width: 8),
+                                const Icon(Icons.star, color: Colors.amber, size: 14),
+                                const SizedBox(width: 2),
+                                Text(
+                                  s.rating.toStringAsFixed(1),
+                                  style: const TextStyle(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                               ],
                             ),
                           ],
                         ),
                       ),
-                      const Icon(Icons.chevron_left, color: AppColors.textHint),
+                      PopupMenuButton<String>(
+                        icon: const Icon(Icons.more_vert, color: AppColors.textHint),
+                        onSelected: (val) {
+                          if (val == 'edit') {
+                            context.push('/seller/edit-service/${s.id}');
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('الخاصية غير متاحة الآن')),
+                            );
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(
+                            value: 'edit',
+                            child: Text('تعديل'),
+                          ),
+                          const PopupMenuItem(
+                            value: 'pause',
+                            child: Text('إيقاف مؤقت'),
+                          ),
+                          const PopupMenuItem(
+                            value: 'delete',
+                            child: Text('حذف', style: TextStyle(color: Colors.red)),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 );

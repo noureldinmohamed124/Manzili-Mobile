@@ -156,10 +156,10 @@ class _PaymentMethodViewState extends State<PaymentMethodView> {
               return FilledButton(
                 onPressed: busy ? null : _submitPayment,
                 child: busy
-                    ? const SizedBox(
+                    ? SizedBox(
                         height: 20,
                         width: 20,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        child: CircularProgressIndicator(color: Theme.of(context).colorScheme.surface, strokeWidth: 2),
                       )
                     : const Text('تأكيد وإتمام الدفع'),
               );

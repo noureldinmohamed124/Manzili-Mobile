@@ -11,7 +11,7 @@ class ServiceCoverImage extends StatelessWidget {
     this.imageUrlRaw,
     this.width,
     this.height,
-    this.fit = BoxFit.cover,
+    this.fit = BoxFit.contain,
   });
 
   final String? imageUrlRaw;
@@ -33,7 +33,7 @@ class ServiceCoverImage extends StatelessWidget {
       fit: fit,
       placeholder: (context, url) => Shimmer(
         duration: const Duration(seconds: 2),
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         enabled: true,
         direction: const ShimmerDirection.fromLTRB(),
         child: Container(

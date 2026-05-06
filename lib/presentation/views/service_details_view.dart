@@ -32,7 +32,7 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
   final Map<int, bool> _selectedOptions = {};
   final TextEditingController _notesController = TextEditingController();
   final PageController _pageController = PageController();
-  bool _submittingOrder = false;
+  final bool _submittingOrder = false;
 
   @override
   void initState() {
@@ -167,13 +167,13 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: Directionality.of(context),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final headerHeight = MediaQuery.of(context).padding.top + ResponsiveHelper.responsiveValueCompat(context, mobile: 60.0, tablet: 64.0);
           
           return Scaffold(
-            backgroundColor: Colors.white,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             body: Stack(
               children: [
                 Positioned(
@@ -262,8 +262,7 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
                             children: [
                             _buildProductImage(service),
                             _buildProductInfo(service),
-                            if (service.options != null && service.options!.isNotEmpty)
-                              _buildFlavorSelector(service),
+                            _buildFlavorSelector(service),
                             _buildQuantitySelector(),
                             _buildSpecialInstructions(),
                             if (service.options != null && service.options!.isNotEmpty)
@@ -294,7 +293,7 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
         right: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16),
         bottom: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12),
       ),
-      color: Colors.white,
+      color: Theme.of(context).colorScheme.surface,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -304,7 +303,7 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
                 width: ResponsiveHelper.responsiveValueCompat(context, mobile: 40.0, tablet: 44.0),
                 height: ResponsiveHelper.responsiveValueCompat(context, mobile: 40.0, tablet: 44.0),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(8),
                   boxShadow: [
                     BoxShadow(
@@ -332,7 +331,7 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
                 child: IconButton(
                   padding: EdgeInsets.zero,
                   icon: const Icon(Icons.shopping_cart_outlined),
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.surface,
                   onPressed: () => context.push('/cart'),
                 ),
               ),
@@ -383,7 +382,7 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
                 imageUrlRaw: rawImagePaths.isEmpty ? null : rawImagePaths[index],
                 width: double.infinity,
                 height: imageHeight,
-                fit: BoxFit.cover,
+                fit: BoxFit.contain,
               );
             },
           ),
@@ -527,7 +526,34 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
 
   Widget _buildFlavorSelector(ServiceItem service) {
     final options = service.options ?? [];
-    if (options.isEmpty) return const SizedBox.shrink();
+    if (options.isEmpty) {
+      return Padding(
+        padding: EdgeInsets.symmetric(horizontal: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 22)),
+        child: Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16),
+            vertical: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 14),
+          ),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceMuted,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE0E0E0)),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.info_outline, color: AppColors.textSecondary, size: 20),
+              SizedBox(width: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12)),
+              const Expanded(
+                child: Text(
+                  'لا توجد خيارات إضافية لهذه الخدمة',
+                  style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w600, fontSize: 14),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 22)),
@@ -646,7 +672,13 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
               SizedBox(width: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 24)),
               GestureDetector(
                 onTap: () {
-                  setState(() => _quantity++);
+                  if (_quantity < 10) {
+                    setState(() => _quantity++);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('أقصى كمية للطلب هي 10')),
+                    );
+                  }
                 },
                 child: Container(
                   width: ResponsiveHelper.responsiveValueCompat(context, mobile: 40.0),
@@ -655,7 +687,7 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
                     color: AppColors.primary,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.add, color: Colors.white),
+                  child: Icon(Icons.add, color: Theme.of(context).colorScheme.surface),
                 ),
               ),
             ],
@@ -791,7 +823,7 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
           Container(
             padding: EdgeInsets.all(ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16)),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: const Color(0xFFE0E0E0)),
               boxShadow: [
@@ -811,9 +843,9 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
                     shape: BoxShape.circle,
                     color: Colors.blue,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.person,
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.surface,
                     size: 30,
                   ),
                 ),
@@ -972,7 +1004,7 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
           bottom: MediaQuery.of(context).padding.bottom + ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16),
         ),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.1),
@@ -1008,12 +1040,12 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
                       ),
                     ),
                     child: _submittingOrder
-                        ? const SizedBox(
+                        ? SizedBox(
                             height: 22,
                             width: 22,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: Colors.white,
+                              color: Theme.of(context).colorScheme.surface,
                             ),
                           )
                         : Text(
@@ -1021,7 +1053,7 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
                             style: TextStyle(
                               fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 16),
                               fontWeight: FontWeight.w700,
-                              color: Colors.white,
+                              color: Theme.of(context).colorScheme.surface,
                             ),
                           ),
                   ),

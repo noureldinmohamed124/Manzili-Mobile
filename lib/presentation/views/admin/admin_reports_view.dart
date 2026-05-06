@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:manzili_mobile/core/strings/app_strings.dart';
-import 'package:manzili_mobile/core/theme/app_colors.dart';
 import 'package:manzili_mobile/presentation/widgets/common/soft_card.dart';
 
 class AdminReportsView extends StatelessWidget {

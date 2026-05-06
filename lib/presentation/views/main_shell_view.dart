@@ -13,7 +13,7 @@ class MainShellView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: Directionality.of(context),
       child: Scaffold(
         body: navigationShell,
         bottomNavigationBar: BottomNavBar(

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:manzili_mobile/core/theme/app_colors.dart';
 import 'package:manzili_mobile/presentation/widgets/common/soft_card.dart';
+import 'package:provider/provider.dart';
+import 'package:manzili_mobile/presentation/providers/orders_provider.dart';
 
 class SellerManageOrdersView extends StatefulWidget {
   const SellerManageOrdersView({super.key});
@@ -17,6 +19,9 @@ class _SellerManageOrdersViewState extends State<SellerManageOrdersView> with Si
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<OrdersProvider>().fetchOrders();
+    });
   }
 
   @override
@@ -27,24 +32,6 @@ class _SellerManageOrdersViewState extends State<SellerManageOrdersView> with Si
 
   @override
   Widget build(BuildContext context) {
-    // TODO: Connect to backend API for seller's incoming requests
-    final pendingRequests = [
-      {
-        'id': '1046',
-        'service': 'بوكسات سينابون (طلب جديد)',
-        'price': '300 جنيه',
-        'time': 'منذ 10 دقائق',
-      },
-    ];
-
-    final activeOrders = [
-      {
-        'id': '1042',
-        'service': 'كحك وبسكوت العيد',
-        'price': '250 جنيه',
-        'status': 'جاري التحضير',
-      },
-    ];
 
     return Scaffold(
 
@@ -61,17 +48,47 @@ class _SellerManageOrdersViewState extends State<SellerManageOrdersView> with Si
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildList(pendingRequests, isPending: true),
-          _buildList(activeOrders, isPending: false),
-        ],
+      body: Consumer<OrdersProvider>(
+        builder: (context, ordersProvider, child) {
+          if (ordersProvider.isLoading && ordersProvider.orders.isEmpty) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (ordersProvider.errorMessage != null && ordersProvider.orders.isEmpty) {
+            return Center(
+              child: Text(
+                ordersProvider.errorMessage!,
+                style: const TextStyle(color: AppColors.error),
+              ),
+            );
+          }
+
+          final allOrders = ordersProvider.orders;
+          
+          // Pending = 'Pending' status (or equivalent for new requests)
+          final pendingRequests = allOrders.where((o) => 
+            o.status?.toLowerCase() == 'pending').toList();
+            
+          // Active = anything not pending and not finished/cancelled
+          final activeOrders = allOrders.where((o) => 
+            o.status?.toLowerCase() != 'pending' && 
+            o.status?.toLowerCase() != 'cancelled' && 
+            o.status?.toLowerCase() != 'completed' &&
+            o.status?.toLowerCase() != 'delivered').toList();
+
+          return TabBarView(
+            controller: _tabController,
+            children: [
+              _buildList(pendingRequests, isPending: true),
+              _buildList(activeOrders, isPending: false),
+            ],
+          );
+        },
       ),
     );
   }
 
-  Widget _buildList(List<Map<String, String>> items, {required bool isPending}) {
+  Widget _buildList(List<dynamic> items, {required bool isPending}) {
     if (items.isEmpty) {
       return Center(
         child: Text(
@@ -89,7 +106,7 @@ class _SellerManageOrdersViewState extends State<SellerManageOrdersView> with Si
         final item = items[index];
         return SoftCard(
           onTap: () {
-            context.push('/seller/order-details/${item['id']}');
+            context.push('/seller/order-details/${item.id}');
           },
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -98,12 +115,12 @@ class _SellerManageOrdersViewState extends State<SellerManageOrdersView> with Si
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'طلب #${item['id']}',
+                    'طلب #${item.id}',
                     style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
                   ),
                   if (isPending)
                     Text(
-                      item['time']!,
+                      item.createdAt?.toLocal().toString().split(' ')[0] ?? '',
                       style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
                     )
                   else
@@ -114,7 +131,7 @@ class _SellerManageOrdersViewState extends State<SellerManageOrdersView> with Si
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        item['status']!,
+                        item.status ?? 'مجهول',
                         style: const TextStyle(color: AppColors.statusPending, fontSize: 12, fontWeight: FontWeight.bold),
                       ),
                     ),
@@ -122,12 +139,12 @@ class _SellerManageOrdersViewState extends State<SellerManageOrdersView> with Si
               ),
               const SizedBox(height: 12),
               Text(
-                item['service']!,
+                item.serviceName ?? 'خدمة بدون اسم',
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 8),
               Text(
-                'المبلغ: ${item['price']}',
+                'المبلغ: ${item.totalAmount} جنيه',
                 style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
               ),
             ],

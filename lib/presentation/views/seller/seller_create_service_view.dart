@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -173,7 +172,7 @@ class _SellerCreateServiceViewState extends State<SellerCreateServiceView> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: Directionality.of(context),
       child: Scaffold(
         appBar: AppBar(
           title: const Text(AppStrings.createServiceTitle),
@@ -221,7 +220,7 @@ class _SellerCreateServiceViewState extends State<SellerCreateServiceView> {
                           return const Center(child: CircularProgressIndicator());
                         }
                         return DropdownButtonFormField<int>(
-                          value: _categoryId,
+                          initialValue: _categoryId,
                           hint: const Text(AppStrings.fieldCategory),
                           items: services.categories.map((c) {
                             return DropdownMenuItem<int>(
@@ -283,13 +282,13 @@ class _SellerCreateServiceViewState extends State<SellerCreateServiceView> {
                                 left: -4,
                                 child: InkWell(
                                   onTap: () => setState(() => _images.removeAt(i)),
-                                  child: const CircleAvatar(
+                                  child: CircleAvatar(
                                     radius: 12,
                                     backgroundColor: AppColors.error,
                                     child: Icon(
                                       Icons.close,
                                       size: 14,
-                                      color: Colors.white,
+                                      color: Theme.of(context).colorScheme.surface,
                                     ),
                                   ),
                                 ),
@@ -462,10 +461,10 @@ class _StickyActions extends StatelessWidget {
                 child: FilledButton(
                   onPressed: isUploading ? null : onPrimary,
                   child: isUploading
-                      ? const SizedBox(
+                      ? SizedBox(
                           height: 20,
                           width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Theme.of(context).colorScheme.surface),
                         )
                       : const Text(AppStrings.ctaPublishService),
                 ),

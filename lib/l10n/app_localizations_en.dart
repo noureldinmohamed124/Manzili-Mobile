@@ -459,6 +459,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get servicesFilterLabel => 'Filter';
 
   @override
+  String get searchEmptyState => 'No results found, try a different keyword.';
+
+  @override
+  String get errSearchNetwork => 'Network error, please try again.';
+
+  @override
   String get badgeDiscount => 'Discount';
 
   @override
@@ -506,4 +512,150 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeHeaderSubtitle => 'Handmade and homemade food at its best 👋';
+
+  @override
+  String get welcomeLabel => 'Welcome';
+
+  @override
+  String get signInSubtitle => 'Sign in to your account';
+
+  @override
+  String get fieldEmail => 'Email Address';
+
+  @override
+  String get fieldPassword => 'Password';
+
+  @override
+  String get socialLoginOr => 'Or sign in with social media';
+
+  @override
+  String get fillAllFields => 'Please fill all fields first';
+
+  @override
+  String get roleBuyer => 'Buyer';
+
+  @override
+  String get roleSeller => 'Seller';
+
+  @override
+  String get fieldFullName => 'Full Name';
+
+  @override
+  String get fieldFirstName => 'First Name';
+
+  @override
+  String get fieldFirstNameHint => 'ex. Mohamed';
+
+  @override
+  String get fieldLastName => 'Last Name';
+
+  @override
+  String get fieldLastNameHint => 'ex. Ahmed Sayed';
+
+  @override
+  String get fieldEmailHint => 'ex. mohamed@gmail.com';
+
+  @override
+  String get passwordRequirements =>
+      'at least 8 characters, must include a number and a special character';
+
+  @override
+  String get agreeToTerms =>
+      'I agree to the Terms of Service and Privacy Policy';
+
+  @override
+  String get errFirstName => 'Please enter a valid name.';
+
+  @override
+  String get errLastName => 'Please enter a valid last name.';
+
+  @override
+  String get errEmail => 'Please enter a valid email address.';
+
+  @override
+  String get errPasswordRequirement =>
+      'Password must be at least 8 characters and include uppercase, lowercase, number, and special character.';
+
+  @override
+  String get errTermsRequired =>
+      'You must agree to the Terms of Service to continue.';
+
+  @override
+  String get errServerSignup =>
+      'There was a problem creating your account. Please try again later.';
+
+  @override
+  String get fieldEmailOrPhone => 'Email or Phone';
+
+  @override
+  String get fieldEmailOrPhoneHint => 'ex. mohamed@gmail.com';
+
+  @override
+  String get errEmailOrPhoneEmpty =>
+      'Please enter your email address or phone number.';
+
+  @override
+  String get errInvalidCredentials =>
+      'Invalid email/phone or password. Please try again.';
+
+  @override
+  String get errServerSignin =>
+      'We’re having trouble signing you in right now. Please try again later.';
+
+  @override
+  String get successSignIn => 'Welcome back!';
+
+  @override
+  String get forgotPasswordInstruction =>
+      'If an account exists, we have sent instructions.';
+
+  @override
+  String get btnSendReset => 'Send Reset Instructions';
+
+  @override
+  String get backToSignIn => 'Back to Sign In';
+
+  @override
+  String get errInvalidRequest => 'Please enter a valid email or phone number.';
+
+  @override
+  String get errServerForgot =>
+      'We’re unable to process your request right now. Please try again later.';
+
+  @override
+  String get fieldNewPassword => 'New Password';
+
+  @override
+  String get fieldConfirmPassword => 'Confirm Password';
+
+  @override
+  String get btnResetPassword => 'Reset Password';
+
+  @override
+  String get errPasswordMismatch => 'Passwords do not match.';
+
+  @override
+  String get successPasswordReset =>
+      'Your password has been reset. Please sign in with your new password.';
+
+  @override
+  String get homeCategoriesTitle => 'Categories';
+
+  @override
+  String get homeOffersTitle => 'Offers & Discounts';
+
+  @override
+  String get homeTopPicksTitle => 'Top Picks';
+
+  @override
+  String get homeBestSellersTitle => 'Best Sellers';
+
+  @override
+  String get homeAllServicesTitle => 'All Services';
+
+  @override
+  String get homeRecommendedTitle => 'Recommended For You';
+
+  @override
+  String get homeMostPurchasedTitle => 'Most Purchased';
 }

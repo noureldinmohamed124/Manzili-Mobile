@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:manzili_mobile/core/theme/app_colors.dart';
 import 'package:manzili_mobile/presentation/widgets/common/soft_card.dart';
 
 class AdminCreateAnnouncementView extends StatelessWidget {
@@ -39,7 +38,7 @@ class AdminCreateAnnouncementView extends StatelessWidget {
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
                     decoration: const InputDecoration(border: OutlineInputBorder()),
-                    value: 'الجميع',
+                    initialValue: 'الجميع',
                     items: const [
                       DropdownMenuItem(value: 'الجميع', child: Text('الجميع (عملاء، بائعين، مناديب)')),
                       DropdownMenuItem(value: 'العملاء', child: Text('العملاء فقط')),

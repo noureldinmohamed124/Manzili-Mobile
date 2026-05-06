@@ -461,6 +461,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get servicesFilterLabel => 'فلترة';
 
   @override
+  String get searchEmptyState => 'لم يتم العثور على نتائج، جرب كلمة بحث أخرى.';
+
+  @override
+  String get errSearchNetwork => 'خطأ في الشبكة، يرجى المحاولة مرة أخرى.';
+
+  @override
   String get badgeDiscount => 'خصم';
 
   @override
@@ -508,4 +514,148 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get homeHeaderSubtitle => 'شغل يدوي وأكل بيتي على أصوله 👋';
+
+  @override
+  String get welcomeLabel => 'مرحباً';
+
+  @override
+  String get signInSubtitle => 'سجل الدخول إلى حسابك';
+
+  @override
+  String get fieldEmail => 'البريد الالكتروني';
+
+  @override
+  String get fieldPassword => 'كلمة المرور';
+
+  @override
+  String get socialLoginOr => 'أو سجل باستخدام وسائل التواصل الاجتماعي';
+
+  @override
+  String get fillAllFields => 'كمّل كل الحقول الأول';
+
+  @override
+  String get roleBuyer => 'مشتري';
+
+  @override
+  String get roleSeller => 'بائع';
+
+  @override
+  String get fieldFullName => 'الاسم بالكامل';
+
+  @override
+  String get fieldFirstName => 'الاسم الأول';
+
+  @override
+  String get fieldFirstNameHint => 'مثال: محمد';
+
+  @override
+  String get fieldLastName => 'الاسم الأخير';
+
+  @override
+  String get fieldLastNameHint => 'مثال: أحمد سيد';
+
+  @override
+  String get fieldEmailHint => 'مثال: mohamed@gmail.com';
+
+  @override
+  String get passwordRequirements =>
+      '٨ حروف على الأقل، ويجب أن تحتوي على رقم ورمز خاص';
+
+  @override
+  String get agreeToTerms => 'أوافق على شروط الخدمة وسياسة الخصوصية';
+
+  @override
+  String get errFirstName => 'يرجى إدخال اسم صحيح.';
+
+  @override
+  String get errLastName => 'يرجى إدخال اسم أخير صحيح.';
+
+  @override
+  String get errEmail => 'يرجى إدخال بريد إلكتروني صحيح.';
+
+  @override
+  String get errPasswordRequirement =>
+      'كلمة المرور يجب أن تكون ٨ حروف على الأقل وتحتوي على حرف كبير وصغير ورقم ورمز خاص.';
+
+  @override
+  String get errTermsRequired => 'يجب الموافقة على شروط الخدمة للمتابعة.';
+
+  @override
+  String get errServerSignup =>
+      'حدثت مشكلة أثناء إنشاء الحساب. يرجى المحاولة لاحقاً.';
+
+  @override
+  String get fieldEmailOrPhone => 'البريد الإلكتروني أو رقم الهاتف';
+
+  @override
+  String get fieldEmailOrPhoneHint => 'مثال: mohamed@gmail.com';
+
+  @override
+  String get errEmailOrPhoneEmpty =>
+      'يرجى إدخال البريد الإلكتروني أو رقم الهاتف.';
+
+  @override
+  String get errInvalidCredentials =>
+      'البريد/رقم الهاتف أو كلمة المرور غير صحيحة. يرجى المحاولة مرة أخرى.';
+
+  @override
+  String get errServerSignin =>
+      'نواجه مشكلة في تسجيل الدخول الآن. يرجى المحاولة لاحقاً.';
+
+  @override
+  String get successSignIn => 'أهلاً بك مجدداً!';
+
+  @override
+  String get forgotPasswordInstruction =>
+      'إذا كان الحساب موجوداً، فقد أرسلنا تعليمات استعادة كلمة المرور.';
+
+  @override
+  String get btnSendReset => 'إرسال تعليمات الاستعادة';
+
+  @override
+  String get backToSignIn => 'العودة لتسجيل الدخول';
+
+  @override
+  String get errInvalidRequest => 'يرجى إدخال بريد إلكتروني أو رقم هاتف صحيح.';
+
+  @override
+  String get errServerForgot =>
+      'لا يمكننا معالجة طلبك الآن. يرجى المحاولة لاحقاً.';
+
+  @override
+  String get fieldNewPassword => 'كلمة المرور الجديدة';
+
+  @override
+  String get fieldConfirmPassword => 'تأكيد كلمة المرور';
+
+  @override
+  String get btnResetPassword => 'إعادة تعيين كلمة المرور';
+
+  @override
+  String get errPasswordMismatch => 'كلمات المرور غير متطابقة.';
+
+  @override
+  String get successPasswordReset =>
+      'تم إعادة تعيين كلمة المرور. يرجى تسجيل الدخول بكلمة المرور الجديدة.';
+
+  @override
+  String get homeCategoriesTitle => 'التصنيفات';
+
+  @override
+  String get homeOffersTitle => 'عروض وخصومات';
+
+  @override
+  String get homeTopPicksTitle => 'أهم الاختيارات';
+
+  @override
+  String get homeBestSellersTitle => 'الأكثر مبيعاً';
+
+  @override
+  String get homeAllServicesTitle => 'كل الخدمات';
+
+  @override
+  String get homeRecommendedTitle => 'خدمات مرشحة لك';
+
+  @override
+  String get homeMostPurchasedTitle => 'الأكثر مبيعاً';
 }

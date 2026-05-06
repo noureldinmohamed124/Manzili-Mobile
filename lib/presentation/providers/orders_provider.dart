@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-import 'package:manzili_mobile/core/constants/demo_data.dart';
 import 'package:manzili_mobile/data/models/order_models.dart';
 import 'package:manzili_mobile/data/repositories/orders_repository.dart';
 
@@ -14,7 +13,7 @@ class OrdersProvider extends ChangeNotifier {
   String? _errorMessage;
 
   int _currentPage = 1;
-  int _pageSize = 10;
+  final int _pageSize = 10;
   int _totalPages = 1;
 
   List<OrderListItem> get orders => _orders;

@@ -11,6 +11,7 @@ import 'package:manzili_mobile/presentation/providers/seller_provider.dart';
 import 'package:manzili_mobile/presentation/providers/favourites_provider.dart';
 import 'package:manzili_mobile/presentation/providers/theme_provider.dart';
 import 'package:manzili_mobile/presentation/providers/locale_provider.dart';
+import 'package:manzili_mobile/presentation/providers/admin_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -42,6 +43,7 @@ class MyApp extends StatelessWidget {
         ),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => LocaleProvider()),
+        ChangeNotifierProvider(create: (_) => AdminProvider()),
       ],
       child: Consumer2<ThemeProvider, LocaleProvider>(
         builder: (context, themeProvider, localeProvider, _) {

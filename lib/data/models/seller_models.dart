@@ -296,3 +296,140 @@ class CreateOption {
 
   Map<String, dynamic> toJson() => {'name': name, 'price': price};
 }
+
+class SellerOrderListResponse {
+  SellerOrderListResponse({
+    required this.items,
+    required this.totalCount,
+    required this.page,
+    required this.pageSize,
+  });
+
+  final List<SellerOrderListItem> items;
+  final int totalCount;
+  final int page;
+  final int pageSize;
+
+  factory SellerOrderListResponse.fromJson(Map<String, dynamic> json) {
+    return SellerOrderListResponse(
+      items: (json['items'] as List?)?.map((e) => SellerOrderListItem.fromJson(e)).toList() ?? [],
+      totalCount: (json['totalCount'] as num?)?.toInt() ?? 0,
+      page: (json['page'] as num?)?.toInt() ?? 1,
+      pageSize: (json['pageSize'] as num?)?.toInt() ?? 10,
+    );
+  }
+}
+
+class SellerOrderListItem {
+  SellerOrderListItem({
+    required this.id,
+    required this.orderCode,
+    required this.providerName,
+    required this.serviceTitle,
+    required this.totalPrice,
+    this.proposedPrice,
+    required this.status,
+    required this.createdAt,
+    required this.serviceImage,
+  });
+
+  final int id;
+  final String orderCode;
+  final String providerName;
+  final String serviceTitle;
+  final double totalPrice;
+  final double? proposedPrice;
+  final String status;
+  final DateTime? createdAt;
+  final String serviceImage;
+
+  factory SellerOrderListItem.fromJson(Map<String, dynamic> json) {
+    return SellerOrderListItem(
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      orderCode: json['orderCode']?.toString() ?? '',
+      providerName: json['providerName']?.toString() ?? '',
+      serviceTitle: json['serviceTitle']?.toString() ?? '',
+      totalPrice: (json['totalPrice'] as num?)?.toDouble() ?? 0.0,
+      proposedPrice: (json['ProposedPrice'] as num?)?.toDouble() ?? (json['proposedPrice'] as num?)?.toDouble(),
+      status: json['status']?.toString() ?? '',
+      createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? ''),
+      serviceImage: json['serviceImage']?.toString() ?? '',
+    );
+  }
+}
+
+class SellerOrderDetails {
+  SellerOrderDetails({
+    required this.id,
+    required this.buyerName,
+    required this.buyerPhone,
+    required this.serviceTitle,
+    required this.serviceImage,
+    this.customRequestText,
+    this.customRequestImage,
+    required this.rawPrice,
+    required this.totalPrice,
+    this.proposedPrice,
+    this.rePricingReason,
+    required this.status,
+    required this.createdAt,
+    required this.options,
+  });
+
+  final int id;
+  final String buyerName;
+  final String buyerPhone;
+  final String serviceTitle;
+  final String serviceImage;
+  final String? customRequestText;
+  final String? customRequestImage;
+  final double rawPrice;
+  final double totalPrice;
+  final double? proposedPrice;
+  final String? rePricingReason;
+  final String status;
+  final DateTime? createdAt;
+  final List<SellerOrderOption> options;
+
+  factory SellerOrderDetails.fromJson(Map<String, dynamic> json) {
+    return SellerOrderDetails(
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      buyerName: json['buyerName']?.toString() ?? '',
+      buyerPhone: json['buyerPhone']?.toString() ?? '',
+      serviceTitle: json['serviceTitle']?.toString() ?? '',
+      serviceImage: json['serviceImage']?.toString() ?? '',
+      customRequestText: json['customRequestText']?.toString(),
+      customRequestImage: json['customRequestImage']?.toString(),
+      rawPrice: (json['rawPrice'] as num?)?.toDouble() ?? 0.0,
+      totalPrice: (json['totalPrice'] as num?)?.toDouble() ?? 0.0,
+      proposedPrice: (json['ProposedPrice'] as num?)?.toDouble() ?? (json['proposedPrice'] as num?)?.toDouble(),
+      rePricingReason: json['RePricingReason']?.toString() ?? json['rePricingReason']?.toString(),
+      status: json['status']?.toString() ?? '',
+      createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? ''),
+      options: (json['options'] as List?)?.map((e) => SellerOrderOption.fromJson(e)).toList() ?? [],
+    );
+  }
+}
+
+class SellerOrderOption {
+  SellerOrderOption({
+    required this.optionGroupName,
+    required this.optionName,
+    required this.price,
+    required this.quantity,
+  });
+
+  final String optionGroupName;
+  final String optionName;
+  final double price;
+  final int quantity;
+
+  factory SellerOrderOption.fromJson(Map<String, dynamic> json) {
+    return SellerOrderOption(
+      optionGroupName: json['optionGroupName']?.toString() ?? '',
+      optionName: json['optionName']?.toString() ?? '',
+      price: (json['price'] as num?)?.toDouble() ?? 0.0,
+      quantity: (json['quantity'] as num?)?.toInt() ?? 1,
+    );
+  }
+}

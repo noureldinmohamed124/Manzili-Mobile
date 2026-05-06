@@ -64,19 +64,60 @@ class _RequestsListViewState extends State<RequestsListView>
             return Center(child: Text(provider.errorMessage!));
           }
 
-          final pending = provider.orders.where((o) => ['0', 'pending', 'request'].contains(o.status.toLowerCase())).toList();
-          final approved = provider.orders.where((o) => ['1', 'approved', 'repriced'].contains(o.status.toLowerCase())).toList();
+          final pending = provider.orders.where((o) => ['0', 'pending', 'request', 'pendingpaymentverification', 'pending_payment_verification'].contains(o.status.toLowerCase())).toList();
+          final approved = provider.orders.where((o) => ['1', 'approved', 'repriced', 'accepted'].contains(o.status.toLowerCase())).toList();
           final rejected = provider.orders.where((o) => ['2', 'rejected'].contains(o.status.toLowerCase())).toList();
 
           return TabBarView(
             controller: _tabController,
             children: [
               pending.isEmpty ? _emptyTab(AppStrings.requestsEmptyPending) : _requestList(pending, isApproved: false),
-              approved.isEmpty ? _emptyTab(AppStrings.requestsEmptyApproved) : _requestList(approved, isApproved: true),
+              approved.isEmpty 
+                  ? _emptyTab(AppStrings.requestsEmptyApproved) 
+                  : Column(
+                      children: [
+                        Expanded(child: _requestList(approved, isApproved: true)),
+                        _buildBulkPayButton(context, approved),
+                      ],
+                    ),
               rejected.isEmpty ? _emptyTab(AppStrings.requestsEmptyRejected) : _requestList(rejected, isApproved: false),
             ],
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildBulkPayButton(BuildContext context, List<OrderListItem> approvedOrders) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          width: double.infinity,
+          child: FilledButton(
+            onPressed: () {
+              // TODO: Bulk pay logic or gather all IDs
+              // For now, if we use the same dialog but with all IDs:
+              final ids = approvedOrders.map((o) => o.id).toList();
+              _showBulkPaymentProofDialog(context, ids);
+            },
+            style: FilledButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+            ),
+            child: const Text('ادفع الطلبات الموافق عليها', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          ),
+        ),
       ),
     );
   }
@@ -132,33 +173,126 @@ class _RequestsListViewState extends State<RequestsListView>
                       '${item.totalPrice} جنيه',
                       style: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.primary, fontSize: 15),
                     ),
-                    if (!isApproved)
-                      FilledButton.icon(
-                        onPressed: () => _showPaymentProofDialog(context, item.id),
-                        icon: const Icon(Icons.upload_file, size: 16),
-                        label: const Text('Send payment proof', style: TextStyle(fontSize: 12)),
-                        style: FilledButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-                          minimumSize: const Size(0, 36),
-                        ),
-                      ),
                     if (isApproved)
                       FilledButton(
-                        onPressed: () {
-                          // TODO: Go to payment summary view, pass order id
-                          context.push('/payment-summary');
-                        },
+                        onPressed: () => _showPaymentProofDialog(context, item.id),
                         style: FilledButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
                           minimumSize: const Size(0, 36),
                         ),
-                        child: const Text('ادفع الآن'),
+                        child: const Text('أدفع', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    if (!isApproved && (item.status.toLowerCase() == 'pendingpaymentverification' || item.status.toLowerCase() == 'pending_payment_verification'))
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text('جاري مراجعة الدفع', style: TextStyle(color: Colors.orange, fontSize: 12, fontWeight: FontWeight.bold)),
                       ),
                   ],
                 ),
               ],
             ),
           ),
+        );
+      },
+    );
+  }
+
+  Future<void> _showBulkPaymentProofDialog(BuildContext context, List<int> orderIds) async {
+    final ImagePicker picker = ImagePicker();
+    XFile? pickedFile;
+    final notesController = TextEditingController();
+
+    await showDialog(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('إرسال إثبات الدفع للكل', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('سداد ${orderIds.length} طلبات', style: const TextStyle(fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 8),
+                  if (pickedFile != null)
+                    Text('تم اختيار الصورة: ${pickedFile!.name}', style: const TextStyle(fontSize: 13, color: Colors.green))
+                  else
+                    const Text('لم يتم اختيار صورة بعد', style: TextStyle(fontSize: 13, color: Colors.grey)),
+                  const SizedBox(height: 12),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.image),
+                    label: const Text('اختر صورة الإيصال'),
+                    onPressed: () async {
+                      final file = await picker.pickImage(source: ImageSource.gallery);
+                      if (file != null) {
+                        setState(() {
+                          pickedFile = file;
+                        });
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: notesController,
+                    decoration: const InputDecoration(
+                      labelText: 'ملاحظات (اختياري)',
+                      border: OutlineInputBorder(),
+                    ),
+                    maxLines: 2,
+                  ),
+                  const SizedBox(height: 10),
+                  Consumer<OrdersProvider>(
+                    builder: (context, provider, child) {
+                      if (provider.errorMessage != null && provider.errorMessage!.isNotEmpty) {
+                        return Text(
+                          provider.errorMessage!,
+                          style: const TextStyle(color: Colors.red, fontSize: 12),
+                          textAlign: TextAlign.center,
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    },
+                  )
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('إلغاء'),
+                ),
+                Consumer<OrdersProvider>(
+                  builder: (context, provider, child) {
+                    final busy = provider.isSubmittingPaymentProof;
+                    return FilledButton(
+                      onPressed: (pickedFile == null || busy)
+                          ? null
+                          : () async {
+                              final success = await provider.submitPaymentProof(
+                                targetOrderIds: orderIds,
+                                paymentScreenshotPath: pickedFile!.path,
+                                notes: notesController.text,
+                              );
+                              if (success && context.mounted) {
+                                Navigator.pop(ctx);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('تم إرسال إثبات الدفع بنجاح')),
+                                );
+                                provider.fetchOrders();
+                              }
+                            },
+                      child: busy 
+                          ? SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Theme.of(context).colorScheme.surface, strokeWidth: 2))
+                          : const Text('إرسال'),
+                    );
+                  },
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -246,7 +380,7 @@ class _RequestsListViewState extends State<RequestsListView>
                               }
                             },
                       child: busy 
-                          ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                          ? SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Theme.of(context).colorScheme.surface, strokeWidth: 2))
                           : const Text('إرسال'),
                     );
                   },
