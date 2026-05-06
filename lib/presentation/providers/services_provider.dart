@@ -89,7 +89,13 @@ class ServicesProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await _dio.get(ApiConstants.categories);
+      Response response;
+      try {
+        response = await _dio.get(ApiConstants.categories);
+      } on DioException catch (e) {
+        if (e.response?.statusCode != 404) rethrow;
+        response = await _dio.get('/api/categories');
+      }
       if (response.data == null) {
         _errorMessage = 'السيرفر ماردش بيانات';
         return;
@@ -222,14 +228,27 @@ class ServicesProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await _dio.get(
-        ApiConstants.services,
-        queryParameters: <String, dynamic>{
-          'page': page,
-          'pageSize': pageSize,
-          'topDiscounts': true,
-        },
-      );
+      Response response;
+      try {
+        response = await _dio.get(
+          ApiConstants.services,
+          queryParameters: <String, dynamic>{
+            'page': page,
+            'pageSize': pageSize,
+            'topDiscounts': true,
+          },
+        );
+      } on DioException catch (e) {
+        if (e.response?.statusCode != 404) rethrow;
+        response = await _dio.get(
+          ApiConstants.servicesLegacy,
+          queryParameters: <String, dynamic>{
+            'page': page,
+            'pageSize': pageSize,
+            'topDiscounts': true,
+          },
+        );
+      }
 
       if (response.data == null || response.data.toString().isEmpty) {
         _errorMessage = 'السيرفر ماردش بيانات';
@@ -266,14 +285,27 @@ class ServicesProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await _dio.get(
-        ApiConstants.services,
-        queryParameters: <String, dynamic>{
-          'page': page,
-          'pageSize': pageSize,
-          'isRecommended': true,
-        },
-      );
+      Response response;
+      try {
+        response = await _dio.get(
+          ApiConstants.services,
+          queryParameters: <String, dynamic>{
+            'page': page,
+            'pageSize': pageSize,
+            'isRecommended': true,
+          },
+        );
+      } on DioException catch (e) {
+        if (e.response?.statusCode != 404) rethrow;
+        response = await _dio.get(
+          ApiConstants.servicesLegacy,
+          queryParameters: <String, dynamic>{
+            'page': page,
+            'pageSize': pageSize,
+            'isRecommended': true,
+          },
+        );
+      }
 
       if (response.data == null || response.data.toString().isEmpty) {
         _errorMessage = 'السيرفر ماردش بيانات';
@@ -309,14 +341,27 @@ class ServicesProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await _dio.get(
-        ApiConstants.services,
-        queryParameters: <String, dynamic>{
-          'page': page,
-          'pageSize': pageSize,
-          'mostPurchased': true,
-        },
-      );
+      Response response;
+      try {
+        response = await _dio.get(
+          ApiConstants.services,
+          queryParameters: <String, dynamic>{
+            'page': page,
+            'pageSize': pageSize,
+            'mostPurchased': true,
+          },
+        );
+      } on DioException catch (e) {
+        if (e.response?.statusCode != 404) rethrow;
+        response = await _dio.get(
+          ApiConstants.servicesLegacy,
+          queryParameters: <String, dynamic>{
+            'page': page,
+            'pageSize': pageSize,
+            'mostPurchased': true,
+          },
+        );
+      }
 
       if (response.data == null || response.data.toString().isEmpty) {
         _errorMessage = 'السيرفر ماردش بيانات';

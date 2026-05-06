@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:manzili_mobile/core/theme/app_colors.dart';
 import 'package:manzili_mobile/presentation/widgets/common/soft_card.dart';
 import 'package:provider/provider.dart';
-import 'package:manzili_mobile/presentation/providers/orders_provider.dart';
+import 'package:manzili_mobile/presentation/providers/seller_provider.dart';
 
 class SellerManageOrdersView extends StatefulWidget {
   const SellerManageOrdersView({super.key});
@@ -20,7 +20,7 @@ class _SellerManageOrdersViewState extends State<SellerManageOrdersView> with Si
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<OrdersProvider>().fetchOrders();
+      context.read<SellerProvider>().fetchSellerOrders();
     });
   }
 
@@ -48,22 +48,24 @@ class _SellerManageOrdersViewState extends State<SellerManageOrdersView> with Si
           ],
         ),
       ),
-      body: Consumer<OrdersProvider>(
-        builder: (context, ordersProvider, child) {
-          if (ordersProvider.isLoading && ordersProvider.orders.isEmpty) {
+      body: Consumer<SellerProvider>(
+        builder: (context, provider, child) {
+          final items = provider.ordersResponse?.items ?? [];
+          
+          if (provider.isLoadingOrders && items.isEmpty) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (ordersProvider.errorMessage != null && ordersProvider.orders.isEmpty) {
+          if (provider.ordersError != null && items.isEmpty) {
             return Center(
               child: Text(
-                ordersProvider.errorMessage!,
+                provider.ordersError!,
                 style: const TextStyle(color: AppColors.error),
               ),
             );
           }
 
-          final allOrders = ordersProvider.orders;
+          final allOrders = items;
           
           // Pending = 'Pending' status (or equivalent for new requests)
           final pendingRequests = allOrders.where((o) => 
@@ -139,7 +141,7 @@ class _SellerManageOrdersViewState extends State<SellerManageOrdersView> with Si
               ),
               const SizedBox(height: 12),
               Text(
-                item.serviceName ?? 'خدمة بدون اسم',
+                item.serviceTitle ?? 'خدمة بدون اسم',
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 8),

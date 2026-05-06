@@ -12,7 +12,13 @@ class AdminRepository {
 
   Future<(Map<String, dynamic>?, String?)> getUserDetails(int userId) async {
     try {
-      final res = await _dio.get(ApiConstants.adminUserDetails(userId));
+      Response res;
+      try {
+        res = await _dio.get(ApiConstants.adminUserDetails(userId));
+      } on DioException catch (e) {
+        if (e.response?.statusCode != 404) rethrow;
+        res = await _dio.get(ApiConstants.adminUserDetailsLegacy(userId));
+      }
       final raw = tryParseJsonMap(res.data);
       if (raw == null) return (null, 'السيرفر ماردش بيانات');
       if (raw['success'] != true) {
@@ -28,7 +34,13 @@ class AdminRepository {
 
   Future<(bool, String?)> unblockUser(int userId) async {
     try {
-      final res = await _dio.post(ApiConstants.adminUnblockUser(userId));
+      Response res;
+      try {
+        res = await _dio.patch(ApiConstants.adminUnblockUser(userId));
+      } on DioException catch (e) {
+        if (e.response?.statusCode != 404) rethrow;
+        res = await _dio.patch(ApiConstants.adminUnblockUserLegacy(userId));
+      }
       final raw = tryParseJsonMap(res.data);
       if (raw == null) return (false, 'السيرفر ماردش بيانات');
       if (raw['success'] != true) {
@@ -44,13 +56,23 @@ class AdminRepository {
 
   Future<(bool, String?)> blockUser(int userId, String reason, DateTime blockedUntil) async {
     try {
-      final res = await _dio.post(
-        ApiConstants.adminBlockUser(userId),
-        data: {
-          'reason': reason,
-          'blockedUntil': blockedUntil.toIso8601String(),
-        },
-      );
+      Response res;
+      final dataBody = {
+        'reason': reason,
+        'blockedUntil': blockedUntil.toIso8601String(),
+      };
+      try {
+        res = await _dio.patch(
+          ApiConstants.adminBlockUser(userId),
+          data: dataBody,
+        );
+      } on DioException catch (e) {
+        if (e.response?.statusCode != 404) rethrow;
+        res = await _dio.patch(
+          ApiConstants.adminBlockUserLegacy(userId),
+          data: dataBody,
+        );
+      }
       final raw = tryParseJsonMap(res.data);
       if (raw == null) return (false, 'السيرفر ماردش بيانات');
       if (raw['success'] != true) {
@@ -72,16 +94,28 @@ class AdminRepository {
     String? search,
   }) async {
     try {
-      final res = await _dio.get(
-        ApiConstants.adminUsers,
-        queryParameters: {
-          'Page': page,
-          'PageSize': pageSize,
-          if (role != null) 'Role': role,
-          if (isBlocked != null) 'IsBlocked': isBlocked,
-          if (search != null && search.isNotEmpty) 'Search': search,
-        },
-      );
+      Response res;
+      final queryParameters = {
+        'page': page,
+        'pageSize': pageSize,
+        if (role != null) 'role': role,
+        if (isBlocked != null) 'isBlocked': isBlocked,
+        if (search != null && search.isNotEmpty) 'search': search,
+      };
+
+      try {
+        res = await _dio.get(
+          ApiConstants.adminUsers,
+          queryParameters: queryParameters,
+        );
+      } on DioException catch (e) {
+        if (e.response?.statusCode != 404) rethrow;
+        res = await _dio.get(
+          ApiConstants.adminUsersLegacy,
+          queryParameters: queryParameters,
+        );
+      }
+      
       final raw = tryParseJsonMap(res.data);
       if (raw == null) return (null, 'السيرفر ماردش بيانات');
       final data = raw['data'];
@@ -95,7 +129,13 @@ class AdminRepository {
 
   Future<(AdminDashboardStats?, String?)> getDashboardStats() async {
     try {
-      final res = await _dio.get(ApiConstants.adminDashboard);
+      Response res;
+      try {
+        res = await _dio.get(ApiConstants.adminDashboard);
+      } on DioException catch (e) {
+        if (e.response?.statusCode != 404) rethrow;
+        res = await _dio.get(ApiConstants.adminDashboardLegacy);
+      }
       final raw = tryParseJsonMap(res.data);
       if (raw == null) return (null, 'السيرفر ماردش بيانات');
       // If the response wraps in data:
@@ -117,17 +157,29 @@ class AdminRepository {
     int? providerId,
   }) async {
     try {
-      final res = await _dio.get(
-        ApiConstants.adminFinancials,
-        queryParameters: {
-          'Page': page,
-          'PageSize': pageSize,
-          if (from != null) 'From': from.toIso8601String(),
-          if (to != null) 'To': to.toIso8601String(),
-          if (buyerId != null) 'BuyerId': buyerId,
-          if (providerId != null) 'ProviderId': providerId,
-        },
-      );
+      Response res;
+      final queryParameters = {
+        'page': page,
+        'pageSize': pageSize,
+        if (from != null) 'from': from.toIso8601String(),
+        if (to != null) 'to': to.toIso8601String(),
+        if (buyerId != null) 'buyerId': buyerId,
+        if (providerId != null) 'providerId': providerId,
+      };
+
+      try {
+        res = await _dio.get(
+          ApiConstants.adminFinancials,
+          queryParameters: queryParameters,
+        );
+      } on DioException catch (e) {
+        if (e.response?.statusCode != 404) rethrow;
+        res = await _dio.get(
+          ApiConstants.adminFinancialsLegacy,
+          queryParameters: queryParameters,
+        );
+      }
+
       final raw = tryParseJsonMap(res.data);
       if (raw == null) return (null, 'السيرفر ماردش بيانات');
       final data = raw['data'];
@@ -147,16 +199,28 @@ class AdminRepository {
     int? providerId,
   }) async {
     try {
-      final res = await _dio.get(
-        ApiConstants.adminOrders,
-        queryParameters: {
-          'Page': page,
-          'PageSize': pageSize,
-          if (status != null && status.isNotEmpty) 'Status': status,
-          if (buyerId != null) 'BuyerId': buyerId,
-          if (providerId != null) 'ProviderId': providerId,
-        },
-      );
+      Response res;
+      final queryParameters = {
+        'page': page,
+        'pageSize': pageSize,
+        if (status != null && status.isNotEmpty) 'status': status,
+        if (buyerId != null) 'buyerId': buyerId,
+        if (providerId != null) 'providerId': providerId,
+      };
+
+      try {
+        res = await _dio.get(
+          ApiConstants.adminOrders,
+          queryParameters: queryParameters,
+        );
+      } on DioException catch (e) {
+        if (e.response?.statusCode != 404) rethrow;
+        res = await _dio.get(
+          ApiConstants.adminOrdersLegacy,
+          queryParameters: queryParameters,
+        );
+      }
+
       final raw = tryParseJsonMap(res.data);
       if (raw == null) return (null, 'السيرفر ماردش بيانات');
       final data = raw['data'];
@@ -176,16 +240,28 @@ class AdminRepository {
     String? search,
   }) async {
     try {
-      final res = await _dio.get(
-        ApiConstants.adminServices,
-        queryParameters: {
-          'Page': page,
-          'PageSize': pageSize,
-          if (providerId != null) 'ProviderId': providerId,
-          if (status != null && status.isNotEmpty) 'Status': status,
-          if (search != null && search.isNotEmpty) 'Search': search,
-        },
-      );
+      Response res;
+      final queryParameters = {
+        'page': page,
+        'pageSize': pageSize,
+        if (providerId != null) 'providerId': providerId,
+        if (status != null && status.isNotEmpty) 'status': status,
+        if (search != null && search.isNotEmpty) 'search': search,
+      };
+
+      try {
+        res = await _dio.get(
+          ApiConstants.adminServices,
+          queryParameters: queryParameters,
+        );
+      } on DioException catch (e) {
+        if (e.response?.statusCode != 404) rethrow;
+        res = await _dio.get(
+          ApiConstants.adminServicesLegacy,
+          queryParameters: queryParameters,
+        );
+      }
+
       final raw = tryParseJsonMap(res.data);
       if (raw == null) return (null, 'السيرفر ماردش بيانات');
       final data = raw['data'];
@@ -199,14 +275,26 @@ class AdminRepository {
 
   String _mapDioError(DioException e) {
     final code = e.response?.statusCode;
-    if (code == 401) return 'محتاج تسجّل دخول كمدير';
-    if (code == 403) return 'مش مسموحلك تدخل هنا';
-    if (code == 404) return 'المستخدم مش موجود';
+    if (code == 401) return 'محتاج تسجّل دخول أولاً';
+    if (code == 403) return 'غير مصرح لك (أدمن فقط)';
+    if (code == 404) return 'البيانات مش موجودة';
     if (e.response?.data is Map) {
       final m = e.response!.data as Map;
       final msg = m['message']?.toString() ?? m['title']?.toString();
+      
+      if (m.containsKey('errors')) {
+        return 'Validation: ${m['errors']}';
+      }
       if (msg != null && msg.isNotEmpty) return msg;
     }
-    return 'مشكلة في الاتصال أو السيرفر مش جاهز';
+    
+    final rawData = e.response?.data?.toString();
+    if (rawData != null && rawData.isNotEmpty && rawData.length < 200) {
+      return 'Error $code: $rawData';
+    } else if (rawData != null && rawData.isNotEmpty) {
+      return 'Error $code: ${rawData.substring(0, 200)}...';
+    }
+    
+    return 'مشكلة في الاتصال أو السيرفر مش جاهز. Code: $code';
   }
 }

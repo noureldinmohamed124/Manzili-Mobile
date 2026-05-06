@@ -5,11 +5,24 @@ import 'package:manzili_mobile/core/theme/app_colors.dart';
 import 'package:manzili_mobile/presentation/widgets/common/soft_card.dart';
 import 'package:manzili_mobile/presentation/providers/auth_provider.dart';
 import 'package:manzili_mobile/presentation/providers/theme_provider.dart';
-import 'package:manzili_mobile/presentation/providers/locale_provider.dart';
+import 'package:manzili_mobile/presentation/providers/admin_provider.dart';
 import 'package:provider/provider.dart';
 
-class AdminHubView extends StatelessWidget {
+class AdminHubView extends StatefulWidget {
   const AdminHubView({super.key});
+
+  @override
+  State<AdminHubView> createState() => _AdminHubViewState();
+}
+
+class _AdminHubViewState extends State<AdminHubView> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AdminProvider>().fetchDashboardStats();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,18 +41,6 @@ class AdminHubView extends StatelessWidget {
               );
             },
           ),
-          /*
-          Consumer<LocaleProvider>(
-            builder: (context, localeProvider, _) {
-              return IconButton(
-                icon: const Icon(Icons.language),
-                onPressed: () {
-                  localeProvider.toggleLocale();
-                },
-              );
-            },
-          ),
-          */
           IconButton(
             icon: const Icon(Icons.logout, color: AppColors.error),
             onPressed: () {
@@ -49,67 +50,83 @@ class AdminHubView extends StatelessWidget {
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          SoftCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'نظرة سريعة',
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
-                ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
+      body: Consumer<AdminProvider>(
+        builder: (context, adminProvider, child) {
+          if (adminProvider.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final stats = adminProvider.dashboardStats;
+          
+          return ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              SoftCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _MetricChip('مستخدمين جدد', '+ ١٢٨'),
-                    _MetricChip('طلبات اليوم', '٤٦٠'),
-                    _MetricChip('تنبيهات', '٣'),
+                    const Text(
+                      'نظرة سريعة',
+                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                    ),
+                    const SizedBox(height: 12),
+                    if (adminProvider.errorMessage != null)
+                      Text(adminProvider.errorMessage!, style: const TextStyle(color: AppColors.error))
+                    else if (stats != null)
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          _MetricChip('المستخدمين', '${stats.totalUsers}'),
+                          _MetricChip('الطلبات النشطة', '${stats.activeOrders}'),
+                          _MetricChip('الخدمات المعلقة', '${stats.pendingServices}'),
+                          _MetricChip('إجمالي الإيرادات', '${stats.totalRevenue} ج'),
+                        ],
+                      )
+                    else
+                      const Text('لا توجد بيانات متاحة'),
                   ],
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            'اختصارات',
-            style: TextStyle(fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 8),
-          _AdminTile(
-            icon: Icons.group_outlined,
-            label: AppStrings.adminUsers,
-            route: '/admin/users',
-          ),
-          _AdminTile(
-            icon: Icons.design_services_outlined,
-            label: AppStrings.adminServices,
-            route: '/admin/services',
-          ),
-          _AdminTile(
-            icon: Icons.receipt_long_outlined,
-            label: AppStrings.adminOrders,
-            route: '/admin/orders',
-          ),
-          _AdminTile(
-            icon: Icons.account_balance_wallet_outlined,
-            label: AppStrings.adminFinance,
-            route: '/admin/finance',
-          ),
-          _AdminTile(
-            icon: Icons.campaign_outlined,
-            label: AppStrings.adminAnnouncements,
-            route: '/admin/announcements',
-          ),
-          _AdminTile(
-            icon: Icons.analytics_outlined,
-            label: AppStrings.adminReports,
-            route: '/admin/reports',
-          ),
-        ],
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'اختصارات',
+                style: TextStyle(fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 8),
+              _AdminTile(
+                icon: Icons.group_outlined,
+                label: AppStrings.adminUsers,
+                route: '/admin/users',
+              ),
+              _AdminTile(
+                icon: Icons.design_services_outlined,
+                label: AppStrings.adminServices,
+                route: '/admin/services',
+              ),
+              _AdminTile(
+                icon: Icons.receipt_long_outlined,
+                label: AppStrings.adminOrders,
+                route: '/admin/orders',
+              ),
+              _AdminTile(
+                icon: Icons.account_balance_wallet_outlined,
+                label: AppStrings.adminFinance,
+                route: '/admin/finance',
+              ),
+              _AdminTile(
+                icon: Icons.campaign_outlined,
+                label: AppStrings.adminAnnouncements,
+                route: '/admin/announcements',
+              ),
+              _AdminTile(
+                icon: Icons.analytics_outlined,
+                label: AppStrings.adminReports,
+                route: '/admin/reports',
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -174,3 +191,4 @@ class _AdminTile extends StatelessWidget {
     );
   }
 }
+

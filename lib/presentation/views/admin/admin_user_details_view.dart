@@ -118,23 +118,38 @@ class _AdminUserDetailsViewState extends State<AdminUserDetailsView> {
                 children: [
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: provider.isUnblocking
+                      onPressed: provider.isUnblocking || provider.isBlocking
                           ? null
                           : () async {
                               if (isBlocked) {
-                                final success = await provider.unblockUser(user['id']);
+                                final (success, error) = await provider.unblockUser(user['id']);
                                 if (success && context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(content: Text('تم فك الحظر بنجاح')),
                                   );
+                                } else if (context.mounted && error != null) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text(error)),
+                                  );
                                 }
                               } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('ميزة الحظر غير متوفرة في هذا الإصدار')),
+                                final (success, error) = await provider.blockUser(
+                                  user['id'],
+                                  'مخالفة الشروط',
+                                  DateTime.now().add(const Duration(days: 30)),
                                 );
+                                if (success && context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('تم حظر المستخدم بنجاح')),
+                                  );
+                                } else if (context.mounted && error != null) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text(error)),
+                                  );
+                                }
                               }
                             },
-                      icon: provider.isUnblocking 
+                      icon: provider.isUnblocking || provider.isBlocking
                           ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
                           : Icon(isBlocked ? Icons.check_circle : Icons.block),
                       label: Text(isBlocked ? 'فك الحظر' : 'حظر مؤقت'),

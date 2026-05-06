@@ -4,7 +4,12 @@ class SellerServicesListResponse {
   final List<SellerServiceListItem> items;
 
   factory SellerServicesListResponse.fromJson(Map<String, dynamic> json) {
-    final rawItems = json['Items'] ?? json['items'] ?? [];
+    dynamic rawItems;
+    if (json.containsKey('data') && json['data'] is Map) {
+      rawItems = json['data']['Items'] ?? json['data']['items'];
+    }
+    rawItems ??= json['Items'] ?? json['items'] ?? [];
+    
     if (rawItems is! List) return SellerServicesListResponse(items: const []);
     return SellerServicesListResponse(
       items: rawItems
@@ -311,11 +316,16 @@ class SellerOrderListResponse {
   final int pageSize;
 
   factory SellerOrderListResponse.fromJson(Map<String, dynamic> json) {
+    Map<String, dynamic> source = json;
+    if (json.containsKey('data') && json['data'] is Map) {
+      source = json['data'] as Map<String, dynamic>;
+    }
+    
     return SellerOrderListResponse(
-      items: (json['items'] as List?)?.map((e) => SellerOrderListItem.fromJson(e)).toList() ?? [],
-      totalCount: (json['totalCount'] as num?)?.toInt() ?? 0,
-      page: (json['page'] as num?)?.toInt() ?? 1,
-      pageSize: (json['pageSize'] as num?)?.toInt() ?? 10,
+      items: (source['items'] as List?)?.map((e) => SellerOrderListItem.fromJson(e)).toList() ?? [],
+      totalCount: (source['totalCount'] as num?)?.toInt() ?? 0,
+      page: (source['page'] as num?)?.toInt() ?? 1,
+      pageSize: (source['pageSize'] as num?)?.toInt() ?? 10,
     );
   }
 }

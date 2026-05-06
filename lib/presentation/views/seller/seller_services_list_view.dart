@@ -18,7 +18,7 @@ class _SellerServicesListViewState extends State<SellerServicesListView> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<SellerProvider>().fetchSellerServices(page: 1, pageSize: 20);
+      context.read<SellerProvider>().fetchSellerServices(page: 1, pageSize: 10);
     });
   }
 
@@ -73,7 +73,7 @@ class _SellerServicesListViewState extends State<SellerServicesListView> {
                     ),
                     const SizedBox(height: 12),
                     FilledButton(
-                      onPressed: () => seller.fetchSellerServices(page: 1, pageSize: 20),
+                      onPressed: () => seller.fetchSellerServices(page: 1, pageSize: 10),
                       child: const Text('جرّب تاني'),
                     ),
                   ],
@@ -92,7 +92,7 @@ class _SellerServicesListViewState extends State<SellerServicesListView> {
           }
 
           return RefreshIndicator(
-            onRefresh: () => seller.fetchSellerServices(page: 1, pageSize: 20),
+            onRefresh: () => seller.fetchSellerServices(page: 1, pageSize: 10),
             child: ListView.separated(
               padding: const EdgeInsets.all(16),
               itemCount: seller.sellerServices.length,

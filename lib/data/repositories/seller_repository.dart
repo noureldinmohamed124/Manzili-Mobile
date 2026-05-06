@@ -15,18 +15,27 @@ class SellerRepository {
     int pageSize = 10,
   }) async {
     try {
+      Response res;
       final query = <String, dynamic>{
         // Backend spec uses PascalCase, but ASP.NET usually accepts either.
-        'Status': status,
-        'Page': page,
-        'PageSize': pageSize,
+        'status': status,
+        'page': page,
+        'pageSize': pageSize,
       }..removeWhere((k, v) => v == null || (v is String && v.isEmpty));
 
-      var res = await _dio.get(ApiConstants.sellerServices, queryParameters: query);
-      
-      // Fallback if the server uses /api/seller/services
-      if (res.statusCode == 404) {
-        res = await _dio.get('/api/seller/services', queryParameters: query);
+      try {
+        res = await _dio.get(
+          ApiConstants.sellerServices,
+          queryParameters: query,
+          data: query, // Pass as body in case backend expects [FromBody]
+        );
+      } on DioException catch (e) {
+        if (e.response?.statusCode != 404) rethrow;
+        res = await _dio.get(
+          ApiConstants.sellerServicesLegacy,
+          queryParameters: query,
+          data: query, // Pass as body in case backend expects [FromBody]
+        );
       }
       
       final raw = tryParseJsonMap(res.data);
@@ -35,19 +44,7 @@ class SellerRepository {
       return (parsed.items, null);
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) {
-        try {
-          final res = await _dio.get('/api/seller/services', queryParameters: {
-            'Status': status,
-            'Page': page,
-            'PageSize': pageSize,
-          }..removeWhere((k, v) => v == null || (v is String && v.isEmpty)));
-          final raw = tryParseJsonMap(res.data);
-          if (raw == null) return (<SellerServiceListItem>[], 'السيرفر ماردش بيانات');
-          final parsed = SellerServicesListResponse.fromJson(raw);
-          return (parsed.items, null);
-        } catch (_) {
-          return (<SellerServiceListItem>[], _mapDioError(e));
-        }
+        return (<SellerServiceListItem>[], null); // Assume empty if 404
       }
       return (<SellerServiceListItem>[], _mapDioError(e));
     } catch (_) {
@@ -57,7 +54,13 @@ class SellerRepository {
 
   Future<(SellerServiceDetails?, String?)> getSellerServiceById(int id) async {
     try {
-      final res = await _dio.get(ApiConstants.sellerServiceById(id));
+      Response res;
+      try {
+        res = await _dio.get(ApiConstants.sellerServiceById(id));
+      } on DioException catch (e) {
+        if (e.response?.statusCode != 404) rethrow;
+        res = await _dio.get(ApiConstants.sellerServiceByIdLegacy(id));
+      }
       final raw = tryParseJsonMap(res.data);
       if (raw == null) return (null, 'السيرفر ماردش بيانات');
       final wrapper = SellerServiceDetailsResponse.fromJson(raw);
@@ -75,7 +78,13 @@ class SellerRepository {
 
   Future<(SellerDashboardStats?, String?)> getDashboardStats() async {
     try {
-      final res = await _dio.get(ApiConstants.sellerDashboard);
+      Response res;
+      try {
+        res = await _dio.get(ApiConstants.sellerDashboard);
+      } on DioException catch (e) {
+        if (e.response?.statusCode != 404) rethrow;
+        res = await _dio.get(ApiConstants.sellerDashboardLegacy);
+      }
       final raw = tryParseJsonMap(res.data);
       if (raw == null) return (null, 'السيرفر ماردش بيانات');
       final dataJson = raw['data'] as Map<String, dynamic>? ?? raw;
@@ -90,39 +99,56 @@ class SellerRepository {
 
   Future<(bool, String?)> createService(CreateServiceRequest request, List<String> imagePaths) async {
     try {
-      final formData = FormData.fromMap({
-        'title': request.title,
-        'description': request.description,
-        'categoryId': request.categoryId,
-        'basePrice': request.basePrice,
-      });
+      FormData createFormData() {
+        final form = FormData.fromMap({
+          'title': request.title,
+          'description': request.description,
+          'categoryId': request.categoryId,
+          'basePrice': request.basePrice,
+        });
 
-      // Add options as JSON string or array, depending on backend requirement
-      for (var i = 0; i < request.optionGroups.length; i++) {
-        final group = request.optionGroups[i];
-        formData.fields.add(MapEntry('optionGroups[$i].name', group.name));
-        formData.fields.add(MapEntry('optionGroups[$i].isRequired', group.isRequired.toString()));
-        for (var j = 0; j < group.options.length; j++) {
-          final opt = group.options[j];
-          formData.fields.add(MapEntry('optionGroups[$i].options[$j].name', opt.name));
-          formData.fields.add(MapEntry('optionGroups[$i].options[$j].price', opt.price.toString()));
+        for (var i = 0; i < request.optionGroups.length; i++) {
+          final group = request.optionGroups[i];
+          form.fields.add(MapEntry('optionGroups[$i].name', group.name));
+          form.fields.add(MapEntry('optionGroups[$i].isRequired', group.isRequired.toString()));
+          for (var j = 0; j < group.options.length; j++) {
+            final opt = group.options[j];
+            form.fields.add(MapEntry('optionGroups[$i].options[$j].name', opt.name));
+            form.fields.add(MapEntry('optionGroups[$i].options[$j].price', opt.price.toString()));
+          }
         }
+        return form;
       }
 
+      var formData = createFormData();
       for (var path in imagePaths) {
-        formData.files.add(MapEntry(
-          'images',
-          await MultipartFile.fromFile(path),
-        ));
+        formData.files.add(MapEntry('images', await MultipartFile.fromFile(path)));
       }
 
-      final res = await _dio.post(
-        ApiConstants.sellerServices,
-        data: formData,
-        options: Options(
-          headers: {'Content-Type': 'multipart/form-data'},
-        ),
-      );
+      Response res;
+      final options = Options(headers: {'Content-Type': 'multipart/form-data'});
+      try {
+        res = await _dio.post(
+          ApiConstants.sellerServices,
+          data: formData,
+          options: options,
+        );
+      } on DioException catch (e) {
+        if (e.response?.statusCode != 404) rethrow;
+        
+        // Recreate FormData for retry because Dio streams can only be read once
+        formData = createFormData();
+        for (var path in imagePaths) {
+          formData.files.add(MapEntry('images', await MultipartFile.fromFile(path)));
+        }
+        
+        res = await _dio.post(
+          ApiConstants.sellerServicesLegacy,
+          data: formData,
+          options: options,
+        );
+      }
+
       final raw = tryParseJsonMap(res.data);
       if (raw?['success'] == true) {
         return (true, null);
@@ -137,10 +163,20 @@ class SellerRepository {
 
   Future<(bool, String?)> repriceOrder(int orderId, double newPrice, String reason) async {
     try {
-      final res = await _dio.post(
-        ApiConstants.sellerOrderReprice(orderId),
-        data: {'newPrice': newPrice, 'reason': reason},
-      );
+      Response res;
+      final data = {'newPrice': newPrice, 'reason': reason};
+      try {
+        res = await _dio.post(
+          ApiConstants.sellerOrderReprice(orderId),
+          data: data,
+        );
+      } on DioException catch (e) {
+        if (e.response?.statusCode != 404) rethrow;
+        res = await _dio.post(
+          ApiConstants.sellerOrderRepriceLegacy(orderId),
+          data: data,
+        );
+      }
       final raw = tryParseJsonMap(res.data);
       if (raw?['success'] == true) return (true, null);
       return (false, raw?['message']?.toString() ?? 'فشل تسعير الطلب');
@@ -153,10 +189,20 @@ class SellerRepository {
 
   Future<(bool, String?)> rejectOrder(int orderId, String reason) async {
     try {
-      final res = await _dio.post(
-        ApiConstants.sellerOrderReject(orderId),
-        data: {'reason': reason},
-      );
+      Response res;
+      final data = {'reason': reason};
+      try {
+        res = await _dio.post(
+          ApiConstants.sellerOrderReject(orderId),
+          data: data,
+        );
+      } on DioException catch (e) {
+        if (e.response?.statusCode != 404) rethrow;
+        res = await _dio.post(
+          ApiConstants.sellerOrderRejectLegacy(orderId),
+          data: data,
+        );
+      }
       final raw = tryParseJsonMap(res.data);
       if (raw?['success'] == true) return (true, null);
       return (false, raw?['message']?.toString() ?? 'فشل رفض الطلب');
@@ -169,10 +215,19 @@ class SellerRepository {
 
   Future<(bool, String?)> approveOrder(int orderId) async {
     try {
-      final res = await _dio.post(
-        ApiConstants.sellerOrderApprove(orderId),
-        data: {},
-      );
+      Response res;
+      try {
+        res = await _dio.post(
+          ApiConstants.sellerOrderApprove(orderId),
+          data: {},
+        );
+      } on DioException catch (e) {
+        if (e.response?.statusCode != 404) rethrow;
+        res = await _dio.post(
+          ApiConstants.sellerOrderApproveLegacy(orderId),
+          data: {},
+        );
+      }
       final raw = tryParseJsonMap(res.data);
       if (raw?['success'] == true) return (true, null);
       return (false, raw?['message']?.toString() ?? 'فشل الموافقة على الطلب');
@@ -189,19 +244,34 @@ class SellerRepository {
     int pageSize = 10,
   }) async {
     try {
-      final res = await _dio.get(
-        ApiConstants.sellerOrders,
-        queryParameters: {
-          'Page': page,
-          'PageSize': pageSize,
-          if (status != null && status.isNotEmpty) 'Status': status,
-        },
-      );
+      Response res;
+      final queryParams = {
+        'page': page,
+        'pageSize': pageSize,
+        if (status != null && status.isNotEmpty) 'status': status,
+      };
+      try {
+        res = await _dio.get(
+          ApiConstants.sellerOrders,
+          queryParameters: queryParams,
+          data: queryParams,
+        );
+      } on DioException catch (e) {
+        if (e.response?.statusCode != 404) rethrow;
+        res = await _dio.get(
+          ApiConstants.sellerOrdersLegacy,
+          queryParameters: queryParams,
+          data: queryParams,
+        );
+      }
       final raw = tryParseJsonMap(res.data);
       if (raw == null) return (null, 'السيرفر ماردش بيانات');
       final data = raw['data'] ?? raw;
       return (SellerOrderListResponse.fromJson(data is Map<String, dynamic> ? data : raw), null);
     } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        return (SellerOrderListResponse(items: [], totalCount: 0, page: page, pageSize: pageSize), null);
+      }
       return (null, _mapDioError(e));
     } catch (_) {
       return (null, 'حصل خطأ غير متوقع');
@@ -210,7 +280,13 @@ class SellerRepository {
 
   Future<(SellerOrderDetails?, String?)> getSellerOrderById(int orderId) async {
     try {
-      final res = await _dio.get(ApiConstants.sellerOrderById(orderId));
+      Response res;
+      try {
+        res = await _dio.get(ApiConstants.sellerOrderById(orderId));
+      } on DioException catch (e) {
+        if (e.response?.statusCode != 404) rethrow;
+        res = await _dio.get(ApiConstants.sellerOrderByIdLegacy(orderId));
+      }
       final raw = tryParseJsonMap(res.data);
       if (raw == null) return (null, 'السيرفر ماردش بيانات');
       if (raw['success'] == false) return (null, raw['message']?.toString() ?? 'الطلب غير موجود');
@@ -225,10 +301,20 @@ class SellerRepository {
 
   Future<(bool, String?)> updateOrderStatus(int orderId, String status) async {
     try {
-      final res = await _dio.put(
-        ApiConstants.sellerOrderStatus(orderId),
-        data: {'status': status},
-      );
+      Response res;
+      final data = {'status': status};
+      try {
+        res = await _dio.put(
+          ApiConstants.sellerOrderStatus(orderId),
+          data: data,
+        );
+      } on DioException catch (e) {
+        if (e.response?.statusCode != 404) rethrow;
+        res = await _dio.put(
+          ApiConstants.sellerOrderStatusLegacy(orderId),
+          data: data,
+        );
+      }
       final raw = tryParseJsonMap(res.data);
       if (raw?['success'] == true) return (true, null);
       return (false, raw?['message']?.toString() ?? 'فشل تحديث حالة الطلب');
@@ -268,11 +354,22 @@ class SellerRepository {
         }
       }
 
-      final res = await _dio.put(
-        ApiConstants.sellerServiceById(serviceId),
-        data: formData,
-        options: Options(headers: {'Content-Type': 'multipart/form-data'}),
-      );
+      Response res;
+      final options = Options(headers: {'Content-Type': 'multipart/form-data'});
+      try {
+        res = await _dio.put(
+          ApiConstants.sellerServiceById(serviceId),
+          data: formData,
+          options: options,
+        );
+      } on DioException catch (e) {
+        if (e.response?.statusCode != 404) rethrow;
+        res = await _dio.put(
+          ApiConstants.sellerServiceByIdLegacy(serviceId),
+          data: formData,
+          options: options,
+        );
+      }
       final raw = tryParseJsonMap(res.data);
       if (raw?['success'] == true) return (true, null);
       return (false, raw?['message']?.toString() ?? 'فشل تحديث الخدمة');
@@ -285,7 +382,13 @@ class SellerRepository {
 
   Future<(bool, String?)> deleteService(int serviceId) async {
     try {
-      final res = await _dio.delete(ApiConstants.sellerServiceById(serviceId));
+      Response res;
+      try {
+        res = await _dio.delete(ApiConstants.sellerServiceById(serviceId));
+      } on DioException catch (e) {
+        if (e.response?.statusCode != 404) rethrow;
+        res = await _dio.delete(ApiConstants.sellerServiceByIdLegacy(serviceId));
+      }
       final raw = tryParseJsonMap(res.data);
       if (raw?['success'] == true) return (true, null);
       return (false, raw?['message']?.toString() ?? 'فشل حذف الخدمة');
@@ -304,9 +407,25 @@ class SellerRepository {
     if (e.response?.data is Map) {
       final m = e.response!.data as Map;
       final msg = m['message']?.toString() ?? m['title']?.toString();
+      
+      // If it's a validation error, append the errors
+      if (m.containsKey('errors')) {
+        final errors = m['errors'];
+        return 'Validation: $errors';
+      }
+      
       if (msg != null && msg.isNotEmpty) return msg;
     }
-    return 'مشكلة في الاتصال أو السيرفر مش جاهز';
+    
+    // If it's not a map, or doesn't have the expected keys, return the raw data!
+    final rawData = e.response?.data?.toString();
+    if (rawData != null && rawData.isNotEmpty && rawData.length < 200) {
+      return 'Error $code: $rawData';
+    } else if (rawData != null && rawData.isNotEmpty) {
+      return 'Error $code: ${rawData.substring(0, 200)}...';
+    }
+    
+    return 'مشكلة في الاتصال أو السيرفر مش جاهز. Code: $code';
   }
 }
 

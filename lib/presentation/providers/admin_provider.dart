@@ -34,18 +34,16 @@ class AdminProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> unblockUser(int userId) async {
+  Future<(bool, String?)> unblockUser(int userId) async {
     _isUnblocking = true;
-    _errorMessage = null;
     notifyListeners();
 
     final (success, error) = await _repository.unblockUser(userId);
 
     _isUnblocking = false;
     if (error != null) {
-      _errorMessage = error;
       notifyListeners();
-      return false;
+      return (false, error);
     }
 
     // Refresh user details to reflect changes
@@ -56,24 +54,22 @@ class AdminProvider extends ChangeNotifier {
     }
     
     notifyListeners();
-    return true;
+    return (true, null);
   }
 
   bool _isBlocking = false;
   bool get isBlocking => _isBlocking;
 
-  Future<bool> blockUser(int userId, String reason, DateTime blockedUntil) async {
+  Future<(bool, String?)> blockUser(int userId, String reason, DateTime blockedUntil) async {
     _isBlocking = true;
-    _errorMessage = null;
     notifyListeners();
 
     final (success, error) = await _repository.blockUser(userId, reason, blockedUntil);
 
     _isBlocking = false;
     if (error != null) {
-      _errorMessage = error;
       notifyListeners();
-      return false;
+      return (false, error);
     }
 
     if (_userDetails != null && _userDetails!['id'] == userId) {
@@ -83,7 +79,7 @@ class AdminProvider extends ChangeNotifier {
     }
     
     notifyListeners();
-    return true;
+    return (true, null);
   }
 
   AdminDashboardStats? _dashboardStats;
