@@ -9,6 +9,7 @@ import 'package:manzili_mobile/presentation/widgets/common/section_header.dart';
 import 'package:manzili_mobile/presentation/providers/services_provider.dart';
 import 'package:manzili_mobile/presentation/providers/seller_provider.dart';
 import 'package:manzili_mobile/data/models/seller_models.dart';
+import 'package:manzili_mobile/presentation/widgets/common/gradient_app_bar.dart';
 
 /// Screen 3 — Create Service (validation + API integration).
 class SellerCreateServiceView extends StatefulWidget {
@@ -174,11 +175,11 @@ class _SellerCreateServiceViewState extends State<SellerCreateServiceView> {
     return Directionality(
       textDirection: Directionality.of(context),
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text(AppStrings.createServiceTitle),
-        ),
         body: Column(
           children: [
+            const GradientAppBar(
+              title: AppStrings.createServiceTitle,
+            ),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),

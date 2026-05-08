@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:manzili_mobile/core/theme/app_colors.dart';
 import 'package:manzili_mobile/presentation/widgets/common/soft_card.dart';
 import 'package:manzili_mobile/presentation/providers/admin_provider.dart';
+import 'package:manzili_mobile/presentation/widgets/common/gradient_app_bar.dart';
 import 'package:provider/provider.dart';
 
 class AdminFinanceView extends StatefulWidget {
@@ -57,10 +58,11 @@ class _AdminFinanceViewState extends State<AdminFinanceView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('المالية والمعاملات'),
-      ),
-      body: Consumer<AdminProvider>(
+      body: Column(
+        children: [
+          const GradientAppBar(title: 'المالية والمعاملات'),
+          Expanded(
+            child: Consumer<AdminProvider>(
         builder: (context, provider, _) {
           if (provider.isLoading && provider.financialsResponse == null) {
             return const Center(child: CircularProgressIndicator());
@@ -235,6 +237,9 @@ class _AdminFinanceViewState extends State<AdminFinanceView> {
             ),
           );
         },
+      ),
+          ),
+        ],
       ),
     );
   }

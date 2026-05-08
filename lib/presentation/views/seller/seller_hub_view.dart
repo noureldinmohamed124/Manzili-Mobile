@@ -5,7 +5,6 @@ import 'package:manzili_mobile/core/theme/app_colors.dart';
 import 'package:manzili_mobile/presentation/providers/seller_provider.dart';
 import 'package:manzili_mobile/presentation/providers/auth_provider.dart';
 import 'package:manzili_mobile/presentation/providers/theme_provider.dart';
-import 'package:manzili_mobile/presentation/widgets/common/soft_card.dart';
 import 'package:provider/provider.dart';
 
 class SellerHubView extends StatefulWidget {
@@ -26,6 +25,8 @@ class _SellerHubViewState extends State<SellerHubView> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     final items = <_HubItem>[
       _HubItem('خدماتي', Icons.design_services_outlined, '/seller/my-services'),
       _HubItem('إدارة الطلبات', Icons.receipt_long_outlined, '/seller/manage-orders'),
@@ -36,151 +37,133 @@ class _SellerHubViewState extends State<SellerHubView> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: const Text('لوحة البائع'),
-        actions: [
-          Consumer<ThemeProvider>(
-            builder: (context, themeProvider, _) {
-              return IconButton(
-                icon: Icon(themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode),
-                onPressed: () {
-                  themeProvider.toggleTheme();
-                },
-              );
-            },
-          ),
-          /*
-          Consumer<LocaleProvider>(
-            builder: (context, localeProvider, _) {
-              return IconButton(
-                icon: const Icon(Icons.language),
-                onPressed: () {
-                  localeProvider.toggleLocale();
-                },
-              );
-            },
-          ),
-          */
-          IconButton(
-            icon: const Icon(Icons.logout, color: AppColors.error),
-            onPressed: () {
-              context.read<AuthProvider>().logout();
-              context.go('/signin');
-            },
+      body: Column(
+        children: [
+          // ── Gradient header ──────────────────────────────────────────
+          _GradientHeader(isDark: isDark),
+
+          // ── Scrollable body ──────────────────────────────────────────
+          Expanded(
+            child: Consumer<SellerProvider>(
+              builder: (context, seller, _) {
+                final stats = seller.stats;
+                return ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
+                  children: [
+                    // ── Stats section ──────────────────────────────────
+                    if (seller.isLoadingDashboard && stats == null)
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 24),
+                          child: CircularProgressIndicator(),
+                        ),
+                      )
+                    else if (seller.dashboardError != null && stats == null)
+                      _ErrorCard(
+                        message: seller.dashboardError!,
+                        onRetry: () => seller.fetchDashboardStats(),
+                      )
+                    else if (stats != null) ...[
+                      _SectionLabel('ملخص سريع'),
+                      const SizedBox(height: 12),
+                      GridView.count(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        crossAxisCount: 2,
+                        mainAxisSpacing: 12,
+                        crossAxisSpacing: 12,
+                        childAspectRatio: 1.4,
+                        children: [
+                          _StatCard(
+                            icon: Icons.design_services_rounded,
+                            value: stats.totalServices.toString(),
+                            label: 'الخدمات',
+                          ),
+                          _StatCard(
+                            icon: Icons.pending_actions_rounded,
+                            value: stats.activeOrders.toString(),
+                            label: 'طلبات شغالة',
+                          ),
+                          _StatCard(
+                            icon: Icons.notification_important_rounded,
+                            value: stats.pendingRequests.toString(),
+                            label: 'طلبات جديدة',
+                          ),
+                          _StatCard(
+                            icon: Icons.check_circle_outline_rounded,
+                            value: stats.completedOrders.toString(),
+                            label: 'طلبات مكتملة',
+                          ),
+                          _StatCard(
+                            icon: Icons.account_balance_wallet_rounded,
+                            value: '${stats.totalRevenue.toStringAsFixed(0)}ج',
+                            label: 'الإيراد',
+                          ),
+                          _StatCard(
+                            icon: Icons.star_rounded,
+                            value: stats.averageRating.toStringAsFixed(1),
+                            label: 'التقييم',
+                          ),
+                        ],
+                      ),
+                    ] else
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: Text(
+                          'مفيش بيانات دلوقتي.',
+                          style: TextStyle(color: AppColors.textSecondary),
+                        ),
+                      ),
+
+                    const SizedBox(height: 24),
+
+                    // ── Quick actions grid ─────────────────────────────
+                    _SectionLabel('اختصارات سريعة'),
+                    const SizedBox(height: 12),
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        mainAxisSpacing: 12,
+                        crossAxisSpacing: 12,
+                        childAspectRatio: 1.05,
+                      ),
+                      itemCount: items.length,
+                      itemBuilder: (context, i) {
+                        final it = items[i];
+                        return _ActionCard(
+                          label: it.label,
+                          icon: it.icon,
+                          onTap: () => context.push(it.route),
+                        );
+                      },
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // ── Placeholder sections ───────────────────────────
+                    _buildPlaceholderSection(
+                        context, 'أفضل الخدمات مبيعاً', Icons.star_border_outlined),
+                    const SizedBox(height: 16),
+                    _buildPlaceholderSection(
+                        context, 'أحدث الطلبات', Icons.shopping_bag_outlined),
+                    const SizedBox(height: 16),
+                    _buildPlaceholderSection(
+                        context, 'أحدث التقييمات', Icons.rate_review_outlined),
+                  ],
+                );
+              },
+            ),
           ),
         ],
-      ),
-      body: Consumer<SellerProvider>(
-        builder: (context, seller, _) {
-          final stats = seller.stats;
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              SoftCard(
-                padding: const EdgeInsets.all(14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'ملخص سريع',
-                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
-                    ),
-                    const SizedBox(height: 10),
-                    if (seller.isLoadingDashboard && stats == null)
-                      const Center(child: Padding(
-                        padding: EdgeInsets.all(10),
-                        child: CircularProgressIndicator(),
-                      ))
-                    else if (seller.dashboardError != null && stats == null)
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            seller.dashboardError!,
-                            style: const TextStyle(
-                              color: AppColors.error,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          FilledButton(
-                            onPressed: () => seller.fetchDashboardStats(),
-                            child: const Text('جرّب تاني'),
-                          ),
-                        ],
-                      )
-                    else if (stats != null)
-                      Wrap(
-                        spacing: 10,
-                        runSpacing: 10,
-                        children: [
-                          _StatChip(label: 'الخدمات', value: stats.totalServices.toString()),
-                          _StatChip(label: 'طلبات شغالة', value: stats.activeOrders.toString()),
-                          _StatChip(label: 'طلبات جديدة', value: stats.pendingRequests.toString()),
-                          _StatChip(label: 'طلبات مكتملة', value: stats.completedOrders.toString()),
-                          _StatChip(label: 'الإيراد', value: '${stats.totalRevenue.toStringAsFixed(2)}ج'),
-                          _StatChip(label: 'إيراد متوقع', value: '${stats.expectedRevenue.toStringAsFixed(2)}ج'),
-                          _StatChip(label: 'في الانتظار', value: '${stats.onWaitingRevenue.toStringAsFixed(2)}ج'),
-                          _StatChip(label: 'التقييم', value: stats.averageRating.toStringAsFixed(1)),
-                        ],
-                      )
-                    else
-                      const Text(
-                        'مفيش بيانات دلوقتي.',
-                        style: TextStyle(color: AppColors.textSecondary),
-                      ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 14),
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 1.05,
-                ),
-                itemCount: items.length,
-                itemBuilder: (context, i) {
-                  final it = items[i];
-                  return SoftCard(
-                    onTap: () => context.push(it.route),
-                    padding: const EdgeInsets.all(14),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(it.icon, size: 36, color: AppColors.primary),
-                        const SizedBox(height: 10),
-                        Text(
-                          it.label,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 14,
-                            height: 1.2,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 24),
-              _buildPlaceholderSection(context, 'أفضل الخدمات مبيعاً', Icons.star_border_outlined),
-              const SizedBox(height: 16),
-              _buildPlaceholderSection(context, 'أحدث الطلبات', Icons.shopping_bag_outlined),
-              const SizedBox(height: 16),
-              _buildPlaceholderSection(context, 'أحدث التقييمات', Icons.rate_review_outlined),
-            ],
-          );
-        },
       ),
     );
   }
 
-  Widget _buildPlaceholderSection(BuildContext context, String title, IconData icon) {
+  Widget _buildPlaceholderSection(
+      BuildContext context, String title, IconData icon) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -195,16 +178,30 @@ class _SellerHubViewState extends State<SellerHubView> {
           ],
         ),
         const SizedBox(height: 12),
-        SoftCard(
+        Container(
           padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
           child: Center(
             child: Column(
               children: [
-                Icon(Icons.hourglass_empty, color: AppColors.textHint, size: 32),
+                Icon(Icons.hourglass_empty,
+                    color: AppColors.textHint, size: 32),
                 const SizedBox(height: 8),
                 Text(
                   'لم يتم الإضافة بعد',
-                  style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w600),
                 ),
               ],
             ),
@@ -215,49 +212,278 @@ class _SellerHubViewState extends State<SellerHubView> {
   }
 }
 
-class _HubItem {
-  _HubItem(this.label, this.icon, this.route);
-  final String label;
-  final IconData icon;
-  final String route;
-}
+// ── Gradient Header ───────────────────────────────────────────────────────────
 
-class _StatChip extends StatelessWidget {
-  const _StatChip({required this.label, required this.value});
-  final String label;
-  final String value;
+class _GradientHeader extends StatelessWidget {
+  const _GradientHeader({required this.isDark});
+  final bool isDark;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+          colors: isDark
+              ? [const Color(0xFF2A1A14), const Color(0xFF1A1A1A)]
+              : [AppColors.primary, AppColors.secondary],
+        ),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+          child: Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'لوحة البائع',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              // Theme toggle
+              Consumer<ThemeProvider>(
+                builder: (context, tp, _) => _GlassButton(
+                  icon: tp.isDarkMode
+                      ? Icons.light_mode_rounded
+                      : Icons.dark_mode_rounded,
+                  onTap: tp.toggleTheme,
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Logout
+              _GlassButton(
+                icon: Icons.logout_rounded,
+                onTap: () {
+                  context.read<AuthProvider>().logout();
+                  context.go('/signin');
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Glass Button ──────────────────────────────────────────────────────────────
+
+class _GlassButton extends StatelessWidget {
+  const _GlassButton({required this.icon, required this.onTap});
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.2),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(icon, color: Colors.white, size: 20),
+      ),
+    );
+  }
+}
+
+// ── Section Label ─────────────────────────────────────────────────────────────
+
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: const TextStyle(
+        fontWeight: FontWeight.w900,
+        fontSize: 16,
+      ),
+    );
+  }
+}
+
+// ── Stat Card ─────────────────────────────────────────────────────────────────
+
+class _StatCard extends StatelessWidget {
+  const _StatCard({
+    required this.icon,
+    required this.value,
+    required this.label,
+  });
+  final IconData icon;
+  final String value;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Theme.of(context).dividerColor),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: Theme.of(context).textTheme.bodySmall?.color ?? AppColors.textSecondary,
-              fontWeight: FontWeight.w700,
-              fontSize: 12,
-            ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
-          const SizedBox(width: 8),
-          Text(
-            value,
-            style: TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 13,
-              color: Theme.of(context).textTheme.bodyLarge?.color ?? AppColors.heading,
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
             ),
+            child: Icon(icon, size: 20, color: AppColors.primary),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
+}
+
+// ── Action Card ───────────────────────────────────────────────────────────────
+
+class _ActionCard extends StatelessWidget {
+  const _ActionCard({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+  });
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topRight,
+                  end: Alignment.bottomLeft,
+                  colors: [AppColors.primary, AppColors.secondary],
+                ),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(icon, size: 26, color: Colors.white),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+                height: 1.2,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Error Card ────────────────────────────────────────────────────────────────
+
+class _ErrorCard extends StatelessWidget {
+  const _ErrorCard({required this.message, required this.onRetry});
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.error.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            message,
+            style: const TextStyle(
+              color: AppColors.error,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 10),
+          FilledButton(
+            onPressed: onRetry,
+            child: const Text('جرّب تاني'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Hub Item ──────────────────────────────────────────────────────────────────
+
+class _HubItem {
+  _HubItem(this.label, this.icon, this.route);
+  final String label;
+  final IconData icon;
+  final String route;
 }

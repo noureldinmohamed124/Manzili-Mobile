@@ -5,6 +5,7 @@ import 'package:manzili_mobile/core/theme/app_colors.dart';
 import 'package:manzili_mobile/presentation/widgets/common/service_cover_image.dart';
 import 'package:manzili_mobile/presentation/widgets/common/soft_card.dart';
 import 'package:manzili_mobile/presentation/providers/seller_provider.dart';
+import 'package:manzili_mobile/presentation/widgets/common/gradient_app_bar.dart';
 import 'package:provider/provider.dart';
 
 class SellerOrderDetailsView extends StatefulWidget {
@@ -243,10 +244,13 @@ class _SellerOrderDetailsViewState extends State<SellerOrderDetailsView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('تفاصيل طلب #${widget.orderId}'),
-      ),
-      body: Consumer<SellerProvider>(
+      body: Column(
+        children: [
+          GradientAppBar(
+            title: 'تفاصيل طلب #${widget.orderId}',
+          ),
+          Expanded(
+            child: Consumer<SellerProvider>(
         builder: (context, provider, _) {
           if (provider.isLoadingOrderDetails && provider.currentOrder == null) {
             return const Center(child: CircularProgressIndicator());
@@ -676,6 +680,9 @@ class _SellerOrderDetailsViewState extends State<SellerOrderDetailsView> {
             ],
           );
         },
+      ),
+          ),
+        ],
       ),
     );
   }

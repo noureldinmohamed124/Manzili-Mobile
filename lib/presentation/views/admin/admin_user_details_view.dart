@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:manzili_mobile/core/theme/app_colors.dart';
 import 'package:manzili_mobile/presentation/widgets/common/soft_card.dart';
 import 'package:manzili_mobile/presentation/providers/admin_provider.dart';
+import 'package:manzili_mobile/presentation/widgets/common/gradient_app_bar.dart';
 import 'package:provider/provider.dart';
 
 class AdminUserDetailsView extends StatefulWidget {
@@ -159,10 +160,11 @@ class _AdminUserDetailsViewState extends State<AdminUserDetailsView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('بيانات المستخدم #${widget.userId}'),
-      ),
-      body: Consumer<AdminProvider>(
+      body: Column(
+        children: [
+          GradientAppBar(title: 'بيانات المستخدم #${widget.userId}'),
+          Expanded(
+            child: Consumer<AdminProvider>(
         builder: (context, provider, _) {
           if (provider.isLoading) {
             return const Center(child: CircularProgressIndicator());
@@ -376,6 +378,9 @@ class _AdminUserDetailsViewState extends State<AdminUserDetailsView> {
             ],
           );
         },
+      ),
+          ),
+        ],
       ),
     );
   }

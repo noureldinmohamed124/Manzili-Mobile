@@ -1,0 +1,22 @@
+{
+  "enabled": true,
+  "name": "Manzili API Postman Testing",
+  "description": "Monitors API source code and configuration changes in the Manzili Flutter project and automatically runs Postman collection tests to validate API functionality",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "lib/core/network/*.dart",
+      "lib/data/repositories/*.dart",
+      "lib/data/models/*.dart",
+      "lib/presentation/providers/*.dart",
+      "lib/presentation/views/**/*.dart",
+      "pubspec.yaml",
+      ".postman.json"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "API source code or configuration has been modified. Please retrieve the contents of the .postman.json file. If the file does not exist or is empty, create a Postman collection for the API. If it exists, get the collection ID and run the collection, showing me the results and propose fixes for any errors found."
+  }
+}

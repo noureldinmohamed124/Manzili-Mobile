@@ -1,0 +1,6 @@
+{
+  "workspaceId": null,
+  "collectionId": null,
+  "environmentId": null,
+  "note": "Populate workspaceId, collectionId, and environmentId after importing manzili_api.postman_collection.json into Postman."
+}

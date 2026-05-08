@@ -8,6 +8,7 @@ import 'package:manzili_mobile/data/models/seller_models.dart';
 import 'package:manzili_mobile/presentation/providers/seller_provider.dart';
 import 'package:manzili_mobile/presentation/providers/services_provider.dart';
 import 'package:manzili_mobile/presentation/widgets/common/service_cover_image.dart';
+import 'package:manzili_mobile/presentation/widgets/common/gradient_app_bar.dart';
 import 'package:provider/provider.dart';
 
 // ── Editable option group model ───────────────────────────────────────────────
@@ -289,15 +290,6 @@ class _SellerEditServiceViewState extends State<SellerEditServiceView> {
     return Directionality(
       textDirection: Directionality.of(context),
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text(AppStrings.editServiceTitle),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.delete_outline, color: AppColors.error),
-              onPressed: _confirmDelete,
-            ),
-          ],
-        ),
         bottomNavigationBar: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -333,7 +325,19 @@ class _SellerEditServiceViewState extends State<SellerEditServiceView> {
             ),
           ),
         ),
-        body: Consumer<SellerProvider>(
+        body: Column(
+          children: [
+            GradientAppBar(
+              title: AppStrings.editServiceTitle,
+              actions: [
+                GradientAppBarAction(
+                  icon: Icons.delete_outline,
+                  onTap: _confirmDelete,
+                ),
+              ],
+            ),
+            Expanded(
+              child: Consumer<SellerProvider>(
           builder: (context, seller, _) {
             if (seller.isLoadingDetails && seller.currentService == null) {
               return const Center(child: CircularProgressIndicator());
@@ -710,6 +714,9 @@ class _SellerEditServiceViewState extends State<SellerEditServiceView> {
               ],
             );
           },
+        ),
+            ),
+          ],
         ),
       ),
     );

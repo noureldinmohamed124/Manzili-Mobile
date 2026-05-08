@@ -6,6 +6,7 @@ import 'package:manzili_mobile/data/models/seller_models.dart';
 import 'package:manzili_mobile/presentation/widgets/common/soft_card.dart';
 import 'package:manzili_mobile/presentation/providers/seller_provider.dart';
 import 'package:manzili_mobile/presentation/widgets/common/service_cover_image.dart';
+import 'package:manzili_mobile/presentation/widgets/common/gradient_app_bar.dart';
 import 'package:provider/provider.dart';
 
 class SellerServicesListView extends StatefulWidget {
@@ -104,17 +105,17 @@ class _SellerServicesListViewState extends State<SellerServicesListView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('خدماتي'),
-        actions: [
-          IconButton(
-            onPressed: () => context.push('/seller/create-service'),
-            icon: const Icon(Icons.add),
-          ),
-        ],
-      ),
       body: Column(
         children: [
+          GradientAppBar(
+            title: 'خدماتي',
+            actions: [
+              GradientAppBarAction(
+                icon: Icons.add,
+                onTap: () => context.push('/seller/create-service'),
+              ),
+            ],
+          ),
           // Status filter chips — client-side filtering
           SizedBox(
             height: 48,

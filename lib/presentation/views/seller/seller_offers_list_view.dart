@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:manzili_mobile/core/strings/app_strings.dart';
 import 'package:manzili_mobile/core/theme/app_colors.dart';
 import 'package:manzili_mobile/presentation/widgets/common/soft_card.dart';
+import 'package:manzili_mobile/presentation/widgets/common/gradient_app_bar.dart';
 
 class SellerOffersListView extends StatelessWidget {
   const SellerOffersListView({super.key});
@@ -15,76 +16,73 @@ class SellerOffersListView extends StatelessWidget {
     ];
 
     return Scaffold(
-
-      appBar: AppBar(
-        title: const Text(AppStrings.offersTitle),
-        actions: [
-          IconButton(
-            onPressed: () => context.push('/seller/offers/new'),
-            icon: const Icon(Icons.add),
+      body: Column(
+        children: [
+          GradientAppBar(
+            title: AppStrings.offersTitle,
+            actions: [
+              GradientAppBarAction(
+                icon: Icons.add,
+                onTap: () => context.push('/seller/offers/new'),
+              ),
+            ],
+          ),
+          Expanded(
+            child: ListView.separated(
+              padding: const EdgeInsets.all(16),
+              itemCount: offers.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 10),
+              itemBuilder: (context, i) {
+                final o = offers[i];
+                return SoftCard(
+                  onTap: () => context.push('/seller/offers/new'),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(o.title,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w800, fontSize: 16)),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: o.active
+                                  ? AppColors.statusActive
+                                      .withValues(alpha: 0.12)
+                                  : AppColors.statusInactive
+                                      .withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              o.status,
+                              style: TextStyle(
+                                color: o.active
+                                    ? AppColors.statusActive
+                                    : AppColors.statusInactive,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text('الخصم: ${o.discount} · ${o.service}'),
+                      const SizedBox(height: 4),
+                      Text('التاريخ: ${o.date}',
+                          style: const TextStyle(
+                              color: AppColors.textSecondary, fontSize: 13)),
+                    ],
+                  ),
+                );
+              },
+            ),
           ),
         ],
-      ),
-      body: ListView.separated(
-        padding: const EdgeInsets.all(16),
-        itemCount: offers.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 10),
-        itemBuilder: (context, i) {
-          final o = offers[i];
-          return SoftCard(
-            onTap: () => context.push('/seller/offers/new'),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        o.title,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: o.active
-                            ? AppColors.statusActive.withValues(alpha: 0.12)
-                            : AppColors.statusInactive.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        o.status,
-                        style: TextStyle(
-                          color: o.active
-                              ? AppColors.statusActive
-                              : AppColors.statusInactive,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text('الخصم: ${o.discount} · ${o.service}'),
-                const SizedBox(height: 4),
-                Text(
-                  'التاريخ: ${o.date}',
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
       ),
     );
   }
@@ -97,6 +95,5 @@ class _OfferUi {
   final String service;
   final String date;
   final String status;
-
   bool get active => status == 'نشط';
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:manzili_mobile/core/strings/app_strings.dart';
+import 'package:manzili_mobile/presentation/widgets/common/gradient_app_bar.dart';
 
 class SellerComposePostView extends StatefulWidget {
   const SellerComposePostView({super.key});
@@ -29,9 +30,74 @@ class _SellerComposePostViewState extends State<SellerComposePostView> {
     return Directionality(
       textDirection: Directionality.of(context),
       child: Scaffold(
-
-        appBar: AppBar(
-          title: const Text(AppStrings.composePostTitle),
+        body: Column(
+          children: [
+            const GradientAppBar(title: AppStrings.composePostTitle),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  TextField(
+                    controller: _title,
+                    decoration: const InputDecoration(
+                        labelText: AppStrings.fieldPostTitle),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _body,
+                    minLines: 4,
+                    maxLines: 10,
+                    decoration: const InputDecoration(
+                        labelText: AppStrings.fieldPostBody),
+                  ),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: () {},
+                    icon: const Icon(Icons.perm_media_outlined),
+                    label: const Text(AppStrings.fieldMedia),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _tags,
+                    decoration: const InputDecoration(
+                        labelText: AppStrings.fieldTags,
+                        hintText: '#حلويات #منزلي'),
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    initialValue: _visibility,
+                    decoration: const InputDecoration(
+                        labelText: AppStrings.fieldVisibility),
+                    items: const [
+                      DropdownMenuItem(value: 'الكل', child: Text('الكل')),
+                      DropdownMenuItem(
+                          value: 'المتابعين', child: Text('المتابعين')),
+                    ],
+                    onChanged: (v) =>
+                        setState(() => _visibility = v ?? _visibility),
+                  ),
+                  const SizedBox(height: 12),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text(AppStrings.fieldSchedule),
+                    subtitle: Text(_schedule?.toString() ??
+                        'اختياري — اضغط للجدولة'),
+                    trailing: const Icon(Icons.schedule),
+                    onTap: () async {
+                      final t = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime.now(),
+                        lastDate:
+                            DateTime.now().add(const Duration(days: 365)),
+                      );
+                      if (t != null) setState(() => _schedule = t);
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
         bottomNavigationBar: SafeArea(
           child: Padding(
@@ -44,8 +110,7 @@ class _SellerComposePostViewState extends State<SellerComposePostView> {
                   child: FilledButton(
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('تم النشر (محليًا)')),
-                      );
+                          const SnackBar(content: Text('تم النشر (محليًا)')));
                       context.pop();
                     },
                     child: const Text(AppStrings.ctaPublish),
@@ -57,8 +122,7 @@ class _SellerComposePostViewState extends State<SellerComposePostView> {
                   child: OutlinedButton(
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('اتحفظت كمسودة')),
-                      );
+                          const SnackBar(content: Text('اتحفظت كمسودة')));
                       context.pop();
                     },
                     child: const Text(AppStrings.ctaSaveDraft),
@@ -67,66 +131,6 @@ class _SellerComposePostViewState extends State<SellerComposePostView> {
               ],
             ),
           ),
-        ),
-        body: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            TextField(
-              controller: _title,
-              decoration: const InputDecoration(labelText: AppStrings.fieldPostTitle),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _body,
-              minLines: 4,
-              maxLines: 10,
-              decoration: const InputDecoration(
-                labelText: AppStrings.fieldPostBody,
-              ),
-            ),
-            const SizedBox(height: 12),
-            OutlinedButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.perm_media_outlined),
-              label: const Text(AppStrings.fieldMedia),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _tags,
-              decoration: const InputDecoration(
-                labelText: AppStrings.fieldTags,
-                hintText: '#حلويات #منزلي',
-              ),
-            ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              initialValue: _visibility,
-              decoration: const InputDecoration(labelText: AppStrings.fieldVisibility),
-              items: const [
-                DropdownMenuItem(value: 'الكل', child: Text('الكل')),
-                DropdownMenuItem(value: 'المتابعين', child: Text('المتابعين')),
-              ],
-              onChanged: (v) => setState(() => _visibility = v ?? _visibility),
-            ),
-            const SizedBox(height: 12),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text(AppStrings.fieldSchedule),
-              subtitle: Text(
-                _schedule?.toString() ?? 'اختياري — اضغط للجدولة',
-              ),
-              trailing: const Icon(Icons.schedule),
-              onTap: () async {
-                final t = await showDatePicker(
-                  context: context,
-                  initialDate: DateTime.now(),
-                  firstDate: DateTime.now(),
-                  lastDate: DateTime.now().add(const Duration(days: 365)),
-                );
-                if (t != null) setState(() => _schedule = t);
-              },
-            ),
-          ],
         ),
       ),
     );

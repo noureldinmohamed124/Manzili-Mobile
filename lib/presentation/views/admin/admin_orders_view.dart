@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:manzili_mobile/core/theme/app_colors.dart';
 import 'package:manzili_mobile/presentation/widgets/common/soft_card.dart';
 import 'package:manzili_mobile/presentation/providers/admin_provider.dart';
+import 'package:manzili_mobile/presentation/widgets/common/gradient_app_bar.dart';
 import 'package:provider/provider.dart';
 
 class AdminOrdersView extends StatefulWidget {
@@ -79,11 +80,9 @@ class _AdminOrdersViewState extends State<AdminOrdersView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('إدارة الطلبات'),
-      ),
       body: Column(
         children: [
+          const GradientAppBar(title: 'إدارة الطلبات'),
           // ── Status filter chips ──────────────────────────────────
           Container(
             color: Theme.of(context).colorScheme.surface,

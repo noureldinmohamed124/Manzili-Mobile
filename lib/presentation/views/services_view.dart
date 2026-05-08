@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -22,10 +23,12 @@ class _ServicesViewState extends State<ServicesView> {
   String _selectedSortOption = 'الافتراضي';
   String _searchQuery = '';
   final _searchController = TextEditingController();
+  Timer? _debounce;
 
   @override
   void initState() {
     super.initState();
+    _searchController.addListener(_onSearchChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final q = GoRouter.of(context).state.uri.queryParameters['q'] ?? '';
       final catId = GoRouter.of(context).state.uri.queryParameters['categoryId'];
@@ -40,8 +43,20 @@ class _ServicesViewState extends State<ServicesView> {
     });
   }
 
+  void _onSearchChanged() {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 350), () {
+      final q = _searchController.text.trim();
+      if (q == _searchQuery) return;
+      setState(() => _searchQuery = q);
+      _fetchData();
+    });
+  }
+
   @override
   void dispose() {
+    _debounce?.cancel();
+    _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
     super.dispose();
   }
@@ -142,10 +157,7 @@ class _ServicesViewState extends State<ServicesView> {
                         child: TextField(
                           controller: _searchController,
                           textInputAction: TextInputAction.search,
-                          onSubmitted: (v) {
-                            setState(() => _searchQuery = v.trim());
-                            _fetchData();
-                          },
+                          // Live search via _onSearchChanged listener (350ms debounce)
                           decoration: InputDecoration(
                             hintText: AppStrings.servicesSearchFieldHint,
                             hintStyle: const TextStyle(

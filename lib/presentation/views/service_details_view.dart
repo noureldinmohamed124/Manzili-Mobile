@@ -13,7 +13,6 @@ import '../../core/strings/app_strings.dart';
 import '../../core/theme/app_colors.dart';
 import '../widgets/common/service_cover_image.dart';
 import '../../core/utils/responsive_helper.dart';
-import '../../core/widgets/responsive_max_width.dart';
 import '../widgets/home/food_card.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
@@ -217,192 +216,113 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
   Widget build(BuildContext context) {
     return Directionality(
       textDirection: Directionality.of(context),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final headerHeight = MediaQuery.of(context).padding.top + ResponsiveHelper.responsiveValueCompat(context, mobile: 60.0, tablet: 64.0);
-          
-          return Scaffold(
-            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-            body: Stack(
-              children: [
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: headerHeight,
-                  child: _buildHeader(),
-                ),
-                Positioned(
-                  top: headerHeight,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: Consumer<ServicesProvider>(
-                    builder: (context, servicesProvider, _) {
-                      // Use detailed service if available, otherwise fall back to list
-                      ServiceItem? service = servicesProvider.currentServiceDetails;
-                      if (service == null || service.id != widget.serviceId) {
-                        for (final s in servicesProvider.services) {
-                          if (s.id == widget.serviceId) {
-                            service = s;
-                            break;
-                          }
-                        }
-                      }
+      child: Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        body: Consumer<ServicesProvider>(
+          builder: (context, servicesProvider, _) {
+            ServiceItem? service = servicesProvider.currentServiceDetails;
+            if (service == null || service.id != widget.serviceId) {
+              for (final s in servicesProvider.services) {
+                if (s.id == widget.serviceId) { service = s; break; }
+              }
+            }
 
-                      if (servicesProvider.isLoading && service == null) {
-                        return const Center(
-                          child: CircularProgressIndicator(),
-                        );
-                      }
+            if (servicesProvider.isLoading && service == null) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-                      if (servicesProvider.errorMessage != null &&
-                          service == null) {
-                        return Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 24),
-                                child: Text(
-                                  servicesProvider.errorMessage!,
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.red,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              ElevatedButton(
-                                onPressed: () {
-                                  servicesProvider
-                                      .getServiceById(widget.serviceId);
-                                },
-                                child: const Text('إعادة المحاولة'),
-                              ),
-                            ],
-                          ),
-                        );
-                      }
-
-                      if (service == null) {
-                        return const Center(
-                          child: Text(
-                            'لم يتم العثور على هذه الخدمة',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        );
-                      }
-
-                      return ResponsiveMaxWidth(
-                        child: SingleChildScrollView(
-                          padding: EdgeInsets.only(
-                            bottom: MediaQuery.of(context).viewInsets.bottom + MediaQuery.of(context).padding.bottom + ResponsiveHelper.responsiveSpacingCompat(context, mobile: 100),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                            _buildProductImage(service),
-                            _buildProductInfo(service),
-                            _buildOptionGroups(service),
-                            _buildQuantitySelector(),
-                            _buildSpecialInstructions(),
-                            _buildSellerInfo(service),
-                            _buildYouMightAlsoLike(servicesProvider),
-                          ],
+            if (servicesProvider.errorMessage != null && service == null) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: AppColors.error.withValues(alpha: 0.08),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.wifi_off_rounded,
+                            size: 48, color: AppColors.error),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        servicesProvider.errorMessage!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textSecondary,
                         ),
                       ),
-                    );
-                    },
+                      const SizedBox(height: 20),
+                      FilledButton.icon(
+                        onPressed: () =>
+                            servicesProvider.getServiceById(widget.serviceId),
+                        icon: const Icon(Icons.refresh_rounded, size: 18),
+                        label: const Text('إعادة المحاولة'),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+
+            if (service == null) {
+              return const Center(
+                child: Text(
+                  'لم يتم العثور على هذه الخدمة',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              );
+            }
+
+            return Stack(
+              children: [
+                SingleChildScrollView(
+                  padding: EdgeInsets.only(
+                    bottom: MediaQuery.of(context).padding.bottom + 120,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Image with overlaid back/cart buttons
+                      _buildProductImageWithOverlay(service),
+                      const SizedBox(height: 4),
+                      _buildProductInfo(service),
+                      _buildOptionGroups(service),
+                      _buildQuantitySelector(),
+                      _buildSpecialInstructions(),
+                      _buildSellerInfo(service),
+                      _buildYouMightAlsoLike(servicesProvider),
+                    ],
                   ),
                 ),
                 _buildBottomBar(),
               ],
-            ),
-          );
-      },
-    ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Container(
-      padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + ResponsiveHelper.responsiveSpacingCompat(context, mobile: 8),
-        left: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16),
-        right: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16),
-        bottom: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12),
-      ),
-      color: Theme.of(context).colorScheme.surface,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: ResponsiveHelper.responsiveValueCompat(context, mobile: 40.0, tablet: 44.0),
-                height: ResponsiveHelper.responsiveValueCompat(context, mobile: 40.0, tablet: 44.0),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: IconButton(
-                  padding: EdgeInsets.zero,
-                  icon: const Icon(Icons.share_outlined),
-                  color: AppColors.textPrimary,
-                  onPressed: () {},
-                ),
-              ),
-              SizedBox(width: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 8)),
-              Container(
-                width: ResponsiveHelper.responsiveValueCompat(context, mobile: 40.0, tablet: 44.0),
-                height: ResponsiveHelper.responsiveValueCompat(context, mobile: 40.0, tablet: 44.0),
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: IconButton(
-                  padding: EdgeInsets.zero,
-                  icon: const Icon(Icons.shopping_cart_outlined),
-                  color: Theme.of(context).colorScheme.surface,
-                  onPressed: () => context.push('/cart'),
-                ),
-              ),
-            ],
-          ),
-          IconButton(
-            padding: EdgeInsets.zero,
-            icon: const Icon(Icons.arrow_forward_ios, size: 20),
-            color: AppColors.textPrimary,
-            onPressed: () => context.pop(),
-          ),
-        ],
+            );
+          },
+        ),
       ),
     );
   }
 
-  Widget _buildProductImage(ServiceItem service) {
+  /// Image section with floating back/cart/share buttons overlaid on top.
+  Widget _buildProductImageWithOverlay(ServiceItem service) {
     final imageHeight = ResponsiveHelper.scaleValue(
-      40,
+      45,
       MediaQuery.of(context).size.width,
-      min: 250.0,
-      max: 400.0,
+      min: 260.0,
+      max: 420.0,
     );
-    
+    final topPad = MediaQuery.of(context).padding.top;
+
     final rawImagePaths = <String>[];
     if (service.images != null && service.images!.isNotEmpty) {
       for (final img in service.images!) {
@@ -412,57 +332,133 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
       rawImagePaths.add(service.imageUrl);
     }
 
-    if (_currentImageIndex >= rawImagePaths.length && rawImagePaths.isNotEmpty) {
+    if (_currentImageIndex >= rawImagePaths.length &&
+        rawImagePaths.isNotEmpty) {
       _currentImageIndex = 0;
     }
 
-    return Stack(
-      children: [
-        SizedBox(
-          height: imageHeight,
-          child: PageView.builder(
-            controller: _pageController,
-            onPageChanged: (index) => setState(() => _currentImageIndex = index),
-            itemCount: rawImagePaths.isEmpty ? 1 : rawImagePaths.length,
-            itemBuilder: (context, index) {
-              return ServiceCoverImage(
-                imageUrlRaw: rawImagePaths.isEmpty ? null : rawImagePaths[index],
-                width: double.infinity,
-                height: imageHeight,
-                fit: BoxFit.contain,
-              );
-            },
+    return SizedBox(
+      height: imageHeight + topPad,
+      child: Stack(
+        children: [
+          // Full-bleed image
+          Positioned.fill(
+            child: rawImagePaths.isEmpty
+                ? Container(
+                    color: AppColors.surfaceMuted,
+                    child: const Icon(Icons.image_not_supported_outlined,
+                        size: 64, color: AppColors.textHint),
+                  )
+                : PageView.builder(
+                    controller: _pageController,
+                    onPageChanged: (i) =>
+                        setState(() => _currentImageIndex = i),
+                    itemCount: rawImagePaths.length,
+                    itemBuilder: (context, i) => ServiceCoverImage(
+                      imageUrlRaw: rawImagePaths[i],
+                      width: double.infinity,
+                      height: imageHeight + topPad,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
           ),
-        ),
-        if (rawImagePaths.length > 1)
+
+          // Gradient overlay at top for button legibility
           Positioned(
-            bottom: 16,
+            top: 0,
             left: 0,
             right: 0,
-            child: Center(
-              child: AnimatedSmoothIndicator(
-                activeIndex: _currentImageIndex,
-                count: rawImagePaths.length,
-                effect: ExpandingDotsEffect(
-                  activeDotColor: Colors.white,
-                  dotColor: Colors.white.withValues(alpha: 0.5),
-                  dotHeight: 8,
-                  dotWidth: 8,
-                  expansionFactor: 3,
+            height: topPad + 70,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withValues(alpha: 0.45),
+                    Colors.transparent,
+                  ],
                 ),
-                onDotClicked: (index) {
-                  _pageController.animateToPage(
-                    index,
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                  );
-                },
               ),
             ),
           ),
-      ],
+
+          // Gradient overlay at bottom for price legibility
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: 80,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [
+                    Colors.black.withValues(alpha: 0.35),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // Top buttons
+          Positioned(
+            top: topPad + 8,
+            left: 16,
+            right: 16,
+            child: Row(
+              children: [
+                _OverlayButton(
+                  icon: Icons.arrow_forward_rounded,
+                  onTap: () => context.pop(),
+                ),
+                const Spacer(),
+                _OverlayButton(
+                  icon: Icons.share_outlined,
+                  onTap: () {},
+                ),
+                const SizedBox(width: 8),
+                _OverlayButton(
+                  icon: Icons.shopping_cart_outlined,
+                  onTap: () => context.push('/cart'),
+                  filled: true,
+                ),
+              ],
+            ),
+          ),
+
+          // Page indicator
+          if (rawImagePaths.length > 1)
+            Positioned(
+              bottom: 16,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: AnimatedSmoothIndicator(
+                  activeIndex: _currentImageIndex,
+                  count: rawImagePaths.length,
+                  effect: ExpandingDotsEffect(
+                    activeDotColor: Colors.white,
+                    dotColor: Colors.white.withValues(alpha: 0.5),
+                    dotHeight: 7,
+                    dotWidth: 7,
+                    expansionFactor: 3,
+                  ),
+                  onDotClicked: (i) => _pageController.animateToPage(
+                    i,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
+
 
   Widget _buildProductInfo(ServiceItem service) {
     return Padding(
@@ -1060,99 +1056,152 @@ class _ServiceDetailsViewState extends State<ServiceDetailsView> {
       left: 0,
       right: 0,
       child: Container(
-        padding: EdgeInsets.only(
-          left: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16),
-          right: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16),
-          top: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16),
-          bottom: MediaQuery.of(context).padding.bottom + ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16),
-        ),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
+              blurRadius: 16,
+              offset: const Offset(0, -3),
             ),
           ],
         ),
+        padding: EdgeInsets.only(
+          left: 16,
+          right: 16,
+          top: 12,
+          bottom: MediaQuery.of(context).padding.bottom + 12,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
               AppStrings.serviceRequestHelper,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: ResponsiveHelper.responsiveFontSizeCompat(context, mobile: 12),
-                color: AppColors.textSecondary,
-                height: 1.35,
+              style: const TextStyle(
+                fontSize: 11,
+                color: AppColors.textHint,
+                height: 1.3,
               ),
             ),
-            SizedBox(height: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 10)),
+            const SizedBox(height: 10),
             Row(
               children: [
                 // Add to cart
                 Expanded(
-                  child: ElevatedButton(
+                  child: FilledButton(
                     onPressed: _submittingOrder ? null : _addToCart,
-                    style: ElevatedButton.styleFrom(
+                    style: FilledButton.styleFrom(
                       backgroundColor: AppColors.primary,
-                      padding: EdgeInsets.symmetric(vertical: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 14)),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(14),
                       ),
                     ),
                     child: const Text(
                       'أضف للسلة',
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white),
+                      style: TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.w700),
                     ),
                   ),
                 ),
-                SizedBox(width: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 10)),
+                const SizedBox(width: 10),
                 // Buy now
                 Expanded(
-                  child: ElevatedButton(
+                  child: FilledButton(
                     onPressed: _submittingOrder ? null : _buyNow,
-                    style: ElevatedButton.styleFrom(
+                    style: FilledButton.styleFrom(
                       backgroundColor: AppColors.secondary,
-                      padding: EdgeInsets.symmetric(vertical: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 14)),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(14),
                       ),
                     ),
                     child: _submittingOrder
-                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: Colors.white),
+                          )
                         : const Text(
                             'اشتري دلوقتي',
-                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white),
+                            style: TextStyle(
+                                fontSize: 15, fontWeight: FontWeight.w700),
                           ),
                   ),
                 ),
-                SizedBox(width: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 8)),
+                const SizedBox(width: 8),
                 // Favourite
-                IconButton(
-                  onPressed: () {
+                GestureDetector(
+                  onTap: () {
                     final fav = context.read<FavouritesProvider>();
                     final sp = context.read<ServicesProvider>();
                     final s = sp.currentServiceDetails;
                     if (s != null && s.id == widget.serviceId) {
                       fav.toggle(s);
-                      setState(() => _isFavorite = fav.isFavourite(widget.serviceId));
+                      setState(() =>
+                          _isFavorite = fav.isFavourite(widget.serviceId));
                     } else {
                       setState(() => _isFavorite = !_isFavorite);
                     }
                   },
-                  icon: Icon(
-                    _isFavorite ? Icons.favorite : Icons.favorite_border,
-                    color: _isFavorite ? Colors.red : AppColors.textSecondary,
-                    size: 28,
+                  child: Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: _isFavorite
+                          ? Colors.red.withValues(alpha: 0.1)
+                          : AppColors.surfaceMuted,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: _isFavorite
+                            ? Colors.red.withValues(alpha: 0.3)
+                            : AppColors.border,
+                      ),
+                    ),
+                    child: Icon(
+                      _isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                      color: _isFavorite ? Colors.red : AppColors.textSecondary,
+                      size: 24,
+                    ),
                   ),
                 ),
               ],
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ── Overlay button (used on top of the hero image) ────────────────────────────
+
+class _OverlayButton extends StatelessWidget {
+  const _OverlayButton({
+    required this.icon,
+    required this.onTap,
+    this.filled = false,
+  });
+  final IconData icon;
+  final VoidCallback onTap;
+  final bool filled;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: filled
+              ? AppColors.primary
+              : Colors.black.withValues(alpha: 0.35),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(icon, size: 20, color: Colors.white),
       ),
     );
   }

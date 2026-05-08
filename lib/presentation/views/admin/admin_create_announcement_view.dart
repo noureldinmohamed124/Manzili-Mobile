@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:manzili_mobile/presentation/widgets/common/soft_card.dart';
+import 'package:manzili_mobile/presentation/widgets/common/gradient_app_bar.dart';
 
 class AdminCreateAnnouncementView extends StatelessWidget {
   const AdminCreateAnnouncementView({super.key});
@@ -8,56 +9,54 @@ class AdminCreateAnnouncementView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
-      appBar: AppBar(
-        title: const Text('إعلان جديد'),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
+      body: Column(
         children: [
-          SoftCard(
-            child: Padding(
+          const GradientAppBar(title: 'إعلان جديد'),
+          Expanded(
+            child: ListView(
               padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('عنوان الإعلان', style: TextStyle(fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 8),
-                  const TextField(
-                    decoration: InputDecoration(border: OutlineInputBorder()),
+              children: [
+                SoftCard(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('عنوان الإعلان', style: TextStyle(fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 8),
+                        const TextField(decoration: InputDecoration(border: OutlineInputBorder())),
+                        const SizedBox(height: 16),
+                        const Text('محتوى الإعلان', style: TextStyle(fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 8),
+                        const TextField(maxLines: 4, decoration: InputDecoration(border: OutlineInputBorder())),
+                        const SizedBox(height: 16),
+                        const Text('الجمهور المستهدف', style: TextStyle(fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 8),
+                        DropdownButtonFormField<String>(
+                          decoration: const InputDecoration(border: OutlineInputBorder()),
+                          initialValue: 'الجميع',
+                          items: const [
+                            DropdownMenuItem(value: 'الجميع', child: Text('الجميع (عملاء، بائعين، مناديب)')),
+                            DropdownMenuItem(value: 'العملاء', child: Text('العملاء فقط')),
+                            DropdownMenuItem(value: 'البائعين', child: Text('البائعين فقط')),
+                            DropdownMenuItem(value: 'المناديب', child: Text('المناديب فقط')),
+                          ],
+                          onChanged: (val) {},
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 16),
-                  const Text('محتوى الإعلان', style: TextStyle(fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 8),
-                  const TextField(
-                    maxLines: 4,
-                    decoration: InputDecoration(border: OutlineInputBorder()),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text('الجمهور المستهدف', style: TextStyle(fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<String>(
-                    decoration: const InputDecoration(border: OutlineInputBorder()),
-                    initialValue: 'الجميع',
-                    items: const [
-                      DropdownMenuItem(value: 'الجميع', child: Text('الجميع (عملاء، بائعين، مناديب)')),
-                      DropdownMenuItem(value: 'العملاء', child: Text('العملاء فقط')),
-                      DropdownMenuItem(value: 'البائعين', child: Text('البائعين فقط')),
-                      DropdownMenuItem(value: 'المناديب', child: Text('المناديب فقط')),
-                    ],
-                    onChanged: (val) {},
-                  ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 32),
+                FilledButton(
+                  onPressed: () {
+                    // TODO: API Call to create announcement
+                    context.pop();
+                  },
+                  child: const Text('إرسال التنبيه'),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 32),
-          FilledButton(
-            onPressed: () {
-              // TODO: API Call to create announcement
-              context.pop();
-            },
-            child: const Text('إرسال التنبيه'),
           ),
         ],
       ),

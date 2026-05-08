@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:manzili_mobile/core/theme/app_colors.dart';
 import 'package:manzili_mobile/presentation/widgets/common/soft_card.dart';
+import 'package:manzili_mobile/presentation/widgets/common/gradient_app_bar.dart';
 
 class SellerDiscountEditorView extends StatefulWidget {
   const SellerDiscountEditorView({super.key});
 
   @override
-  State<SellerDiscountEditorView> createState() => _SellerDiscountEditorViewState();
+  State<SellerDiscountEditorView> createState() =>
+      _SellerDiscountEditorViewState();
 }
 
 class _SellerDiscountEditorViewState extends State<SellerDiscountEditorView> {
@@ -24,79 +27,130 @@ class _SellerDiscountEditorViewState extends State<SellerDiscountEditorView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
-      appBar: AppBar(
-        title: const Text('إضافة خصم جديد'),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
+      body: Column(
         children: [
-          SoftCard(
-            child: Padding(
+          const GradientAppBar(title: 'إضافة خصم جديد'),
+          Expanded(
+            child: ListView(
               padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('كود الخصم', style: TextStyle(fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _codeController,
-                    textCapitalization: TextCapitalization.characters,
-                    decoration: const InputDecoration(
-                      hintText: 'مثال: SUMMER20',
-                      border: OutlineInputBorder(),
+              children: [
+                SoftCard(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('كود الخصم',
+                            style: TextStyle(fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: _codeController,
+                          textCapitalization: TextCapitalization.characters,
+                          decoration: const InputDecoration(
+                            hintText: 'مثال: SUMMER20',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        const Text('نوع الخصم',
+                            style: TextStyle(fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () =>
+                                    setState(() => _isPercentage = true),
+                                child: Container(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: _isPercentage
+                                        ? AppColors.primary
+                                            .withValues(alpha: 0.1)
+                                        : AppColors.surfaceMuted,
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                        color: _isPercentage
+                                            ? AppColors.primary
+                                            : AppColors.border),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      'نسبة مئوية (%)',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        color: _isPercentage
+                                            ? AppColors.primary
+                                            : AppColors.textSecondary,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () =>
+                                    setState(() => _isPercentage = false),
+                                child: Container(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: !_isPercentage
+                                        ? AppColors.primary
+                                            .withValues(alpha: 0.1)
+                                        : AppColors.surfaceMuted,
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                        color: !_isPercentage
+                                            ? AppColors.primary
+                                            : AppColors.border),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      'مبلغ ثابت (ج)',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        color: !_isPercentage
+                                            ? AppColors.primary
+                                            : AppColors.textSecondary,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        const Text('قيمة الخصم',
+                            style: TextStyle(fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: _valueController,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            hintText: _isPercentage ? 'مثال: 20' : 'مثال: 50',
+                            suffixText: _isPercentage ? '%' : 'جنيه',
+                            border: const OutlineInputBorder(),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  const Text('نوع الخصم', style: TextStyle(fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: RadioListTile<bool>(
-                          title: const Text('نسبة مئوية (%)'),
-                          value: true,
-                          groupValue: _isPercentage,
-                          onChanged: (val) {
-                            if (val != null) setState(() => _isPercentage = val);
-                          },
-                        ),
-                      ),
-                      Expanded(
-                        child: RadioListTile<bool>(
-                          title: const Text('مبلغ ثابت (ج)'),
-                          value: false,
-                          groupValue: _isPercentage,
-                          onChanged: (val) {
-                            if (val != null) setState(() => _isPercentage = val);
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Text('قيمة الخصم', style: const TextStyle(fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _valueController,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      hintText: _isPercentage ? 'مثال: 20' : 'مثال: 50',
-                      suffixText: _isPercentage ? '%' : 'جنيه',
-                      border: const OutlineInputBorder(),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 32),
+                FilledButton(
+                  onPressed: () {
+                    // TODO: Call API to create discount
+                    context.pop();
+                  },
+                  child: const Text('حفظ الخصم'),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 32),
-          FilledButton(
-            onPressed: () {
-              // TODO: Call API to create discount
-              context.pop();
-            },
-            child: const Text('حفظ الخصم'),
           ),
         ],
       ),

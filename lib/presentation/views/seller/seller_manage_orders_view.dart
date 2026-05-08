@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:manzili_mobile/core/theme/app_colors.dart';
 import 'package:manzili_mobile/data/models/seller_models.dart';
 import 'package:manzili_mobile/presentation/widgets/common/soft_card.dart';
+import 'package:manzili_mobile/presentation/widgets/common/gradient_app_bar.dart';
 import 'package:provider/provider.dart';
 import 'package:manzili_mobile/presentation/providers/seller_provider.dart';
 
@@ -98,11 +99,11 @@ class _SellerManageOrdersViewState extends State<SellerManageOrdersView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('إدارة الطلبات'),
-      ),
       body: Column(
         children: [
+          const GradientAppBar(
+            title: 'إدارة الطلبات',
+          ),
           // Status filter chips
           SizedBox(
             height: 48,

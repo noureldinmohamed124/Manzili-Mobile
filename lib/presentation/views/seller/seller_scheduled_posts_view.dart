@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:manzili_mobile/core/strings/app_strings.dart';
 import 'package:manzili_mobile/core/theme/app_colors.dart';
 import 'package:manzili_mobile/presentation/widgets/common/soft_card.dart';
+import 'package:manzili_mobile/presentation/widgets/common/gradient_app_bar.dart';
 
 class SellerScheduledPostsView extends StatelessWidget {
   const SellerScheduledPostsView({super.key});
@@ -14,49 +15,46 @@ class SellerScheduledPostsView extends StatelessWidget {
     ];
 
     return Scaffold(
-
-      appBar: AppBar(
-        title: const Text(AppStrings.scheduledPostsTitle),
-      ),
-      body: ListView.separated(
-        padding: const EdgeInsets.all(16),
-        itemCount: rows.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 10),
-        itemBuilder: (context, i) {
-          final r = rows[i];
-          return SoftCard(
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+      body: Column(
+        children: [
+          const GradientAppBar(title: AppStrings.scheduledPostsTitle),
+          Expanded(
+            child: ListView.separated(
+              padding: const EdgeInsets.all(16),
+              itemCount: rows.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 10),
+              itemBuilder: (context, i) {
+                final r = rows[i];
+                return SoftCard(
+                  child: Row(
                     children: [
-                      Text(
-                        r.title,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 16,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(r.title,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w800, fontSize: 16)),
+                            const SizedBox(height: 6),
+                            Text(r.when,
+                                style: const TextStyle(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 13)),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 6),
-                      Text(
-                        r.when,
-                        style: const TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 13,
-                        ),
+                      Chip(
+                        label: Text(r.status),
+                        backgroundColor:
+                            AppColors.statusPending.withValues(alpha: 0.15),
                       ),
                     ],
                   ),
-                ),
-                Chip(
-                  label: Text(r.status),
-                  backgroundColor: AppColors.statusPending.withValues(alpha: 0.15),
-                ),
-              ],
+                );
+              },
             ),
-          );
-        },
+          ),
+        ],
       ),
     );
   }

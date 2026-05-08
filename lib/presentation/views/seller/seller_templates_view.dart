@@ -3,6 +3,7 @@ import 'package:manzili_mobile/core/strings/app_strings.dart';
 import 'package:manzili_mobile/core/theme/app_colors.dart';
 import 'package:manzili_mobile/presentation/widgets/common/section_header.dart';
 import 'package:manzili_mobile/presentation/widgets/common/soft_card.dart';
+import 'package:manzili_mobile/presentation/widgets/common/gradient_app_bar.dart';
 
 class SellerTemplatesView extends StatelessWidget {
   const SellerTemplatesView({super.key});
@@ -16,42 +17,44 @@ class SellerTemplatesView extends StatelessWidget {
     ];
 
     return Scaffold(
-
-      appBar: AppBar(
-        title: const Text(AppStrings.templatesTitle),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
+      body: Column(
         children: [
-          const SectionHeader(
-            title: AppStrings.templatesTitle,
-            subtitle: AppStrings.templatesSubtitle,
-          ),
-          ...templates.map(
-            (t) => Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: SoftCard(
-                child: Row(
-                  children: [
-                    const Icon(Icons.article_outlined, color: AppColors.primary),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        t,
-                        style: const TextStyle(fontWeight: FontWeight.w700),
+          const GradientAppBar(title: AppStrings.templatesTitle),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                const SectionHeader(
+                  title: AppStrings.templatesTitle,
+                  subtitle: AppStrings.templatesSubtitle,
+                ),
+                ...templates.map(
+                  (t) => Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: SoftCard(
+                      child: Row(
+                        children: [
+                          const Icon(Icons.article_outlined,
+                              color: AppColors.primary),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(t,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w700)),
+                          ),
+                          IconButton(
+                              onPressed: () {},
+                              icon: const Icon(Icons.edit_outlined)),
+                          IconButton(
+                              onPressed: () {},
+                              icon: const Icon(Icons.delete_outline,
+                                  color: AppColors.error)),
+                        ],
                       ),
                     ),
-                    IconButton(
-                      onPressed: () {},
-                      icon: const Icon(Icons.edit_outlined),
-                    ),
-                    IconButton(
-                      onPressed: () {},
-                      icon: const Icon(Icons.delete_outline, color: AppColors.error),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
         ],
