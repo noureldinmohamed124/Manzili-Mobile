@@ -33,15 +33,18 @@ class FoodCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final cardWidth = ResponsiveHelper.clampScaledValue(
-          context,
+        final cardWidth = ResponsiveHelper.scaleValue(
           45,
+          MediaQuery.of(context).size.width,
           min: 160.0,
           max: 220.0,
         );
         
-        return GestureDetector(
+        return Material(
+          color: Colors.transparent,
+          child: InkWell(
           onTap: onTap,
+          borderRadius: BorderRadius.circular(ResponsiveHelper.responsiveValueCompat(context, mobile: 16.0)),
           child: Container(
             width: cardWidth,
             margin: EdgeInsets.symmetric(
@@ -120,7 +123,7 @@ class FoodCard extends StatelessWidget {
                       vertical: ResponsiveHelper.responsiveSpacingCompat(context, mobile: 4),
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.6),
+                      color: Colors.black.withValues(alpha: 0.6),
                       borderRadius: BorderRadius.circular(ResponsiveHelper.responsiveValueCompat(context, mobile: 8.0)),
                     ),
                     child: Row(
@@ -203,15 +206,16 @@ class FoodCard extends StatelessWidget {
           ],
         ),
       ),
+    ),
     );
       },
     );
   }
 
   Widget _buildImage(BuildContext context) {
-    final height = ResponsiveHelper.clampScaledValue(
-      context,
+    final height = ResponsiveHelper.scaleValue(
       35,
+      MediaQuery.of(context).size.width,
       min: 120.0,
       max: 180.0,
     );
@@ -220,7 +224,7 @@ class FoodCard extends StatelessWidget {
       imageUrlRaw: networkImageUrl,
       width: double.infinity,
       height: height,
-      fit: BoxFit.contain,
+      fit: BoxFit.cover,
     );
   }
 
@@ -229,7 +233,7 @@ class FoodCard extends StatelessWidget {
     if (lower.contains('خصم') || lower.contains('أفضل') || lower.contains('discount') || lower.contains('top')) {
       return Colors.red;
     } else if (lower.contains('مرش') || lower.contains('recommended') || lower.contains('vip')) {
-      return Colors.amber.shade700;
+      return AppColors.badgeRecommended;
     }
     return AppColors.primary;
   }

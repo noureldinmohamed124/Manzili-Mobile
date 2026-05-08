@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:manzili_mobile/core/services/secure_storage_service.dart';
 import 'package:manzili_mobile/presentation/providers/auth_provider.dart';
 import 'package:manzili_mobile/presentation/widgets/auth/custom_text_field.dart';
 import 'package:manzili_mobile/presentation/widgets/auth/login_row_cta.dart';
@@ -29,6 +30,15 @@ class _SigninViewState extends State<SigninView> {
 
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    // Pre-fill the checkbox with the user's last saved preference.
+    SecureStorageService.readRememberMe().then((value) {
+      if (mounted) setState(() => _rememberMe = value);
+    });
+  }
 
   @override
   void dispose() {
@@ -60,6 +70,7 @@ class _SigninViewState extends State<SigninView> {
     final success = await auth.login(
       email: email,
       password: password,
+      rememberMe: _rememberMe,
     );
 
     if (!mounted) return;

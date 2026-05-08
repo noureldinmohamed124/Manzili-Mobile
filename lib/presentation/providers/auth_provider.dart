@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:manzili_mobile/core/constants/demo_role_store.dart';
+import 'package:manzili_mobile/core/services/secure_storage_service.dart';
 import 'package:manzili_mobile/core/utils/jwt_payload.dart';
 import 'package:manzili_mobile/data/models/auth_models.dart';
 
@@ -30,6 +31,31 @@ class AuthProvider extends ChangeNotifier {
   int? get userRole => _userRole;
 
   bool get isAuthenticated => _status == AuthStatus.authenticated;
+
+  // ── Session restore ────────────────────────────────────────────────────────
+
+  /// Called once at app startup. Restores a saved session if "remember me" was
+  /// enabled and valid tokens are present in secure storage.
+  Future<void> tryRestoreSession() async {
+    final rememberMe = await SecureStorageService.readRememberMe();
+    if (!rememberMe) return;
+
+    final accessToken = await SecureStorageService.readAccessToken();
+    final refreshToken = await SecureStorageService.readRefreshToken();
+    final userRole = await SecureStorageService.readUserRole();
+
+    if (accessToken == null || accessToken.isEmpty) return;
+
+    _accessToken = accessToken;
+    _refreshToken = refreshToken;
+    _userRole = userRole;
+    DioClient.instance.setAccessToken(_accessToken);
+    _applyClaimsFromAccessToken(_accessToken);
+    // Prefer stored role over JWT claim (backend may have updated it).
+    if (userRole != null) _userRole = userRole;
+    _status = AuthStatus.authenticated;
+    notifyListeners();
+  }
 
   /// First screen after successful login/signup flow.
   String get postLoginRoute {
@@ -230,6 +256,7 @@ class AuthProvider extends ChangeNotifier {
     required String email,
     required String password,
     int? uiRoleFallback,
+    bool rememberMe = false,
   }) async {
     _status = AuthStatus.authenticating;
     _errorMessage = null;
@@ -244,6 +271,16 @@ class AuthProvider extends ChangeNotifier {
       DioClient.instance.setAccessToken(_accessToken);
       _status = AuthStatus.authenticated;
       _errorMessage = null;
+      if (rememberMe) {
+        await SecureStorageService.saveRememberMe(true);
+        await SecureStorageService.saveSession(
+          accessToken: _accessToken!,
+          refreshToken: _refreshToken!,
+          userRole: _userRole,
+        );
+      } else {
+        await SecureStorageService.saveRememberMe(false);
+      }
       notifyListeners();
       return true;
     }
@@ -309,6 +346,19 @@ class AuthProvider extends ChangeNotifier {
         }
         _status = AuthStatus.authenticated;
         _errorMessage = null;
+
+        // Persist session based on "remember me" choice.
+        await SecureStorageService.saveRememberMe(rememberMe);
+        if (rememberMe) {
+          await SecureStorageService.saveSession(
+            accessToken: _accessToken!,
+            refreshToken: _refreshToken!,
+            userRole: _userRole,
+          );
+        } else {
+          await SecureStorageService.clearSession();
+        }
+
         return true;
       }
 
@@ -488,6 +538,7 @@ class AuthProvider extends ChangeNotifier {
     _errorMessage = null;
     _userRole = null;
     DioClient.instance.setAccessToken(null);
+    SecureStorageService.clearSession(); // fire-and-forget is fine here
     notifyListeners();
   }
 

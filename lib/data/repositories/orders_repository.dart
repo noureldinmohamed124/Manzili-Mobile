@@ -9,32 +9,40 @@ class OrdersRepository {
 
   final Dio _dio;
 
-  /// Returns server message on failure; `null` on success.
-  Future<String?> requestService(OrderRequestBody body) async {
+  /// Returns `(orderId, null)` on success, `(null, errorMessage)` on failure.
+  /// The API response contains `requestId` which is the new order's ID.
+  Future<(int?, String?)> requestService(OrderRequestBody body) async {
     try {
-      // New API returns { requestId, totalPrice, requestDate } (no wrapper).
-      // We try the new URI first, then fall back to legacy /api path on 404.
       try {
         final res = await _dio.postUri(ApiConstants.orderRequestUri, data: body.toJson());
         final raw = tryParseJsonMap(res.data);
-        if (raw == null) return null; // Some servers may return empty on success.
+        if (raw == null) return (null, null); // empty body = success, no ID
         if (raw['success'] == false) {
-          return raw['message']?.toString() ?? 'الطلب ماتمش';
+          return (null, raw['message']?.toString() ?? 'الطلب ماتمش');
         }
-        return null;
+        // Try to extract the order/request ID from the response
+        final id = (raw['requestId'] as num?)?.toInt() ??
+            (raw['orderId'] as num?)?.toInt() ??
+            (raw['id'] as num?)?.toInt() ??
+            (raw['data'] is Map ? (raw['data']['requestId'] as num?)?.toInt() : null) ??
+            (raw['data'] is Map ? (raw['data']['id'] as num?)?.toInt() : null);
+        return (id, null);
       } on DioException catch (e) {
         if (e.response?.statusCode != 404) rethrow;
         final res = await _dio.postUri(ApiConstants.orderRequestUriLegacy, data: body.toJson());
         final raw = tryParseJsonMap(res.data);
-        if (raw == null) return 'مفيش رد من السيرفر';
+        if (raw == null) return (null, 'مفيش رد من السيرفر');
         final ok = raw['success'] == true || raw.containsKey('requestId');
-        if (!ok) return raw['message']?.toString() ?? 'الطلب ماتمش';
-        return null;
+        if (!ok) return (null, raw['message']?.toString() ?? 'الطلب ماتمش');
+        final id = (raw['requestId'] as num?)?.toInt() ??
+            (raw['orderId'] as num?)?.toInt() ??
+            (raw['id'] as num?)?.toInt();
+        return (id, null);
       }
     } on DioException catch (e) {
-      return _mapDioError(e);
+      return (null, _mapDioError(e));
     } catch (_) {
-      return 'حصل خطأ غير متوقع';
+      return (null, 'حصل خطأ غير متوقع');
     }
   }
 

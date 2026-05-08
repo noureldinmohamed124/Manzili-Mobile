@@ -258,6 +258,8 @@ class AdminUserItem {
     required this.isBlocked,
     required this.blockedUntil,
     required this.createdAt,
+    required this.servicesCount,
+    required this.ordersCount,
   });
 
   final int id;
@@ -268,17 +270,19 @@ class AdminUserItem {
   final bool isBlocked;
   final DateTime? blockedUntil;
   final DateTime? createdAt;
+  final int servicesCount;
+  final int ordersCount;
 
   factory AdminUserItem.fromJson(Map<String, dynamic> json) {
     final rawRole = json['role'];
     String parsedRole = 'Unknown';
-    if (rawRole is String) parsedRole = rawRole;
-    else if (rawRole is num) {
-      if (rawRole == 0) parsedRole = 'Buyer';
-      else if (rawRole == 1) parsedRole = 'Admin';
-      else if (rawRole == 2) parsedRole = 'Provider';
+    if (rawRole is String && rawRole.isNotEmpty) {
+      parsedRole = rawRole;
+    } else if (rawRole is num) {
+      if (rawRole == 0) { parsedRole = 'Buyer'; }
+      else if (rawRole == 1) { parsedRole = 'Admin'; }
+      else if (rawRole == 2) { parsedRole = 'Provider'; }
     }
-
     return AdminUserItem(
       id: (json['id'] as num?)?.toInt() ?? 0,
       fullName: json['fullName']?.toString() ?? '',
@@ -288,6 +292,8 @@ class AdminUserItem {
       isBlocked: json['isBlocked'] == true,
       blockedUntil: DateTime.tryParse(json['blockedUntil']?.toString() ?? ''),
       createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? ''),
+      servicesCount: (json['servicesCount'] as num?)?.toInt() ?? 0,
+      ordersCount: (json['ordersCount'] as num?)?.toInt() ?? 0,
     );
   }
 }

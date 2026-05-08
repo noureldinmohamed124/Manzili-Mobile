@@ -1,3 +1,35 @@
+## Latest Updates (Seller Section — Live API Alignment)
+- **`api_constants.dart`**: Swapped all seller paths so `/api/seller/...` is primary and `/seller/...` is legacy fallback. This fixes the root cause of all seller 404 errors.
+- **`seller_models.dart`**: `SellerDashboardStats` now includes 3 new fields from the real API: `pendingRequests` (int), `expectedRevenue` (double), `onWaitingRevenue` (double). All parsed with the same case-insensitive `getVal` pattern.
+- **`seller_repository.dart`**:
+  - `getSellerServices` — now sends params as JSON body only (`data:`) with PascalCase keys (`Page`, `PageSize`, `Status`). Removed `queryParameters:` since the backend uses `[FromBody]` and returns 400 on query-only requests.
+  - `getSellerOrders` — removed `data: queryParams` from GET call; orders list works with query params only.
+  - `updateOrderStatus` — changed from `_dio.put(...)` to `_dio.patch(...)` (PUT returns 405, PATCH is the correct verb).
+- **`seller_provider.dart`**: Removed unused `service_models.dart` import. Added `_selectedOrderStatus` / `selectedOrderStatus` / `setSelectedOrderStatus()`. Fixed if-without-braces lint warnings.
+- **`seller_hub_view.dart`**: Removed unused `locale_provider.dart` import. Dashboard stats now shows all 8 fields including `pendingRequests`, `expectedRevenue`, `onWaitingRevenue`.
+- **`seller_services_list_view.dart`**: Full rewrite — status filter chips (الكل/نشط/مسودة/موقوف), pull-to-refresh, `createdAt` date shown in each card, delete action in popup menu with confirmation dialog, fixed non-nullable `s.status` (removed `?? 'active'` fallbacks).
+- **`seller_manage_orders_view.dart`**: Complete rewrite — uses correct `SellerOrderListItem` fields (`totalPrice` not `totalAmount`, `providerName`, `orderCode`), status filter chips (الكل/طلبات جديدة/مقبولة/مرفوضة), pull-to-refresh, retry on error, Arabic status labels, navigate to `/seller/order-details/{id}` on tap.
+- **`seller_order_details_view.dart`**: Complete rewrite — reads from `SellerProvider.currentOrder` (not `OrdersProvider`). Shows all `SellerOrderDetails` fields: buyer info, service image, pricing, custom request, options list. Action buttons based on status: Request → Approve/Reject/Reprice; Accepted+ → Update Status dropdown (PATCH). Valid next statuses: Paid/InProgress/ReadyForShipping/OutForDelivery/Shipped/Confirmed.
+- **`seller_edit_service_view.dart`**: Fixed non-nullable `svc.status` (removed `?? 'active'`). Save button now calls `provider.updateService(...)` via API. Added image picker to add new images. Added delete button in AppBar that calls `provider.deleteService(...)` with confirmation dialog.
+- **`demo_data.dart`**: Updated `sellerDashboard()` to pass the 3 new required fields (`pendingRequests`, `expectedRevenue`, `onWaitingRevenue`).
+- All changes verified with `flutter analyze --no-fatal-infos --no-fatal-warnings` — zero new errors introduced.
+
+## Latest Updates (Admin API Fix — Live API Alignment)
+- **Root cause fixed**: All admin endpoints were returning 404 because `api_constants.dart` had `/admin/...` as primary and `/api/admin/...` as legacy. Swapped them so `/api/admin/...` is now primary (matching live server).
+- **Dashboard parsing fixed**: `getDashboardStats` now correctly handles the direct-object response (no wrapper) by checking for `totalUsers` key first, then falling back to `raw['data']`.
+- **`admin_repository.dart`**: Removed unused `auth_models.dart` import.
+- **`admin_models.dart`**: `AdminUserItem` now handles `role` as string (`"Buyer"`, `"Provider"`, `"Admin"`) with numeric fallback. Added `servicesCount` and `ordersCount` fields parsed from user details response.
+- **`admin_provider.dart`**: Added `_selectedRole`, `_selectedIsBlocked` filter state with `selectedRole`, `selectedIsBlocked` getters and `setUserFilters()` method.
+- **`admin_users_view.dart`**: Full rewrite — role filter chips (الكل/مشتري/مزود/أدمن), blocked toggle, join date shown in each card, avatar with initials fallback, role badge, status badge, pull-to-refresh, pagination (load more on scroll), retry on error.
+- **`admin_user_details_view.dart`**: Removed unused `go_router` import. Fixed `_buildRow` overflow (value wrapped in `Flexible`). Added block dialog (bottom sheet with reason text field + date picker). Shows all API fields: `phoneNumber`, `imageUrl`, `role` (string), `isBlocked`, `blockedUntil`, `blockReason`, `blockedByAdmin`, `createdAt`, `updatedAt`, `servicesCount`, `ordersCount`. Retry button on error.
+- **`admin_orders_view.dart`**: Added status filter chips (الكل/طلب/مقبول/قيد التنفيذ/مكتمل), `createdAt` date and price shown in each card, pull-to-refresh, retry on error.
+- **`admin_services_view.dart`**: Added status filter chips (الكل/نشط/معلق/محظور), `createdAt` date and `basePrice` shown in each card, pull-to-refresh, retry on error.
+- **`admin_finance_view.dart`**: Shows `createdAt` date, buyer name, provider name in each transaction card. Pull-to-refresh, retry on error.
+- **`admin_order_details_view.dart`**: Fixed `_buildRow` overflow (value wrapped in `Flexible`).
+- **`admin_service_details_view.dart`**: Removed unused `go_router` import. Fixed `_buildRow` overflow.
+- **`admin_transaction_details_view.dart`**: Fixed `_buildDetailRow` overflow (value wrapped in `Flexible`).
+- All changes verified with `flutter analyze --no-fatal-infos --no-fatal-warnings` — zero new errors introduced.
+
 ## Latest Updates (Antigravity)
 - Integrated Admin Users API: Unblock User and Get User Details endpoints added to AdminProvider and wired into AdminUserDetailsView.
 - Integrated Seller Orders API: Reprice, Reject, and Approve endpoints added to SellerProvider and wired into SellerOrderDetailsView with reason dialogs.
@@ -6,6 +38,18 @@
 - Solved layout overflow issues in horizontal lists.
 - Audited hardcoded colors and replaced them with AppColors/Theme values for Dark Mode compatibility.
 - Language toggle was verified to trigger correctly; fully dynamic translations of hardcoded Arabic text remain a future enhancement.
+
+## Latest Updates (Session Persistence + Route Guards)
+- **Auth persistence**: Added `flutter_secure_storage` package. Created `lib/core/services/secure_storage_service.dart` which stores `accessToken`, `refreshToken`, `userRole`, and `rememberMe` flag securely.
+- **Remember Me**: `AuthProvider.login()` now accepts a `rememberMe` parameter. When `true`, tokens are saved to secure storage on login and cleared on logout. When `false`, any previously saved session is cleared.
+- **Session restore**: `AuthProvider.tryRestoreSession()` is called in `main()` before `runApp`. If `rememberMe` was enabled and tokens exist, the session is restored immediately — the user lands on their role's home screen without seeing the sign-in page.
+- **Sign-in screen**: `_rememberMe` checkbox now pre-fills from stored preference on screen open. The flag is passed to `auth.login()`.
+- **Route guards**: `app_router.dart` now accepts an `AuthProvider` and uses `GoRouter.redirect` + `refreshListenable` to enforce:
+  - Unauthenticated users → redirected to `/signin` for any protected route.
+  - Authenticated users → redirected away from `/signin` and `/signup` to their role's home.
+  - Role-restricted routes (`/seller/*` = role 2, `/admin/*` = role 3, `/delivery/*` = role 4) → wrong-role users are redirected to their own home.
+- **Admin block/unblock**: Confirmed uses `PATCH` (correct per backend). No change needed.
+- **`main.dart`**: Refactored to `StatefulWidget` so the `GoRouter` instance is created once and reused across theme/locale rebuilds.
 # Manzili Mobile — Full Project Handoff File (Everything)
 
 This file is meant to be a **single, complete handoff artifact** you can send to another AI (or reuse later) to quickly reconstruct:

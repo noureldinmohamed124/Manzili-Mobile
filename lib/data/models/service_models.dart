@@ -10,6 +10,7 @@ class ServiceItem {
     this.address,
     this.provider,
     this.options,
+    this.optionGroups,
     this.images,
     this.reviews,
     this.status,
@@ -26,7 +27,10 @@ class ServiceItem {
   final String? serviceDescription;
   final String? address;
   final ServiceProvider? provider;
+  /// Flat list of all options (legacy — kept for backward compat).
   final List<ServiceOption>? options;
+  /// Structured option groups — use this for rendering in the buyer details view.
+  final List<ServiceOptionGroup>? optionGroups;
   final List<ServiceImage>? images;
   final List<ServiceReview>? reviews;
   final String? status;
@@ -61,6 +65,7 @@ class ServiceItem {
           ? ServiceProvider.fromJson(json['provider'] as Map<String, dynamic>)
           : null,
       options: _parseOptions(json),
+      optionGroups: _parseOptionGroups(json),
       images: json['images'] is List
           ? (json['images'] as List<dynamic>)
               .map((e) => ServiceImage.fromJson(e as Map<String, dynamic>))
@@ -105,6 +110,19 @@ class ServiceItem {
       return opts.isNotEmpty ? opts : null;
     }
     return null;
+  }
+
+  /// Parses the structured optionGroups array, preserving group name + isRequired.
+  static List<ServiceOptionGroup>? _parseOptionGroups(Map<String, dynamic> json) {
+    final raw = json['optionGroups'] ?? json['OptionGroups'];
+    if (raw is! List || raw.isEmpty) return null;
+    final groups = <ServiceOptionGroup>[];
+    for (final g in raw) {
+      if (g is Map<String, dynamic>) {
+        groups.add(ServiceOptionGroup.fromJson(g));
+      }
+    }
+    return groups.isEmpty ? null : groups;
   }
 
   static List<ServiceReview>? _parseReviews(Map<String, dynamic> json) {
@@ -176,6 +194,39 @@ class ServiceImage {
     return ServiceImage(
       id: json['id'] as int? ?? 0,
       imageUrl: json['imageUrl'] as String? ?? '',
+    );
+  }
+}
+
+/// A structured option group as returned by the API.
+/// [isRequired] = true → buyer must pick exactly one (radio).
+/// [isRequired] = false → buyer can pick zero or more (checkbox add-ons).
+class ServiceOptionGroup {
+  ServiceOptionGroup({
+    required this.id,
+    required this.name,
+    required this.isRequired,
+    required this.options,
+  });
+
+  final int id;
+  final String name;
+  final bool isRequired;
+  final List<ServiceOption> options;
+
+  factory ServiceOptionGroup.fromJson(Map<String, dynamic> json) {
+    final rawOpts = json['options'] ?? json['Options'];
+    final opts = <ServiceOption>[];
+    if (rawOpts is List) {
+      for (final e in rawOpts) {
+        if (e is Map<String, dynamic>) opts.add(ServiceOption.fromJson(e));
+      }
+    }
+    return ServiceOptionGroup(
+      id: (json['id'] ?? json['Id']) as int? ?? 0,
+      name: (json['name'] ?? json['Name'])?.toString() ?? '',
+      isRequired: json['isRequired'] == true,
+      options: opts,
     );
   }
 }

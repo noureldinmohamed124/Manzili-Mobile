@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:go_router/go_router.dart';
 import 'package:manzili_mobile/core/router/app_router.dart';
 import 'package:manzili_mobile/core/theme/app_theme.dart';
 import 'package:manzili_mobile/l10n/app_localizations.dart';
@@ -19,19 +20,40 @@ import 'firebase_options.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  runApp(const MyApp());
+
+  // Restore saved session before the widget tree is built so the router
+  // can redirect to the correct initial route immediately.
+  final authProvider = AuthProvider();
+  await authProvider.tryRestoreSession();
+
+  runApp(MyApp(authProvider: authProvider));
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class MyApp extends StatefulWidget {
+  const MyApp({super.key, required this.authProvider});
 
-  static final _router = createAppRouter();
+  final AuthProvider authProvider;
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  late final GoRouter _router;
+
+  @override
+  void initState() {
+    super.initState();
+    _router = createAppRouter(authProvider: widget.authProvider);
+  }
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider<AuthProvider>(create: (_) => AuthProvider()),
+        // Reuse the pre-initialised AuthProvider so the restored session is
+        // immediately available to the router and all child widgets.
+        ChangeNotifierProvider<AuthProvider>.value(value: widget.authProvider),
         ChangeNotifierProvider<ServicesProvider>(
           create: (_) => ServicesProvider(),
         ),
@@ -61,7 +83,7 @@ class MyApp extends StatelessWidget {
               GlobalCupertinoLocalizations.delegate,
             ],
             supportedLocales: AppLocalizations.supportedLocales,
-            routerConfig: MyApp._router,
+            routerConfig: _router,
           );
         },
       ),

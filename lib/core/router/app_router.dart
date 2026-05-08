@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:manzili_mobile/presentation/providers/auth_provider.dart';
 import 'package:manzili_mobile/presentation/views/admin/admin_announcements_view.dart';
 import 'package:manzili_mobile/presentation/views/admin/admin_finance_view.dart';
 import 'package:manzili_mobile/presentation/views/admin/admin_hub_view.dart';
@@ -62,10 +63,63 @@ import 'package:manzili_mobile/presentation/views/delivery/delivery_result_view.
 
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 
-GoRouter createAppRouter() {
+// ---------------------------------------------------------------------------
+// Route guard helpers
+// ---------------------------------------------------------------------------
+
+/// Routes that are always public (no auth required).
+const _publicRoutes = {'/signin', '/signup', '/forgot-password', '/reset-password'};
+
+/// Routes that require a specific role.
+/// Key = route prefix, Value = required role int (2 = seller, 3 = admin).
+const _roleRequiredRoutes = {
+  '/seller': 2,
+  '/admin': 3,
+  '/delivery': 4,
+};
+
+/// Returns a redirect path if the user is not allowed to access [location],
+/// or `null` if access is granted.
+String? _guardRedirect(AuthProvider auth, String location) {
+  final isPublic = _publicRoutes.any((p) => location == p || location.startsWith('$p/'));
+
+  // Not logged in → send to sign-in (except public routes).
+  if (!auth.isAuthenticated) {
+    return isPublic ? null : '/signin';
+  }
+
+  // Already logged in → don't let them see sign-in/sign-up again.
+  if (isPublic) {
+    return auth.postLoginRoute;
+  }
+
+  // Role-restricted routes.
+  for (final entry in _roleRequiredRoutes.entries) {
+    if (location == entry.key || location.startsWith('${entry.key}/')) {
+      if (auth.userRole != entry.value) {
+        // Wrong role → send to their own home.
+        return auth.postLoginRoute;
+      }
+    }
+  }
+
+  return null; // Access granted.
+}
+
+// ---------------------------------------------------------------------------
+// Router factory
+// ---------------------------------------------------------------------------
+
+GoRouter createAppRouter({AuthProvider? authProvider}) {
   return GoRouter(
     navigatorKey: rootNavigatorKey,
     initialLocation: '/signin',
+    // Re-evaluate guards whenever AuthProvider notifies.
+    refreshListenable: authProvider,
+    redirect: (context, state) {
+      if (authProvider == null) return null;
+      return _guardRedirect(authProvider, state.uri.toString());
+    },
     routes: [
       GoRoute(
         path: '/signin',

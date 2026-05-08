@@ -89,7 +89,7 @@ class CartProvider extends ChangeNotifier {
         optionGroups: item.optionGroups,
       );
 
-      final error = await _ordersRepository.requestService(body);
+      final (_, error) = await _ordersRepository.requestService(body);
       if (error == null) {
         successCount++;
       } else {

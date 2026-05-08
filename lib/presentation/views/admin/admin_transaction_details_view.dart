@@ -86,13 +86,20 @@ class AdminTransactionDetailsView extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(label, style: const TextStyle(color: AppColors.textSecondary)),
-          Text(
-            value,
-            style: TextStyle(
-              fontWeight: isHighlight ? FontWeight.w800 : FontWeight.w600,
-              color: isHighlight ? AppColors.primary : Colors.black,
+          const SizedBox(width: 12),
+          Flexible(
+            child: Text(
+              value,
+              style: TextStyle(
+                fontWeight: isHighlight ? FontWeight.w800 : FontWeight.w600,
+                color: isHighlight ? AppColors.primary : Colors.black,
+                overflow: TextOverflow.ellipsis,
+              ),
+              softWrap: true,
+              textAlign: TextAlign.end,
             ),
           ),
         ],

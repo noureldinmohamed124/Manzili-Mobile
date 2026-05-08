@@ -16,25 +16,39 @@ class SellerRepository {
   }) async {
     try {
       Response res;
-      final query = <String, dynamic>{
-        // Backend spec uses PascalCase, but ASP.NET usually accepts either.
-        'status': status,
-        'page': page,
-        'pageSize': pageSize,
-      }..removeWhere((k, v) => v == null || (v is String && v.isEmpty));
+      // Backend requires a JSON body with Content-Type: application/json.
+      // Status must be sent as an integer enum value (Active=2, Draft=1, Blocked=0).
+      // String values like "Blocked" cause a 400 validation error.
+      int? statusInt;
+      if (status != null) {
+        switch (status.toLowerCase()) {
+          case 'active': statusInt = 2; break;
+          case 'draft': statusInt = 1; break;
+          case 'blocked': statusInt = 0; break;
+        }
+      }
+
+      final body = <String, dynamic>{
+        'Page': page,
+        'PageSize': pageSize,
+        if (statusInt != null) 'Status': statusInt,
+      };
+      final jsonOptions = Options(
+        headers: {'Content-Type': 'application/json'},
+      );
 
       try {
         res = await _dio.get(
           ApiConstants.sellerServices,
-          queryParameters: query,
-          data: query, // Pass as body in case backend expects [FromBody]
+          data: body,
+          options: jsonOptions,
         );
       } on DioException catch (e) {
         if (e.response?.statusCode != 404) rethrow;
         res = await _dio.get(
           ApiConstants.sellerServicesLegacy,
-          queryParameters: query,
-          data: query, // Pass as body in case backend expects [FromBody]
+          data: body,
+          options: jsonOptions,
         );
       }
       
@@ -44,7 +58,7 @@ class SellerRepository {
       return (parsed.items, null);
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) {
-        return (<SellerServiceListItem>[], null); // Assume empty if 404
+        return (<SellerServiceListItem>[], null);
       }
       return (<SellerServiceListItem>[], _mapDioError(e));
     } catch (_) {
@@ -254,14 +268,12 @@ class SellerRepository {
         res = await _dio.get(
           ApiConstants.sellerOrders,
           queryParameters: queryParams,
-          data: queryParams,
         );
       } on DioException catch (e) {
         if (e.response?.statusCode != 404) rethrow;
         res = await _dio.get(
           ApiConstants.sellerOrdersLegacy,
           queryParameters: queryParams,
-          data: queryParams,
         );
       }
       final raw = tryParseJsonMap(res.data);
@@ -304,13 +316,14 @@ class SellerRepository {
       Response res;
       final data = {'status': status};
       try {
-        res = await _dio.put(
+        // Must use PATCH — PUT returns 405
+        res = await _dio.patch(
           ApiConstants.sellerOrderStatus(orderId),
           data: data,
         );
       } on DioException catch (e) {
         if (e.response?.statusCode != 404) rethrow;
-        res = await _dio.put(
+        res = await _dio.patch(
           ApiConstants.sellerOrderStatusLegacy(orderId),
           data: data,
         );
@@ -345,12 +358,10 @@ class SellerRepository {
         }
       }
 
+      // New images from local paths
       for (var path in imagePaths) {
         if (!path.startsWith('http')) {
-          formData.files.add(MapEntry(
-            'images',
-            await MultipartFile.fromFile(path),
-          ));
+          formData.files.add(MapEntry('images', await MultipartFile.fromFile(path)));
         }
       }
 
@@ -380,8 +391,7 @@ class SellerRepository {
     }
   }
 
-  Future<(bool, String?)> deleteService(int serviceId) async {
-    try {
+  Future<(bool, String?)> deleteService(int serviceId) async {    try {
       Response res;
       try {
         res = await _dio.delete(ApiConstants.sellerServiceById(serviceId));

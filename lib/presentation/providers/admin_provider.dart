@@ -100,6 +100,18 @@ class AdminProvider extends ChangeNotifier {
   AdminUsersResponse? _usersResponse;
   AdminUsersResponse? get usersResponse => _usersResponse;
 
+  String? _selectedRole; // null = all, 'Buyer', 'Provider', 'Admin'
+  bool? _selectedIsBlocked; // null = all, true = blocked only, false = active only
+
+  String? get selectedRole => _selectedRole;
+  bool? get selectedIsBlocked => _selectedIsBlocked;
+
+  void setUserFilters({String? role, bool? isBlocked}) {
+    _selectedRole = role;
+    _selectedIsBlocked = isBlocked;
+    fetchUsers(role: role, isBlocked: isBlocked);
+  }
+
   Future<void> fetchUsers({int page = 1, int pageSize = 10, String? role, bool? isBlocked, String? search}) async {
     _isLoading = true;
     _errorMessage = null;

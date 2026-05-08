@@ -29,13 +29,23 @@ class _OptionInput {
   }
 }
 
+class _OptionGroup {
+  final TextEditingController groupName = TextEditingController();
+  bool isRequired = true;
+  final List<_OptionInput> options = [_OptionInput()];
+
+  void dispose() {
+    groupName.dispose();
+    for (final o in options) { o.dispose(); }
+  }
+}
+
 class _SellerCreateServiceViewState extends State<SellerCreateServiceView> {
   final _title = TextEditingController();
   final _description = TextEditingController();
   final _price = TextEditingController();
   
-  final List<_OptionInput> _variantInputs = [_OptionInput()];
-  final List<_OptionInput> _extraInputs = [_OptionInput()];
+  final List<_OptionGroup> _optionGroups = [_OptionGroup()];
 
   int? _categoryId;
   bool _draft = false;
@@ -61,8 +71,7 @@ class _SellerCreateServiceViewState extends State<SellerCreateServiceView> {
     _title.dispose();
     _description.dispose();
     _price.dispose();
-    for (var v in _variantInputs) { v.dispose(); }
-    for (var e in _extraInputs) { e.dispose(); }
+    for (var g in _optionGroups) { g.dispose(); }
     super.dispose();
   }
 
@@ -112,26 +121,17 @@ class _SellerCreateServiceViewState extends State<SellerCreateServiceView> {
 
       final optionGroups = <CreateOptionGroup>[];
       
-      final validVariants = _variantInputs.where((v) => v.name.text.trim().isNotEmpty).toList();
-      if (validVariants.isNotEmpty) {
+      for (final g in _optionGroups) {
+        final groupName = g.groupName.text.trim();
+        if (groupName.isEmpty) continue;
+        final validOptions = g.options.where((o) => o.name.text.trim().isNotEmpty).toList();
+        if (validOptions.isEmpty) continue;
         optionGroups.add(CreateOptionGroup(
-          name: 'خيارات / مقاسات',
-          isRequired: true,
-          options: validVariants.map((v) => CreateOption(
-            name: v.name.text.trim(),
-            price: double.tryParse(v.price.text.replaceAll(',', '.')) ?? 0.0,
-          )).toList(),
-        ));
-      }
-      
-      final validExtras = _extraInputs.where((e) => e.name.text.trim().isNotEmpty).toList();
-      if (validExtras.isNotEmpty) {
-        optionGroups.add(CreateOptionGroup(
-          name: 'مميزات إضافية',
-          isRequired: false,
-          options: validExtras.map((e) => CreateOption(
-            name: e.name.text.trim(),
-            price: double.tryParse(e.price.text.replaceAll(',', '.')) ?? 0.0,
+          name: groupName,
+          isRequired: g.isRequired,
+          options: validOptions.map((o) => CreateOption(
+            name: o.name.text.trim(),
+            price: double.tryParse(o.price.text.replaceAll(',', '.')) ?? 0.0,
           )).toList(),
         ));
       }
@@ -315,17 +315,136 @@ class _SellerCreateServiceViewState extends State<SellerCreateServiceView> {
                       ],
                     ),
                     const SizedBox(height: 20),
-                    _buildDynamicList(
-                      AppStrings.fieldVariants,
-                      _variantInputs,
-                      () => setState(() => _variantInputs.add(_OptionInput())),
+                    // Option groups — dynamic, each with name + required toggle + options
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'مجموعات الخيارات',
+                          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                        ),
+                        TextButton.icon(
+                          onPressed: () => setState(() => _optionGroups.add(_OptionGroup())),
+                          icon: const Icon(Icons.add, size: 18),
+                          label: const Text('مجموعة جديدة'),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 12),
-                    _buildDynamicList(
-                      AppStrings.fieldExtras,
-                      _extraInputs,
-                      () => setState(() => _extraInputs.add(_OptionInput())),
-                    ),
+                    const SizedBox(height: 4),
+                    ..._optionGroups.asMap().entries.map((gEntry) {
+                      final gi = gEntry.key;
+                      final g = gEntry.value;
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: TextField(
+                                      controller: g.groupName,
+                                      decoration: const InputDecoration(
+                                        labelText: 'اسم المجموعة',
+                                        hintText: 'مثال: المقاس، اللون، الإضافات',
+                                        isDense: true,
+                                        border: OutlineInputBorder(),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  if (_optionGroups.length > 1)
+                                    IconButton(
+                                      icon: const Icon(Icons.delete_outline, color: AppColors.error, size: 20),
+                                      onPressed: () => setState(() { g.dispose(); _optionGroups.removeAt(gi); }),
+                                    ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              // Required / Optional toggle
+                              Row(
+                                children: [
+                                  const Text('النوع:', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                                  const SizedBox(width: 8),
+                                  ChoiceChip(
+                                    label: const Text('مطلوب'),
+                                    selected: g.isRequired,
+                                    onSelected: (_) => setState(() => g.isRequired = true),
+                                    selectedColor: AppColors.error.withValues(alpha: 0.15),
+                                    labelStyle: TextStyle(
+                                      color: g.isRequired ? AppColors.error : AppColors.textSecondary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  ChoiceChip(
+                                    label: const Text('اختياري'),
+                                    selected: !g.isRequired,
+                                    onSelected: (_) => setState(() => g.isRequired = false),
+                                    selectedColor: AppColors.statusActive.withValues(alpha: 0.15),
+                                    labelStyle: TextStyle(
+                                      color: !g.isRequired ? AppColors.statusActive : AppColors.textSecondary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                              const Text('الخيارات:', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                              const SizedBox(height: 6),
+                              ...g.options.asMap().entries.map((oEntry) {
+                                final oi = oEntry.key;
+                                final o = oEntry.value;
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 8),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        flex: 3,
+                                        child: TextField(
+                                          controller: o.name,
+                                          decoration: const InputDecoration(
+                                            hintText: 'اسم الخيار',
+                                            isDense: true,
+                                            border: OutlineInputBorder(),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        flex: 2,
+                                        child: TextField(
+                                          controller: o.price,
+                                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                          decoration: const InputDecoration(
+                                            hintText: 'السعر',
+                                            isDense: true,
+                                            border: OutlineInputBorder(),
+                                          ),
+                                        ),
+                                      ),
+                                      if (g.options.length > 1)
+                                        IconButton(
+                                          icon: const Icon(Icons.remove_circle_outline, color: Colors.red, size: 20),
+                                          onPressed: () => setState(() { o.dispose(); g.options.removeAt(oi); }),
+                                        ),
+                                    ],
+                                  ),
+                                );
+                              }),
+                              TextButton.icon(
+                                onPressed: () => setState(() => g.options.add(_OptionInput())),
+                                icon: const Icon(Icons.add, size: 16),
+                                label: const Text('أضف خيار'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }),
                     const SizedBox(height: 12),
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
@@ -371,67 +490,7 @@ class _SellerCreateServiceViewState extends State<SellerCreateServiceView> {
     );
   }
 
-  Widget _buildDynamicList(
-    String title,
-    List<_OptionInput> list,
-    VoidCallback onAdd,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SectionHeader(title: title),
-        ...list.asMap().entries.map((entry) {
-          final index = entry.key;
-          final item = entry.value;
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 8.0),
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: TextField(
-                    controller: item.name,
-                    decoration: const InputDecoration(
-                      hintText: 'الاسم',
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  flex: 1,
-                  child: TextField(
-                    controller: item.price,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(
-                      hintText: 'السعر',
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    ),
-                  ),
-                ),
-                if (list.length > 1)
-                  IconButton(
-                    icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
-                    onPressed: () {
-                      setState(() {
-                        item.dispose();
-                        list.removeAt(index);
-                      });
-                    },
-                  ),
-              ],
-            ),
-          );
-        }),
-        TextButton.icon(
-          onPressed: onAdd,
-          icon: const Icon(Icons.add),
-          label: const Text('إضافة خيار آخر'),
-        ),
-      ],
-    );
-  }
-}
+} 
 
 class _StickyActions extends StatelessWidget {
   const _StickyActions({

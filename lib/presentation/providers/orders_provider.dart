@@ -26,6 +26,12 @@ class OrdersProvider extends ChangeNotifier {
   int get currentPage => _currentPage;
   int get totalPages => _totalPages;
 
+  /// Submits a single order request directly (used by "اشتري دلوقتي").
+  /// Returns `(orderId, null)` on success, `(null, errorMessage)` on failure.
+  Future<(int?, String?)> requestServiceDirect(OrderRequestBody body) async {
+    return _repository.requestService(body);
+  }
+
   Future<void> fetchOrders({String? status, int page = 1}) async {
     _isLoading = true;
     _errorMessage = null;

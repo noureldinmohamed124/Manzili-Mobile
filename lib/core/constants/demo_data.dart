@@ -85,8 +85,11 @@ class DemoData {
     return SellerDashboardStats(
       totalServices: 2,
       activeOrders: 3,
+      pendingRequests: 0,
       completedOrders: 1,
       totalRevenue: 2350.14,
+      expectedRevenue: 0.0,
+      onWaitingRevenue: 0.0,
       averageRating: 4.8,
     );
   }

@@ -21,6 +21,39 @@ class _AdminFinanceViewState extends State<AdminFinanceView> {
     });
   }
 
+  Future<void> _onRefresh() async {
+    await context.read<AdminProvider>().fetchFinancials();
+  }
+
+  Color _statusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'completed':
+      case 'مكتمل':
+        return AppColors.statusActive;
+      case 'pending':
+      case 'معلق':
+        return AppColors.statusPending;
+      case 'failed':
+      case 'فشل':
+        return Colors.red;
+      default:
+        return AppColors.textHint;
+    }
+  }
+
+  String _statusLabel(String status) {
+    switch (status.toLowerCase()) {
+      case 'completed':
+        return 'مكتمل';
+      case 'pending':
+        return 'معلق';
+      case 'failed':
+        return 'فشل';
+      default:
+        return status;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -28,80 +61,178 @@ class _AdminFinanceViewState extends State<AdminFinanceView> {
         title: const Text('المالية والمعاملات'),
       ),
       body: Consumer<AdminProvider>(
-        builder: (context, adminProvider, child) {
-          if (adminProvider.isLoading) {
+        builder: (context, provider, _) {
+          if (provider.isLoading && provider.financialsResponse == null) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (adminProvider.errorMessage != null) {
+          if (provider.errorMessage != null && provider.financialsResponse == null) {
             return Center(
-              child: Text(adminProvider.errorMessage!, style: const TextStyle(color: AppColors.error)),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    provider.errorMessage!,
+                    style: const TextStyle(color: AppColors.error),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  FilledButton.icon(
+                    onPressed: _onRefresh,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('إعادة المحاولة'),
+                  ),
+                ],
+              ),
             );
           }
 
-          final res = adminProvider.financialsResponse;
+          final res = provider.financialsResponse;
           final transactions = res?.items ?? [];
           final totalRevenue = res?.totalRevenue ?? 0.0;
 
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              SoftCard(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      Expanded(child: _buildMetric('إجمالي الدخل', '$totalRevenue ج')),
-                      Container(width: 1, height: 40, color: AppColors.textHint),
-                      Expanded(child: _buildMetric('المعلق', '0 ج')),
-                    ],
+          return RefreshIndicator(
+            onRefresh: _onRefresh,
+            child: ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                // ── Revenue summary ──────────────────────────────────
+                SoftCard(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _buildMetric(
+                            'إجمالي الدخل',
+                            '${totalRevenue.toStringAsFixed(0)} ج',
+                          ),
+                        ),
+                        Container(width: 1, height: 40, color: AppColors.textHint),
+                        Expanded(
+                          child: _buildMetric(
+                            'عدد المعاملات',
+                            '${res?.totalCount ?? 0}',
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 24),
-              const Text('سجل المعاملات', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
-              const SizedBox(height: 12),
-              if (transactions.isEmpty)
-                const Center(child: Text('لا توجد معاملات'))
-              else
-                ...transactions.map((trx) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: SoftCard(
-                      onTap: () => context.push('/admin/finance/details/${trx.transactionId}'),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('TRX-${trx.transactionId}', style: const TextStyle(fontWeight: FontWeight.w800)),
-                                const SizedBox(height: 4),
-                                Text(trx.serviceTitle, style: const TextStyle(color: AppColors.textSecondary)),
-                              ],
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text('${trx.totalPrice} جنيه', style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary)),
-                                const SizedBox(height: 4),
-                                Text(
-                                  trx.status,
-                                  style: TextStyle(
-                                      color: trx.status == 'Completed' || trx.status == 'مكتمل' ? AppColors.statusActive : AppColors.statusPending,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                              ],
-                            ),
-                          ],
+                const SizedBox(height: 24),
+                const Text(
+                  'سجل المعاملات',
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                ),
+                const SizedBox(height: 12),
+                if (transactions.isEmpty)
+                  Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const SizedBox(height: 32),
+                        const Icon(Icons.receipt_outlined, size: 64, color: AppColors.textHint),
+                        const SizedBox(height: 16),
+                        const Text('مفيش معاملات', style: TextStyle(color: AppColors.textSecondary)),
+                      ],
+                    ),
+                  )
+                else
+                  ...transactions.map((trx) {
+                    final statusColor = _statusColor(trx.status);
+                    final dateStr = trx.createdAt != null
+                        ? '${trx.createdAt!.day.toString().padLeft(2, '0')}/${trx.createdAt!.month.toString().padLeft(2, '0')}/${trx.createdAt!.year}'
+                        : 'غير معروف';
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: SoftCard(
+                        onTap: () => context.push('/admin/finance/details/${trx.transactionId}'),
+                        child: Padding(
+                          padding: const EdgeInsets.all(14),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'TRX-${trx.transactionId}',
+                                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: statusColor.withValues(alpha: 0.12),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      _statusLabel(trx.status),
+                                      style: TextStyle(
+                                        color: statusColor,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                trx.serviceTitle,
+                                style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 6),
+                              Row(
+                                children: [
+                                  const Icon(Icons.person_outline, size: 13, color: AppColors.textHint),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(
+                                      trx.buyerName,
+                                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Icon(Icons.store_outlined, size: 13, color: AppColors.textHint),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(
+                                      trx.providerName,
+                                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    '${trx.totalPrice.toStringAsFixed(0)} جنيه',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.primary,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  Text(
+                                    dateStr,
+                                    style: const TextStyle(fontSize: 11, color: AppColors.textHint),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  );
-                }),
-            ],
+                    );
+                  }),
+              ],
+            ),
           );
         },
       ),
@@ -111,9 +242,16 @@ class _AdminFinanceViewState extends State<AdminFinanceView> {
   Widget _buildMetric(String label, String value) {
     return Column(
       children: [
-        Text(label, style: const TextStyle(color: AppColors.textSecondary)),
+        Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
         const SizedBox(height: 8),
-        Text(value, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: AppColors.primary)),
+        Text(
+          value,
+          style: const TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 18,
+            color: AppColors.primary,
+          ),
+        ),
       ],
     );
   }

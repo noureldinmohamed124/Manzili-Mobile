@@ -98,6 +98,7 @@ class SellerServiceDetails {
     required this.description,
     required this.basePrice,
     required this.category,
+    required this.categoryId,
     required this.status,
     required this.createdAt,
     required this.rating,
@@ -111,6 +112,7 @@ class SellerServiceDetails {
   final String description;
   final double basePrice;
   final String category;
+  final int categoryId; // 0 if not returned by API — must be resolved from categories list
   final String status;
   final DateTime? createdAt;
   final double rating;
@@ -143,6 +145,7 @@ class SellerServiceDetails {
       description: json['description']?.toString() ?? '',
       basePrice: (json['basePrice'] as num?)?.toDouble() ?? 0.0,
       category: json['category']?.toString() ?? '',
+      categoryId: (json['categoryId'] as num?)?.toInt() ?? 0,
       status: json['status']?.toString() ?? '',
       createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? ''),
       rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
@@ -205,15 +208,21 @@ class SellerDashboardStats {
   SellerDashboardStats({
     required this.totalServices,
     required this.activeOrders,
+    required this.pendingRequests,
     required this.completedOrders,
     required this.totalRevenue,
+    required this.expectedRevenue,
+    required this.onWaitingRevenue,
     required this.averageRating,
   });
 
   final int totalServices;
   final int activeOrders;
+  final int pendingRequests;
   final int completedOrders;
   final double totalRevenue;
+  final double expectedRevenue;
+  final double onWaitingRevenue;
   final double averageRating;
 
   static int _parseInt(dynamic value) {
@@ -241,8 +250,11 @@ class SellerDashboardStats {
     return SellerDashboardStats(
       totalServices: _parseInt(getVal('totalservices')),
       activeOrders: _parseInt(getVal('activeorders')),
+      pendingRequests: _parseInt(getVal('pendingrequests')),
       completedOrders: _parseInt(getVal('completedorders')),
       totalRevenue: _parseDouble(getVal('totalrevenue')),
+      expectedRevenue: _parseDouble(getVal('expectedrevenue')),
+      onWaitingRevenue: _parseDouble(getVal('onwaitingrevenue')),
       averageRating: _parseDouble(getVal('averagerating')),
     );
   }

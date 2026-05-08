@@ -55,7 +55,7 @@ class FoodListSection extends StatelessWidget {
                           tablet: 22,
                         ),
                         fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
+                        color: Theme.of(context).textTheme.titleLarge?.color ?? AppColors.textPrimary,
                       ),
                     ),
                     if (titleIcon != null) ...[
@@ -81,9 +81,7 @@ class FoodListSection extends StatelessWidget {
                 TextButton(
                   onPressed: onViewAllTap,
                   style: TextButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   ),
                   child: Text(
                     viewAllText!,
@@ -93,7 +91,7 @@ class FoodListSection extends StatelessWidget {
                         mobile: 14,
                       ),
                       fontWeight: FontWeight.w600,
-                      color: Colors.red,
+                      color: AppColors.primary,
                     ),
                   ),
                 ),

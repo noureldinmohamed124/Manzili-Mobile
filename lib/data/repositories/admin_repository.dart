@@ -3,7 +3,7 @@ import 'package:manzili_mobile/core/network/api_constants.dart';
 import 'package:manzili_mobile/core/network/dio_client.dart';
 import 'package:manzili_mobile/core/network/json_parse.dart';
 import 'package:manzili_mobile/data/models/admin_models.dart';
-import 'package:manzili_mobile/data/models/auth_models.dart'; // Using User model if exists or create a new one
+
 
 class AdminRepository {
   AdminRepository({Dio? dio}) : _dio = dio ?? DioClient.instance.dio;
@@ -138,9 +138,18 @@ class AdminRepository {
       }
       final raw = tryParseJsonMap(res.data);
       if (raw == null) return (null, 'السيرفر ماردش بيانات');
-      // If the response wraps in data:
-      final data = raw.containsKey('data') ? raw['data'] : raw;
-      return (AdminDashboardStats.fromJson(data is Map<String, dynamic> ? data : raw), null);
+      // Dashboard returns direct object (no wrapper). Handle both shapes:
+      // - Direct: { "totalUsers": 35, ... }
+      // - Wrapped: { "success": true, "data": { "totalUsers": 35, ... } }
+      final Map<String, dynamic> data;
+      if (raw.containsKey('totalUsers')) {
+        data = raw;
+      } else if (raw['data'] is Map<String, dynamic>) {
+        data = raw['data'] as Map<String, dynamic>;
+      } else {
+        data = raw;
+      }
+      return (AdminDashboardStats.fromJson(data), null);
     } on DioException catch (e) {
       return (null, _mapDioError(e));
     } catch (_) {

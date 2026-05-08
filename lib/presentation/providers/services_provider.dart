@@ -94,7 +94,7 @@ class ServicesProvider extends ChangeNotifier {
         response = await _dio.get(ApiConstants.categories);
       } on DioException catch (e) {
         if (e.response?.statusCode != 404) rethrow;
-        response = await _dio.get('/api/categories');
+        response = await _dio.get(ApiConstants.categoriesLegacy);
       }
       if (response.data == null) {
         _errorMessage = 'السيرفر ماردش بيانات';
@@ -156,6 +156,8 @@ class ServicesProvider extends ChangeNotifier {
 
       Response response;
       if (searchQuery != null && searchQuery.isNotEmpty) {
+        // Search endpoint uses the same page/pageSize params as the list endpoint.
+        // We pass them in queryParameters (already built above).
         try {
           response = await _dio.get(
             ApiConstants.serviceByName(searchQuery),

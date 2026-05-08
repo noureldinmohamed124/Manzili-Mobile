@@ -5,7 +5,6 @@ import 'package:manzili_mobile/core/theme/app_colors.dart';
 import 'package:manzili_mobile/presentation/providers/seller_provider.dart';
 import 'package:manzili_mobile/presentation/providers/auth_provider.dart';
 import 'package:manzili_mobile/presentation/providers/theme_provider.dart';
-import 'package:manzili_mobile/presentation/providers/locale_provider.dart';
 import 'package:manzili_mobile/presentation/widgets/common/soft_card.dart';
 import 'package:provider/provider.dart';
 
@@ -117,8 +116,11 @@ class _SellerHubViewState extends State<SellerHubView> {
                         children: [
                           _StatChip(label: 'الخدمات', value: stats.totalServices.toString()),
                           _StatChip(label: 'طلبات شغالة', value: stats.activeOrders.toString()),
+                          _StatChip(label: 'طلبات جديدة', value: stats.pendingRequests.toString()),
                           _StatChip(label: 'طلبات مكتملة', value: stats.completedOrders.toString()),
                           _StatChip(label: 'الإيراد', value: '${stats.totalRevenue.toStringAsFixed(2)}ج'),
+                          _StatChip(label: 'إيراد متوقع', value: '${stats.expectedRevenue.toStringAsFixed(2)}ج'),
+                          _StatChip(label: 'في الانتظار', value: '${stats.onWaitingRevenue.toStringAsFixed(2)}ج'),
                           _StatChip(label: 'التقييم', value: stats.averageRating.toStringAsFixed(1)),
                         ],
                       )

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:manzili_mobile/data/models/service_models.dart';
 
 import 'package:manzili_mobile/data/models/seller_models.dart';
 import 'package:manzili_mobile/data/repositories/seller_repository.dart';
@@ -34,6 +33,12 @@ class SellerProvider extends ChangeNotifier {
   SellerServiceDetails? _currentService;
   SellerServiceDetails? get currentService => _currentService;
 
+  /// Clears current service immediately (prevents stale data between navigations).
+  void clearCurrentService() {
+    _currentService = null;
+    notifyListeners();
+  }
+
   Future<void> fetchDashboardStats() async {
     _isLoadingDashboard = true;
     _dashboardError = null;
@@ -60,7 +65,8 @@ class SellerProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final (data, err) = await _repository.getSellerServices(page: page, pageSize: pageSize, status: status);
+      // Always load without status filter — filtering is done client-side
+      final (data, err) = await _repository.getSellerServices(page: page, pageSize: pageSize);
       if (err != null) {
         _servicesError = err;
       } else {
@@ -74,7 +80,9 @@ class SellerProvider extends ChangeNotifier {
     }
   }
 
+  /// Clears current service before fetching a new one to prevent stale data showing.
   Future<void> fetchSellerServiceById(int id) async {
+    _currentService = null; // Clear immediately so UI shows loading, not stale data
     _isLoadingDetails = true;
     _detailsError = null;
     notifyListeners();
@@ -144,6 +152,14 @@ class SellerProvider extends ChangeNotifier {
   SellerOrderListResponse? _ordersResponse;
   SellerOrderListResponse? get ordersResponse => _ordersResponse;
 
+  String? _selectedOrderStatus;
+  String? get selectedOrderStatus => _selectedOrderStatus;
+
+  void setSelectedOrderStatus(String? status) {
+    _selectedOrderStatus = status;
+    notifyListeners();
+  }
+
   Future<void> fetchSellerOrders({String? status, int page = 1, int pageSize = 10}) async {
     _isLoadingOrders = true;
     _ordersError = null;
@@ -151,8 +167,11 @@ class SellerProvider extends ChangeNotifier {
 
     final (data, error) = await _repository.getSellerOrders(status: status, page: page, pageSize: pageSize);
     _isLoadingOrders = false;
-    if (error != null) _ordersError = error;
-    else _ordersResponse = data;
+    if (error != null) {
+      _ordersError = error;
+    } else {
+      _ordersResponse = data;
+    }
     notifyListeners();
   }
 
@@ -165,15 +184,25 @@ class SellerProvider extends ChangeNotifier {
   SellerOrderDetails? _currentOrder;
   SellerOrderDetails? get currentOrder => _currentOrder;
 
+  /// Clears current order immediately (prevents stale data between navigations).
+  void clearCurrentOrder() {
+    _currentOrder = null;
+    notifyListeners();
+  }
+
   Future<void> fetchSellerOrderById(int orderId) async {
+    _currentOrder = null; // Clear immediately so UI shows loading, not stale data
     _isLoadingOrderDetails = true;
     _orderDetailsError = null;
     notifyListeners();
 
     final (data, error) = await _repository.getSellerOrderById(orderId);
     _isLoadingOrderDetails = false;
-    if (error != null) _orderDetailsError = error;
-    else _currentOrder = data;
+    if (error != null) {
+      _orderDetailsError = error;
+    } else {
+      _currentOrder = data;
+    }
     notifyListeners();
   }
 

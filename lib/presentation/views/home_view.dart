@@ -6,13 +6,9 @@ import 'package:manzili_mobile/presentation/providers/favourites_provider.dart';
 import 'package:manzili_mobile/presentation/providers/services_provider.dart';
 import 'package:manzili_mobile/presentation/widgets/home/food_list_section.dart';
 import 'package:manzili_mobile/presentation/widgets/home/food_card.dart';
-import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:pull_to_refresh_flutter3/pull_to_refresh_flutter3.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/utils/responsive_helper.dart';
-import '../../../core/widgets/responsive_max_width.dart';
 import 'package:manzili_mobile/presentation/providers/theme_provider.dart';
-import 'package:manzili_mobile/presentation/providers/locale_provider.dart';
 import 'package:manzili_mobile/l10n/app_localizations.dart';
 
 class HomeView extends StatefulWidget {
@@ -37,634 +33,488 @@ class _HomeViewState extends State<HomeView> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final servicesProvider = context.read<ServicesProvider>();
-      servicesProvider.fetchHomeBuckets(4);
-      servicesProvider.fetchServices(page: 1, pageSize: 10);
-      servicesProvider.fetchFeaturedServices(page: 1, pageSize: 10);
-      servicesProvider.fetchRecommendedServices(page: 1, pageSize: 10);
-      servicesProvider.fetchMostPurchasedServices(page: 1, pageSize: 10);
+      final p = context.read<ServicesProvider>();
+      p.fetchHomeBuckets(4);
+      p.fetchServices(page: 1, pageSize: 10);
+      p.fetchFeaturedServices(page: 1, pageSize: 10);
+      p.fetchRecommendedServices(page: 1, pageSize: 10);
+      p.fetchMostPurchasedServices(page: 1, pageSize: 10);
+      if (p.categories.isEmpty) p.fetchCategories();
     });
   }
 
+  void _refresh() {
+    final p = context.read<ServicesProvider>();
+    p.fetchHomeBuckets(4);
+    p.fetchServices(page: 1, pageSize: 10);
+    p.fetchFeaturedServices(page: 1, pageSize: 10);
+    p.fetchRecommendedServices(page: 1, pageSize: 10);
+    p.fetchMostPurchasedServices(page: 1, pageSize: 10);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Directionality(
       textDirection: Directionality.of(context),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          // Use effective width for scaling to prevent over-scaling on ultra-wide screens
-          final spacing = ResponsiveHelper.responsiveSpacingFromConstraints(
-            constraints,
-            base: 8.0,
-          );
-          final horizontalPadding =
-              ResponsiveHelper.responsiveHorizontalPaddingFromConstraints(
-                constraints,
-              );
+      child: Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        body: Consumer<ServicesProvider>(
+          builder: (context, sp, _) {
+            final buckets = sp.homeBuckets;
+            final featured = (buckets != null && buckets.topDiscounts.isNotEmpty)
+                ? buckets.topDiscounts
+                : sp.featuredServices;
+            final recommended = (buckets != null && buckets.recommended.isNotEmpty)
+                ? buckets.recommended
+                : sp.recommendedServices;
+            final mostSold = (buckets != null && buckets.mostPurchased.isNotEmpty)
+                ? buckets.mostPurchased
+                : sp.mostPurchasedServices;
+            final allServices = (buckets != null && buckets.regular.isNotEmpty)
+                ? buckets.regular
+                : sp.services;
 
-          return Scaffold(
-            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-            body: SafeArea(
-              bottom: false,
-              child: ResponsiveMaxWidth(
-                child: Column(
-                  children: [
-                    // Header
-                    Container(
-                      padding: EdgeInsets.only(
-                        top: spacing,
-                        bottom:
-                            ResponsiveHelper.responsiveSpacingFromConstraints(
-                              constraints,
-                              base: 12.0,
-                            ),
-                      ).add(horizontalPadding),
-                      child: LayoutBuilder(
-                        builder: (context, headerConstraints) {
-                          final iconSize = ResponsiveHelper.scaleValue(
-                            40.0,
-                            headerConstraints.maxWidth,
-                            min: 36.0,
-                            max: 48.0,
-                          );
+            final isInitialLoading = sp.isLoading &&
+                featured.isEmpty &&
+                recommended.isEmpty &&
+                mostSold.isEmpty &&
+                allServices.isEmpty;
 
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Material(
-                                        color: Colors.transparent,
-                                        child: InkWell(
-                                          onTap: () => context.push('/profile'),
-                                          customBorder: const CircleBorder(),
-                                          child: Container(
-                                            width: iconSize,
-                                            height: iconSize,
-                                            decoration: BoxDecoration(
-                                              shape: BoxShape.circle,
-                                              border: Border.all(
-                                                color: AppColors.coolSteel.withValues(alpha: 0.45),
-                                                width: 2,
-                                              ),
-                                            ),
-                                            child: ClipOval(
-                                              child: Container(
-                                                color: AppColors.surfaceMuted,
-                                                child: Icon(
-                                                  Icons.person_rounded,
-                                                  color: AppColors.heading,
-                                                  size: iconSize * 0.55,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      SizedBox(width: spacing),
-                                      Consumer2<ThemeProvider, LocaleProvider>(
-                                        builder: (context, themeProvider, localeProvider, _) {
-                                          return Row(
-                                            children: [
-                                              _buildIconButton(
-                                                themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode,
-                                                Theme.of(context).iconTheme.color ?? AppColors.textSecondary,
-                                                Theme.of(context).colorScheme.surface,
-                                                iconSize,
-                                                () => themeProvider.toggleTheme(),
-                                              ),
-                                              ],
-                                          );
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                  Row(
-                                    children: [
-                                      _buildIconButton(
-                                        Icons.notifications_outlined,
-                                        Theme.of(context).iconTheme.color ?? AppColors.textSecondary,
-                                        Theme.of(context).colorScheme.surface,
-                                        iconSize,
-                                        () => context.push('/notifications'),
-                                      ),
-                                      SizedBox(width: spacing),
-                                      _buildIconButton(
-                                        Icons.shopping_cart_outlined,
-                                        Colors.white,
-                                        AppColors.primary,
-                                        iconSize,
-                                        () => context.push('/cart'),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                              SizedBox(height: spacing * 1.5),
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: Theme.of(context).colorScheme.surface,
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withValues(alpha: 0.05),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: TextField(
-                                  textInputAction: TextInputAction.search,
-                                  onSubmitted: (value) {
-                                    final q = value.trim();
-                                    if (q.isEmpty) return;
-                                    context.go(Uri(path: '/services', queryParameters: {'q': q}).toString());
-                                  },
-                                  style: TextStyle(
-                                    fontSize: ResponsiveHelper.responsiveFontSize(context, base: 14.0, min: 12.0, max: 16.0),
-                                  ),
-                                  decoration: InputDecoration(
-                                    hintText: AppLocalizations.of(context)!.homeSearchHint,
-                                    hintStyle: TextStyle(
-                                      color: AppColors.textHint,
-                                      fontSize: ResponsiveHelper.responsiveFontSize(context, base: 14.0, min: 12.0, max: 16.0),
-                                    ),
-                                    border: InputBorder.none,
-                                    prefixIcon: Icon(Icons.search, color: AppColors.textHint, size: 24),
-                                    prefixIconConstraints: const BoxConstraints(minWidth: 44, minHeight: 44),
-                                    contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-                    ),
-
-                    // Title Section
-                    Padding(
-                      padding: EdgeInsets.symmetric(
-                        vertical:
-                            ResponsiveHelper.responsiveSpacingFromConstraints(
-                              constraints,
-                              base: 16.0,
-                            ),
-                      ),
-                      child: Column(
-                        children: [
-                          GestureDetector(
-                            onTap: () {
-                              final p = context.read<ServicesProvider>();
-                              p.fetchHomeBuckets(4);
-                              p.fetchServices(page: 1, pageSize: 10);
-                              p.fetchFeaturedServices(page: 1, pageSize: 10);
-                              p.fetchRecommendedServices(page: 1, pageSize: 10);
-                              p.fetchMostPurchasedServices(
-                                page: 1,
-                                pageSize: 10,
-                              );
-                            },
-                            child: Text(
-                              AppLocalizations.of(context)!.appName,
-                              style: TextStyle(
-                                fontSize: ResponsiveHelper.responsiveFontSize(
-                                  context,
-                                  base: 32.0,
-                                  min: 24.0,
-                                  max: 48.0,
-                                ),
-                                fontWeight: FontWeight.w900,
-                                color:
-                                    Theme.of(
-                                      context,
-                                    ).textTheme.displayLarge?.color ??
-                                    AppColors.heading,
-                              ),
-                            ),
-                          ),
-                          SizedBox(
-                            height:
-                                ResponsiveHelper.responsiveSpacingFromConstraints(
-                                  constraints,
-                                  base: 4.0,
-                                ),
-                          ),
-                          Wrap(
-                            alignment: WrapAlignment.center,
-                            spacing:
-                                ResponsiveHelper.responsiveSpacingFromConstraints(
-                                  constraints,
-                                  base: 4.0,
-                                ),
-                            children: [
-                              AnimatedTextKit(
-                                animatedTexts: [
-                                  TypewriterAnimatedText(
-                                    AppLocalizations.of(
-                                      context,
-                                    )!.homeHeaderSubtitle,
-                                    textStyle: TextStyle(
-                                      fontSize:
-                                          ResponsiveHelper.responsiveFontSize(
-                                            context,
-                                            base: 14.0,
-                                            min: 12.0,
-                                            max: 16.0,
-                                          ),
-                                      fontWeight: FontWeight.w500,
-                                      color:
-                                          Theme.of(
-                                            context,
-                                          ).textTheme.bodySmall?.color ??
-                                          AppColors.textSecondary,
-                                    ),
-                                    speed: const Duration(milliseconds: 100),
-                                  ),
-                                ],
-                                totalRepeatCount: 1,
-                              ),
-                              Text(
-                                '👋',
-                                style: TextStyle(
-                                  fontSize: ResponsiveHelper.responsiveFontSize(
-                                    context,
-                                    base: 16.0,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // Scrollable Content
-                    Expanded(
-                      child: Container(
-                        margin: EdgeInsets.only(
-                          top:
-                              ResponsiveHelper.responsiveSpacingFromConstraints(
-                                constraints,
-                                base: 16.0,
-                              ),
-                        ),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).scaffoldBackgroundColor,
-                          borderRadius: BorderRadius.vertical(
-                            top: Radius.circular(
-                              ResponsiveHelper.responsiveValueFromConstraints(
-                                constraints,
-                                base: 30.0,
-                                lg: 32.0,
-                              ),
-                            ),
-                          ),
-                        ),
-                        child: Consumer<ServicesProvider>(
-                          builder: (context, servicesProvider, _) {
-                            final buckets = servicesProvider.homeBuckets;
-                            final featured =
-                                buckets != null &&
-                                    buckets.topDiscounts.isNotEmpty
-                                ? buckets.topDiscounts
-                                : servicesProvider.featuredServices;
-                            final recommended =
-                                buckets != null &&
-                                    buckets.recommended.isNotEmpty
-                                ? buckets.recommended
-                                : servicesProvider.recommendedServices;
-                            final mostSold =
-                                buckets != null &&
-                                    buckets.mostPurchased.isNotEmpty
-                                ? buckets.mostPurchased
-                                : servicesProvider.mostPurchasedServices;
-                            final allServices =
-                                buckets != null && buckets.regular.isNotEmpty
-                                ? buckets.regular
-                                : servicesProvider.services;
-
-                            final bool isInitialLoading =
-                                servicesProvider.isLoading &&
-                                featured.isEmpty &&
-                                recommended.isEmpty &&
-                                mostSold.isEmpty &&
-                                allServices.isEmpty;
-
-                            if (isInitialLoading) {
-                              return const Center(
-                                child: CircularProgressIndicator(),
-                              );
-                            }
-
-                            if (servicesProvider.errorMessage != null &&
-                                featured.isEmpty &&
-                                recommended.isEmpty &&
-                                mostSold.isEmpty &&
-                                allServices.isEmpty) {
-                              return Center(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(24),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        servicesProvider.errorMessage!,
-                                        textAlign: TextAlign.center,
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w600,
-                                          color: AppColors.error,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 16),
-                                      FilledButton(
-                                        onPressed: () {
-                                          servicesProvider.fetchHomeBuckets(4);
-                                          servicesProvider.fetchServices(
-                                            page: 1,
-                                            pageSize: 10,
-                                          );
-                                          servicesProvider
-                                              .fetchFeaturedServices(
-                                                page: 1,
-                                                pageSize: 10,
-                                              );
-                                          servicesProvider
-                                              .fetchRecommendedServices(
-                                                page: 1,
-                                                pageSize: 10,
-                                              );
-                                          servicesProvider
-                                              .fetchMostPurchasedServices(
-                                                page: 1,
-                                                pageSize: 10,
-                                              );
-                                        },
-                                        child: Text(AppLocalizations.of(context)!.retry),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            }
-
-                            return SmartRefresher(
-                              controller: _refreshController,
-                              header: WaterDropMaterialHeader(
-                                backgroundColor: AppColors.primary,
-                                color: Theme.of(context).colorScheme.surface,
-                              ),
-                              onRefresh: () async {
-                                final p = context.read<ServicesProvider>();
-                                p.fetchHomeBuckets(4);
-                                p.fetchServices(page: 1, pageSize: 10);
-                                p.fetchFeaturedServices(page: 1, pageSize: 10);
-                                p.fetchRecommendedServices(
-                                  page: 1,
-                                  pageSize: 10,
-                                );
-                                p.fetchMostPurchasedServices(
-                                  page: 1,
-                                  pageSize: 10,
-                                );
-                                await Future.delayed(
-                                  const Duration(seconds: 1),
-                                );
-                                _refreshController.refreshCompleted();
-                              },
-                              child: SingleChildScrollView(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    _HomeQuickCategories(
-                                      onCategoryTap: (id) => id == null
-                                          ? context.go('/services')
-                                          : context.go(
-                                              '/services?categoryId=$id',
-                                            ),
-                                    ),
-                                    if (featured.isNotEmpty)
-                                      FoodListSection(
-                                        title: AppLocalizations.of(context)!.homeOffersTitle,
-                                        titleIcon: Icons.percent,
-                                        titleIconColor: Colors.red,
-                                        foodItems: _buildFoodCardsFromServices(
-                                          context,
-                                          constraints,
-                                          featured,
-                                          badge: AppLocalizations.of(context)!.badgeDiscount,
-                                        ),
-                                      ),
-
-                                    if (featured.isNotEmpty)
-                                      SizedBox(
-                                        height:
-                                            ResponsiveHelper.responsiveSpacingFromConstraints(
-                                              constraints,
-                                              base: 8.0,
-                                            ),
-                                      ),
-
-                                    if (recommended.isNotEmpty)
-                                      FoodListSection(
-                                        title: AppLocalizations.of(context)!.homeRecommendedTitle,
-                                        foodItems: _buildFoodCardsFromServices(
-                                          context,
-                                          constraints,
-                                          recommended,
-                                          badge: AppLocalizations.of(context)!.badgeVip,
-                                        ),
-                                      ),
-
-                                    if (recommended.isNotEmpty)
-                                      SizedBox(
-                                        height:
-                                            ResponsiveHelper.responsiveSpacingFromConstraints(
-                                              constraints,
-                                              base: 8.0,
-                                            ),
-                                      ),
-
-                                    if (mostSold.isNotEmpty)
-                                      FoodListSection(
-                                        title: AppLocalizations.of(context)!.homeMostPurchasedTitle,
-                                        titleIcon: Icons.star,
-                                        titleIconColor: Colors.amber,
-                                        foodItems: _buildFoodCardsFromServices(
-                                          context,
-                                          constraints,
-                                          mostSold,
-                                          badge: AppLocalizations.of(context)!.badgeTopSold,
-                                        ),
-                                      ),
-
-                                    if (mostSold.isNotEmpty)
-                                      SizedBox(
-                                        height:
-                                            ResponsiveHelper.responsiveSpacingFromConstraints(
-                                              constraints,
-                                              base: 8.0,
-                                            ),
-                                      ),
-
-                                    if (allServices.isNotEmpty)
-                                      FoodListSection(
-                                        title: AppLocalizations.of(context)!.homeAllServicesTitle,
-                                        viewAllText: 'عرض الكل',
-                                        onViewAllTap: () =>
-                                            context.go('/services'),
-                                        onTitleTap: () =>
-                                            context.go('/services'),
-                                        foodItems: _buildFoodCardsFromServices(
-                                          context,
-                                          constraints,
-                                          allServices,
-                                        ),
-                                      ),
-
-                                    SizedBox(
-                                      height:
-                                          ResponsiveHelper.responsiveSpacingFromConstraints(
-                                            constraints,
-                                            base: 20.0,
-                                          ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+            return SmartRefresher(
+              controller: _refreshController,
+              header: WaterDropMaterialHeader(
+                backgroundColor: AppColors.primary,
+                color: Colors.white,
               ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  List<Widget> _buildFoodCardsFromServices(
-    BuildContext context,
-    BoxConstraints constraints,
-    List<ServiceItem> services, {
-    String? badge,
-  }) {
-    return services.map((service) {
-      return Consumer<FavouritesProvider>(
-        builder: (context, fav, _) {
-          return FoodCard(
-            networkImageUrl: service.imageUrl,
-            name: service.title,
-            sellerName: service.providerName,
-            price: service.basePrice.toDouble(),
-            rating: service.rating.toDouble(),
-            badge: badge,
-            isFavorite: fav.isFavourite(service.id),
-            onFavoriteTap: () => fav.toggle(service),
-            onTap: () => context.push('/service/${service.id}'),
-          );
-        },
-      );
-    }).toList();
-  }
-
-  Widget _buildIconButton(
-    IconData icon,
-    Color iconColor,
-    Color bgColor,
-    double size,
-    VoidCallback onPressed,
-  ) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: IconButton(
-        padding: EdgeInsets.zero,
-        icon: Icon(icon),
-        color: iconColor,
-        onPressed: onPressed,
-      ),
-    );
-  }
-}
-
-/// Spec: quick categories horizontal scroll (filters → services list).
-class _HomeQuickCategories extends StatelessWidget {
-  const _HomeQuickCategories({required this.onCategoryTap});
-
-  final void Function(int?) onCategoryTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16),
-        ResponsiveHelper.responsiveSpacingCompat(context, mobile: 12),
-        ResponsiveHelper.responsiveSpacingCompat(context, mobile: 16),
-        ResponsiveHelper.responsiveSpacingCompat(context, mobile: 8),
-      ),
-      child: SizedBox(
-        height: 40,
-        child: Consumer<ServicesProvider>(
-          builder: (context, provider, child) {
-            final categories = provider.categories;
-            if (categories.isEmpty) return const SizedBox.shrink();
-
-            return ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: categories.length + 1,
-              separatorBuilder: (_, __) => SizedBox(
-                width: ResponsiveHelper.responsiveSpacingCompat(
-                  context,
-                  mobile: 8,
-                ),
-              ),
-              itemBuilder: (context, i) {
-                final isAll = i == 0;
-                final label = isAll ? 'الكل' : categories[i - 1].nameAr;
-                final onTap = isAll
-                    ? () => onCategoryTap(null)
-                    : () => onCategoryTap(categories[i - 1].id);
-
-                return _CategoryChip(label: label, onTap: onTap);
+              onRefresh: () async {
+                _refresh();
+                await Future.delayed(const Duration(milliseconds: 800));
+                _refreshController.refreshCompleted();
               },
+              child: CustomScrollView(
+                slivers: [
+                  // ── Hero header ──────────────────────────────────────────
+                  SliverToBoxAdapter(
+                    child: _HeroHeader(isDark: isDark),
+                  ),
+
+                  // ── Loading / Error ──────────────────────────────────────
+                  if (isInitialLoading)
+                    const SliverFillRemaining(
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  else if (sp.errorMessage != null &&
+                      featured.isEmpty &&
+                      recommended.isEmpty &&
+                      mostSold.isEmpty &&
+                      allServices.isEmpty)
+                    SliverFillRemaining(
+                      child: _ErrorState(
+                        message: sp.errorMessage!,
+                        onRetry: _refresh,
+                      ),
+                    )
+                  else ...[
+                    // ── Category chips ─────────────────────────────────────
+                    SliverToBoxAdapter(
+                      child: _CategoryStrip(
+                        onTap: (id) => id == null
+                            ? context.go('/services')
+                            : context.go('/services?categoryId=$id'),
+                      ),
+                    ),
+
+                    // ── Sections ───────────────────────────────────────────
+                    if (featured.isNotEmpty)
+                      SliverToBoxAdapter(
+                        child: FoodListSection(
+                          title: AppLocalizations.of(context)!.homeOffersTitle,
+                          titleIcon: Icons.local_offer_rounded,
+                          titleIconColor: AppColors.error,
+                          foodItems: _cards(context, featured,
+                              badge: AppLocalizations.of(context)!.badgeDiscount),
+                        ),
+                      ),
+
+                    if (recommended.isNotEmpty)
+                      SliverToBoxAdapter(
+                        child: FoodListSection(
+                          title: AppLocalizations.of(context)!.homeRecommendedTitle,
+                          titleIcon: Icons.verified_rounded,
+                          titleIconColor: AppColors.secondary,
+                          foodItems: _cards(context, recommended,
+                              badge: AppLocalizations.of(context)!.badgeVip),
+                        ),
+                      ),
+
+                    if (mostSold.isNotEmpty)
+                      SliverToBoxAdapter(
+                        child: FoodListSection(
+                          title: AppLocalizations.of(context)!.homeMostPurchasedTitle,
+                          titleIcon: Icons.trending_up_rounded,
+                          titleIconColor: Colors.amber.shade700,
+                          foodItems: _cards(context, mostSold,
+                              badge: AppLocalizations.of(context)!.badgeTopSold),
+                        ),
+                      ),
+
+                    if (allServices.isNotEmpty)
+                      SliverToBoxAdapter(
+                        child: FoodListSection(
+                          title: AppLocalizations.of(context)!.homeAllServicesTitle,
+                          viewAllText: 'عرض الكل',
+                          onViewAllTap: () => context.go('/services'),
+                          onTitleTap: () => context.go('/services'),
+                          foodItems: _cards(context, allServices),
+                        ),
+                      ),
+
+                    // bottom padding
+                    const SliverToBoxAdapter(child: SizedBox(height: 32)),
+                  ],
+                ],
+              ),
             );
           },
         ),
       ),
     );
   }
+
+  List<Widget> _cards(
+    BuildContext context,
+    List<ServiceItem> services, {
+    String? badge,
+  }) {
+    return services.map((s) {
+      return Consumer<FavouritesProvider>(
+        builder: (context, fav, _) => FoodCard(
+          networkImageUrl: s.imageUrl,
+          name: s.title,
+          sellerName: s.providerName,
+          price: s.basePrice.toDouble(),
+          rating: s.rating.toDouble(),
+          badge: badge,
+          isFavorite: fav.isFavourite(s.id),
+          onFavoriteTap: () => fav.toggle(s),
+          onTap: () => context.push('/service/${s.id}'),
+        ),
+      );
+    }).toList();
+  }
 }
 
-class _CategoryChip extends StatelessWidget {
-  const _CategoryChip({required this.label, required this.onTap});
-  final String label;
-  final VoidCallback onTap;
+// ── Hero Header ───────────────────────────────────────────────────────────────
+
+class _HeroHeader extends StatelessWidget {
+  const _HeroHeader({required this.isDark});
+  final bool isDark;
 
   @override
   Widget build(BuildContext context) {
-    return ActionChip(
-      label: Text(
-        label,
-        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+          colors: isDark
+              ? [const Color(0xFF2A1A14), const Color(0xFF1A1A1A)]
+              : [
+                  AppColors.primary,
+                  AppColors.secondary,
+                ],
+        ),
       ),
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      side: BorderSide(color: Theme.of(context).dividerColor),
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      onPressed: onTap,
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Top bar: avatar + actions
+              Row(
+                children: [
+                  // Avatar
+                  GestureDetector(
+                    onTap: () => context.push('/profile'),
+                    child: Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withValues(alpha: 0.2),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.5),
+                          width: 2,
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.person_rounded,
+                        color: Colors.white,
+                        size: 22,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  // Greeting
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'أهلاً بيك 👋',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.white.withValues(alpha: 0.85),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const Text(
+                          'منزلي',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Theme toggle
+                  Consumer<ThemeProvider>(
+                    builder: (context, tp, _) => _HeaderAction(
+                      icon: tp.isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                      onTap: tp.toggleTheme,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // Notifications
+                  _HeaderAction(
+                    icon: Icons.notifications_outlined,
+                    onTap: () => context.push('/notifications'),
+                  ),
+                  const SizedBox(width: 8),
+                  // Cart with badge
+                  Consumer<ServicesProvider>(
+                    builder: (context, _, __) => _HeaderAction(
+                      icon: Icons.shopping_cart_outlined,
+                      onTap: () => context.push('/cart'),
+                      filled: true,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 20),
+
+              // Search bar
+              GestureDetector(
+                onTap: () => context.go('/services'),
+                child: Container(
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.12),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      const SizedBox(width: 14),
+                      Icon(Icons.search_rounded, color: AppColors.primary, size: 22),
+                      const SizedBox(width: 10),
+                      Text(
+                        AppLocalizations.of(context)!.homeSearchHint,
+                        style: const TextStyle(
+                          color: AppColors.textHint,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HeaderAction extends StatelessWidget {
+  const _HeaderAction({
+    required this.icon,
+    required this.onTap,
+    this.filled = false,
+  });
+  final IconData icon;
+  final VoidCallback onTap;
+  final bool filled;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          color: filled
+              ? Colors.white
+              : Colors.white.withValues(alpha: 0.18),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(
+          icon,
+          size: 20,
+          color: filled ? AppColors.primary : Colors.white,
+        ),
+      ),
+    );
+  }
+}
+
+// ── Category Strip ────────────────────────────────────────────────────────────
+
+class _CategoryStrip extends StatefulWidget {
+  const _CategoryStrip({required this.onTap});
+  final void Function(int?) onTap;
+
+  @override
+  State<_CategoryStrip> createState() => _CategoryStripState();
+}
+
+class _CategoryStripState extends State<_CategoryStrip> {
+  int? _selected; // null = "الكل"
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<ServicesProvider>(
+      builder: (context, sp, _) {
+        final cats = sp.categories;
+        if (cats.isEmpty) return const SizedBox.shrink();
+
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(0, 16, 0, 4),
+          child: SizedBox(
+            height: 38,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              itemCount: cats.length + 1,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (context, i) {
+                final isAll = i == 0;
+                final label = isAll ? 'الكل' : cats[i - 1].nameAr;
+                final id = isAll ? null : cats[i - 1].id;
+                final isSelected = _selected == id;
+
+                return GestureDetector(
+                  onTap: () {
+                    setState(() => _selected = id);
+                    widget.onTap(id);
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? AppColors.primary
+                          : Theme.of(context).colorScheme.surface,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isSelected
+                            ? AppColors.primary
+                            : AppColors.border,
+                      ),
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: AppColors.primary.withValues(alpha: 0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ]
+                          : null,
+                    ),
+                    child: Center(
+                      child: Text(
+                        label,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: isSelected
+                              ? Colors.white
+                              : AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ── Error State ───────────────────────────────────────────────────────────────
+
+class _ErrorState extends StatelessWidget {
+  const _ErrorState({required this.message, required this.onRetry});
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppColors.error.withValues(alpha: 0.08),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.wifi_off_rounded, size: 48, color: AppColors.error),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 20),
+            FilledButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh_rounded, size: 18),
+              label: const Text('جرّب تاني'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -60,47 +60,48 @@ class ApiConstants {
   }
 
   // Seller
-  static const String sellerServices = '/seller/services';
-  static const String sellerServicesLegacy = '/api/seller/services';
-  static String sellerServiceById(int id) => '/seller/services/$id';
-  static String sellerServiceByIdLegacy(int id) => '/api/seller/services/$id';
-  static const String sellerDashboard = '/seller/dashboard';
-  static const String sellerDashboardLegacy = '/api/seller/dashboard';
+  static const String sellerServices = '/api/seller/services';
+  static const String sellerServicesLegacy = '/seller/services';
+  static String sellerServiceById(int id) => '/api/seller/services/$id';
+  static String sellerServiceByIdLegacy(int id) => '/seller/services/$id';
+  static const String sellerDashboard = '/api/seller/dashboard';
+  static const String sellerDashboardLegacy = '/seller/dashboard';
 
   // Seller Orders
-  static const String sellerOrders = '/seller/orders';
-  static const String sellerOrdersLegacy = '/api/seller/orders';
-  static String sellerOrderById(int id) => '/seller/orders/$id';
-  static String sellerOrderByIdLegacy(int id) => '/api/seller/orders/$id';
-  static String sellerOrderReprice(int id) => '/seller/orders/$id/reprice';
-  static String sellerOrderRepriceLegacy(int id) => '/api/seller/orders/$id/reprice';
-  static String sellerOrderReject(int id) => '/seller/orders/$id/reject';
-  static String sellerOrderRejectLegacy(int id) => '/api/seller/orders/$id/reject';
-  static String sellerOrderApprove(int id) => '/seller/orders/$id/approve';
-  static String sellerOrderApproveLegacy(int id) => '/api/seller/orders/$id/approve';
-  static String sellerOrderStatus(int id) => '/seller/orders/$id/status';
-  static String sellerOrderStatusLegacy(int id) => '/api/seller/orders/$id/status';
+  static const String sellerOrders = '/api/seller/orders';
+  static const String sellerOrdersLegacy = '/seller/orders';
+  static String sellerOrderById(int id) => '/api/seller/orders/$id';
+  static String sellerOrderByIdLegacy(int id) => '/seller/orders/$id';
+  static String sellerOrderReprice(int id) => '/api/seller/orders/$id/reprice';
+  static String sellerOrderRepriceLegacy(int id) => '/seller/orders/$id/reprice';
+  static String sellerOrderReject(int id) => '/api/seller/orders/$id/reject';
+  static String sellerOrderRejectLegacy(int id) => '/seller/orders/$id/reject';
+  static String sellerOrderApprove(int id) => '/api/seller/orders/$id/approve';
+  static String sellerOrderApproveLegacy(int id) => '/seller/orders/$id/approve';
+  static String sellerOrderStatus(int id) => '/api/seller/orders/$id/status';
+  static String sellerOrderStatusLegacy(int id) => '/seller/orders/$id/status';
 
   // Admin Users
-  static const String adminUsers = '/admin/users';
-  static const String adminUsersLegacy = '/api/admin/users';
-  static String adminBlockUser(int id) => '/admin/users/$id/block';
-  static String adminBlockUserLegacy(int id) => '/api/admin/users/$id/block';
-  static String adminUnblockUser(int id) => '/admin/users/$id/unblock';
-  static String adminUnblockUserLegacy(int id) => '/api/admin/users/$id/unblock';
-  static String adminUserDetails(int id) => '/admin/users/$id';
-  static String adminUserDetailsLegacy(int id) => '/api/admin/users/$id';
+  static const String adminUsers = '/api/admin/users';
+  static const String adminUsersLegacy = '/admin/users';
+  static String adminBlockUser(int id) => '/api/admin/users/$id/block';
+  static String adminBlockUserLegacy(int id) => '/admin/users/$id/block';
+  static String adminUnblockUser(int id) => '/api/admin/users/$id/unblock';
+  static String adminUnblockUserLegacy(int id) => '/admin/users/$id/unblock';
+  static String adminUserDetails(int id) => '/api/admin/users/$id';
+  static String adminUserDetailsLegacy(int id) => '/admin/users/$id';
 
   // Admin Stats and Data
-  static const String adminDashboard = '/admin/dashboard';
-  static const String adminDashboardLegacy = '/api/admin/dashboard';
-  static const String adminFinancials = '/admin/financials';
-  static const String adminFinancialsLegacy = '/api/admin/financials';
-  static const String adminOrders = '/admin/orders';
-  static const String adminOrdersLegacy = '/api/admin/orders';
-  static const String adminServices = '/admin/services';
-  static const String adminServicesLegacy = '/api/admin/services';
+  static const String adminDashboard = '/api/admin/dashboard';
+  static const String adminDashboardLegacy = '/admin/dashboard';
+  static const String adminFinancials = '/api/admin/financials';
+  static const String adminFinancialsLegacy = '/admin/financials';
+  static const String adminOrders = '/api/admin/orders';
+  static const String adminOrdersLegacy = '/admin/orders';
+  static const String adminServices = '/api/admin/services';
+  static const String adminServicesLegacy = '/admin/services';
 
-  // Categories
+  // Categories — /categories is the correct path per live API spec.
   static const String categories = '/categories';
+  static const String categoriesLegacy = '/api/categories';
 }

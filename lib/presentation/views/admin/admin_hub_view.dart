@@ -78,8 +78,16 @@ class _AdminHubViewState extends State<AdminHubView> {
                         runSpacing: 8,
                         children: [
                           _MetricChip('المستخدمين', '${stats.totalUsers}'),
-                          _MetricChip('الطلبات النشطة', '${stats.activeOrders}'),
+                          _MetricChip('مقدمي الخدمات', '${stats.totalProviders}'),
+                          _MetricChip('المشترين', '${stats.totalBuyers}'),
+                          _MetricChip('إجمالي الخدمات', '${stats.totalServices}'),
+                          _MetricChip('الخدمات النشطة', '${stats.activeServices}'),
                           _MetricChip('الخدمات المعلقة', '${stats.pendingServices}'),
+                          _MetricChip('إجمالي الطلبات', '${stats.totalOrders}'),
+                          _MetricChip('الطلبات النشطة', '${stats.activeOrders}'),
+                          _MetricChip('الطلبات المكتملة', '${stats.completedOrders}'),
+                          _MetricChip('الطلبات الملغاة', '${stats.cancelledOrders}'),
+                          _MetricChip('المدفوعات المعلقة', '${stats.pendingPayments}'),
                           _MetricChip('إجمالي الإيرادات', '${stats.totalRevenue} ج'),
                         ],
                       )
